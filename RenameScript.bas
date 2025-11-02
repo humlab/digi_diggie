@@ -12,7 +12,6 @@ Public Sub RemoveFieldRowSource(tableName As String, fieldName As String)
     Set tdf = db.TableDefs(tableName)
     Set fld = tdf.Fields(fieldName)
 
-    ' Remove lookup-related properties (if they exist)
     On Error Resume Next
     fld.Properties.Delete "RowSource"
     fld.Properties.Delete "RowSourceType"
@@ -24,12 +23,10 @@ Public Sub RemoveFieldRowSource(tableName As String, fieldName As String)
     fld.Properties.Delete "ListWidth"
     fld.Properties.Delete "LimitToList"
     On Error GoTo EH
-
-    MsgBox "RowSource removed from " & tableName & "." & fieldName, vbInformation
+    Debug.Print "info: RowSource removed from " & tableName & "." & fieldName
     Exit Sub
-
 EH:
-    MsgBox "Error: " & Err.Description, vbExclamation
+    Debug.Print "error: failed to remove RowSource from " & tableName & "." & fieldName & ": " & Err.Description
 End Sub
 
 Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource As String)
@@ -48,7 +45,7 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
     ' If using a value list instead, set RowSourceType = "Value List"
     On Error Resume Next
 
-    ' If properties donâ€™t exist yet, create them.
+    ' If properties don't exist yet, create them.
     If PropertyExists(fld, "RowSourceType") Then
         fld.Properties("RowSourceType") = "Table/Query"
     Else
@@ -97,113 +94,16 @@ Private Function PropertyExists(obj As Object, propName As String) As Boolean
     On Error GoTo 0
 End Function
 
-
-'------------------------------------------------------------
-' Finds a TableDef in CurrentDb by name, ignoring case.
-' Returns:
-'   - TableDef object if found
-'   - Nothing if not found
-'------------------------------------------------------------
-Public Function FindTableNameIgnoreCase(tableName As String) As String
-    Dim db As DAO.Database
-    Dim tdf As DAO.TableDef
-
-    Set db = CurrentDb
-
-    For Each tdf In db.TableDefs
-        ' Compare ignoring case
-        If StrComp(tdf.Name, tableName, vbTextCompare) = 0 Then
-            Let FindTableNameIgnoreCase = tdf.Name
-            Exit Function
-        End If
-    Next tdf
-
-    ' If no match, return Nothing
-    Let FindTableNameIgnoreCase = ""
+Private Function IsDataTable(tableName As String) As Boolean
+    Dim rs As DAO.Recordset
+    Set rs = CurrentDb.OpenRecordset("SELECT * FROM TranslationMapping WHERE OriginalTable='" & tableName & "' OR OriginalTable='[" & tableName & "]'", dbOpenSnapshot)
+    IsDataTable = Not rs.EOF
+    rs.Close
+    Set rs = Nothing
 End Function
 
 
-'------------------------------------------------------------
-' Finds a field name in CurrentDb by table name and field name,
-' ignoring case sensitivity.
-'
-' Parameters:
-'   tableName - name of the table (case-insensitive)
-'   fieldName - name of the field/column (case-insensitive)
-'
-' Returns:
-'   String containing the field name if found, empty string otherwise.
-'------------------------------------------------------------
-Public Function FindFieldNameIgnoreCase(tableName As String, fieldName As String) As String
-    Dim db As DAO.Database
-    Dim tdf As DAO.TableDef
-    Dim fld As DAO.Field
-
-    Set db = CurrentDb
-
-    ' --- Find table ignoring case ---
-    For Each tdf In db.TableDefs
-        If StrComp(tdf.Name, tableName, vbTextCompare) = 0 Then
-            ' --- Found table: now find field ignoring case ---
-            For Each fld In tdf.Fields
-                If StrComp(fld.Name, fieldName, vbTextCompare) = 0 Then
-                    Let FindFieldNameIgnoreCase = fld.Name
-                    Exit Function
-                End If
-            Next fld
-            ' Field not found in that table
-            Exit Function
-        End If
-    Next tdf
-
-    ' Not found: return empty string
-    Let FindFieldNameIgnoreCase = ""
-End Function
-
-'------------------------------------------------------------
-' Safely gets a Field object from a TableDef by field name,
-' ignoring case sensitivity.
-' Parameters:
-'   tdf - TableDef object
-'   field_name - name of the field/column (case-insensitive)
-' Returns:
-'   Field object if found, Nothing otherwise.
-'------------------------------------------------------------
-Public Function GetFieldSafe(tdf As DAO.TableDef, field_name As String) As DAO.Field
-    Dim fld As DAO.Field
-    For Each fld In tdf.Fields
-        If StrComp(fld.Name, field_name, vbTextCompare) = 0 Then
-            Set GetFieldSafe = fld
-            Exit Function
-        End If
-    Next fld
-    Set GetFieldSafe = Nothing
-End Function
-
-'------------------------------------------------------------
-' Safely renames a field in a TableDef.
-' Parameters:
-'   tdf - TableDef object
-'   oldName - current name of the field
-'   newName - new name for the field
-' Returns:
-'   True if rename succeeded, False otherwise.
-'------------------------------------------------------------
-Public Function RenameFieldSafe(tdf As DAO.TableDef, oldName As String, newName As String) As Boolean
-    On Error Resume Next
-    tdf.Fields(oldName).Name = newName
-    If Err.Number <> 0 Then
-        Debug.Print "Error renaming [" & oldName & "]: " & Err.Description
-        RenameFieldSafe = False
-        Err.Clear
-    Else
-        RenameFieldSafe = True
-    End If
-    On Error GoTo 0
-End Function
-
-
-Public Function VerifyInputData() As Boolean
+Public Function ShowRowSources() As Boolean
     On Error GoTo ErrorHandler
     Dim rs As DAO.Recordset
     Dim tdf As DAO.TableDef
@@ -211,17 +111,10 @@ Public Function VerifyInputData() As Boolean
     Dim property As DAO.property
     Dim rowSource As String
 
-    VerifyInputData = True
+    ShowRowSources = True
     For Each tdf In CurrentDb.TableDefs
-        If Mid(tdf.Name, 1, 4) <> "MSys" And tdf.Name <> "TranslationMapping" And tdf.Name <> "Ortnamn_ny" Then
+        If IsDataTable(tdf.Name) Then
             For Each fld In tdf.Fields
-                Set rs = CurrentDb.OpenRecordset("SELECT * FROM TranslationMapping WHERE OriginalTable = '" & tdf.Name & "' AND OriginalColumn = '" & fld.Name & "'", dbOpenSnapshot)
-                If rs.EOF Then
-                    ' Debug.Print "NOT OK: [" & tdf.Name & "] -> [" & fld.Name & "]"
-                    VerifyInputData = False
-                Else
-                    ' Debug.Print "OK: [" & tdf.Name & "] -> [" & fld.Name & "]"
-                End If
                 On Error Resume Next
                 Set property = fld.Properties("RowSource")
                 If Err.Number = 0 Then
@@ -233,59 +126,60 @@ Public Function VerifyInputData() As Boolean
             Next fld
         End If
     Next tdf
-
     Exit Function
 ErrorHandler:
-    MsgBox "Error verifying input data: " & Err.Description, vbCritical
-    VerifyInputData = False
+    MsgBox "Error verifying original columns: " & Err.Description, vbCritical
+    ShowRowSources = False
 End Function
 
-
-
-Public Function FindExpressions() As Boolean
+Public Function VerifyOriginalColumns() As Boolean
     On Error GoTo ErrorHandler
+    Dim rs As DAO.Recordset
     Dim tdf As DAO.TableDef
     Dim fld As DAO.Field
+    Dim property As DAO.property
+    Dim rowSource As String
 
-    FindExpressions = True
+    VerifyOriginalColumns = True
     For Each tdf In CurrentDb.TableDefs
-        If Mid(tdf.Name, 1, 4) <> "MSys" And tdf.Name <> "TranslationMapping" And tdf.Name <> "Ortnamn_ny" Then
+        If IsDataTable(tdf.Name) Then
             For Each fld In tdf.Fields
-                On Error Resume Next
-                If fld.Expression <> "" Then
-                    Debug.Print "Expression;" & tdf.Name & ";" & fld.Name & ";" & fld.Expression
+                Set rs = CurrentDb.OpenRecordset("SELECT * FROM TranslationMapping WHERE OriginalTable = '" & tdf.Name & "' AND OriginalColumn = '" & fld.Name & "'", dbOpenSnapshot)
+                If rs.EOF Then
+                    Debug.Print "error: NOT FOUND [" & tdf.Name & "] -> [" & fld.Name & "]"
+                    VerifyOriginalColumns = False
                 End If
+                Set rs = Nothing
             Next fld
         End If
     Next tdf
-
+    If Not VerifyOriginalColumns Then
+        Debug.Print "error: some original columns were not found. See above."
+    Else
+        Debug.Print "info: all original columns verified."
+    End If
     Exit Function
 ErrorHandler:
-    MsgBox "Error finding expressions: " & Err.Description, vbCritical
-    FindExpressions = False
+    MsgBox "Error verifying original columns: " & Err.Description, vbCritical
+    VerifyOriginalColumns = False
 End Function
 
-Public Function ClearExpressions() As Boolean
-    On Error GoTo ErrorHandler
-    ClearExpressions = True
-    CurrentDb.TableDefs("Personer").Fields("Helnamn").Expression = ""
-    Exit Function
-ErrorHandler:
-    MsgBox "Error clearing expressions: " & Err.Description, vbCritical
-    ClearExpressions = False
-End Function
-
-Public Function SetExpressions() As Boolean
+Public Function UpdateExpressions(Optional sCommand As String = "clear") As Boolean
     On Error GoTo ErrorHandler
     Dim rs As DAO.Recordset
-    SetExpressions = True
-    Set rs = CurrentDb.OpenRecordset("SELECT [TranslatedTable], [TranslatedColumn], [TranslatedExpression] FROM [TranslationMapping] WHERE [TranslatedExpression] <> ''", dbOpenSnapshot)
+
+    UpdateExpressions = True
+    Set rs = CurrentDb.OpenRecordset("SELECT * FROM TranslationMapping WHERE TranslatedExpression <> ''", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!TranslatedTable).Fields(rs!TranslatedColumn).Expression = rs!TranslatedExpression
+        If sCommand = "clear" Then
+            CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Expression = ""
+        ElseIf sCommand = "set" Then
+            CurrentDb.TableDefs(rs!TranslatedTable).Fields(rs!TranslatedColumn).Expression = rs!TranslatedExpression
+        End If
         If Err.Number <> 0 Then
-            SetExpressions = False
-            Debug.Print "Error setting Expression for " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
+            UpdateExpressions = False
+            Debug.Print "Error clearing Expression for " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
             Err.Clear
         End If
         On Error GoTo 0
@@ -296,7 +190,16 @@ Public Function SetExpressions() As Boolean
     Exit Function
 ErrorHandler:
     MsgBox "Error clearing expressions: " & Err.Description, vbCritical
-    SetExpressions = False
+    UpdateExpressions = False
+End Function
+
+
+Public Function ClearExpressions() As Boolean
+    ClearExpressions = UpdateExpressions("clear")
+End Function
+
+Public Function SetExpressions() As Boolean
+    SetExpressions = UpdateExpressions("set")
 End Function
 
 Public Function ClearRowSource() As Boolean
@@ -306,7 +209,7 @@ Public Function ClearRowSource() As Boolean
     Set rs = CurrentDb.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Properties("RowSource") = Null
+        CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Properties("RowSource") = "SELECT 1 AS DummyID, '' AS DummyValue WHERE False;"
         If Err.Number <> 0 Then
             ClearRowSource = False
             Debug.Print "Error removing RowSource from " & rs!OriginalTable & "." & rs!OriginalColumn & ": " & Err.Description
@@ -322,6 +225,24 @@ Public Function ClearRowSource() As Boolean
 ErrorHandler:
     MsgBox "Error removing RowSource: " & Err.Description, vbCritical
     ClearRowSource = False
+End Function
+
+Public Function RemoveRowSources() As Boolean
+    On Error GoTo ErrorHandler
+    Dim rs As DAO.Recordset
+    RemoveRowSources = True
+    Set rs = CurrentDb.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
+    Do Until rs.EOF
+        RemoveFieldRowSource rs!OriginalTable, rs!OriginalColumn
+        rs.MoveNext
+    Loop
+    rs.Close
+    Set rs = Nothing
+    Debug.Print "Done!"
+    Exit Function
+ErrorHandler:
+    MsgBox "Error removing RowSource: " & Err.Description, vbCritical
+    RemoveRowSources = False
 End Function
 
 Public Function SetRowSource() As Boolean
