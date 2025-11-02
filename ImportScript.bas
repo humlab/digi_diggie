@@ -16,17 +16,16 @@ Private Sub ImportOrReplaceModule(moduleName As String)
     On Error GoTo 0
 
     ' Import the .bas file from the same folder
+    On Error Resume Next
     Application.LoadFromText acModule, moduleName, modulePath
-
-    MsgBox "Module '" & moduleName & "' imported from: " & modulePath, vbInformation
+    If Err.Number <> 0 Then
+        MsgBox "Error! '" & moduleName & "' could not be imported from: " & modulePath & " - " & Err.Description, vbInformation
+    End If
 End Sub
 
 
-Option Compare Database
-Option Explicit
-
-
 Public Function ImportOrReplaceScript() As Boolean
-    Call ImportOrReplaceModule("rename")
+    Call ImportOrReplaceModule("RenameScript")
+    Call ImportOrReplaceModule("HelperScript")
 End Function
 
