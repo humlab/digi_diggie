@@ -213,15 +213,18 @@ Public Function AddTranslatedExpressions() As Boolean
     On Error GoTo ErrorHandler
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
+    Dim sSQL As String
     AddTranslatedExpressions = True
     Set db = CurrentDb
     Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping WHERE TranslatedExpression <> ''", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        db.Execute "ALTER TABLE " & SquareBracket(rs!TranslatedTable) & " ADD COLUMN " & SquareBracket(rs!TranslatedColumn) & " AS (" & rs!TranslatedExpression & ");", dbFailOnError
+        Let sSQL = "ALTER TABLE " & SquareBracket(rs!TranslatedTable) & " ADD COLUMN " & SquareBracket(rs!TranslatedColumn) & " AS (" & rs!TranslatedExpression & ");"
+        db.Execute sSQL, dbFailOnError
         If Err.Number <> 0 Then
             AddTranslatedExpressions = False
             Debug.Print "error: failed adding computed column " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
+            Debug.Print "  sql: " & sSQL
             Err.Clear
         End If
         On Error GoTo 0
@@ -236,7 +239,6 @@ ErrorHandler:
     MsgBox "error: failed adding computed column: " & Err.Description, vbCritical
     AddTranslatedExpressions = False
 End Function
-
 
 Public Function RemoveOriginalQueries() As Boolean
     On Error GoTo ErrorHandler
