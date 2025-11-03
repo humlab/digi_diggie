@@ -317,17 +317,19 @@ Public Function AddTranslatedRowSources() As Boolean
     Dim table As DAO.TableDef
     Dim field As DAO.Field
     Dim rs As DAO.Recordset
-    AddTranslatedRowSources = True
     Set db = CurrentDb
     Set rs = db.OpenRecordset("SELECT [TranslatedTable], [TranslatedColumn], [RowSource] FROM [RowSource]", dbOpenSnapshot)
+    AddTranslatedRowSources = True
     Do Until rs.EOF
         On Error Resume Next
         Set table = db.TableDefs(rs!TranslatedTable)
         Set field = table.Fields(rs!TranslatedColumn)
-        field.Properties("RowSource") = rs!rowSource
+
+        SetFieldRowSource table.Name, field.Name, rs!rowSource
+
         If Err.Number <> 0 Then
             AddTranslatedRowSources = False
-            Debug.Print "error: failed setting RowSource for " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
+            Debug.Print "error: failed setting RowSource for " & table.Name & "." & field.Name & ": " & Err.Description
             Err.Clear
         End If
         On Error GoTo 0
