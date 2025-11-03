@@ -43,7 +43,6 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
     Set table = db.TableDefs(tableName)
     Set field = table.Fields(fieldName)
 
-    ' --- Set lookup display mode ---
     ' RowSourceType "Table/Query" means the RowSource is SQL.
     ' If using a value list instead, set RowSourceType = "Value List"
     On Error Resume Next
@@ -70,11 +69,11 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
     table.Fields.Refresh
 
     On Error GoTo EH
-    MsgBox "RowSource added to field " & tableName & "." & fieldName, vbInformation
+    Debug.Print "info: RowSource added to field " & tableName & "." & fieldName
     Exit Sub
 
 EH:
-    MsgBox "Error setting RowSource: " & Err.Description, vbExclamation
+    Debug.Print "error: failed setting RowSource: " & Err.Description
 End Sub
 
 
