@@ -1,27 +1,30 @@
 Option Compare Database
 Option Explicit
 
-Public Sub RemoveFieldRowSource(tableName As String, fieldName As String)
+Public Sub RemoveRowSource(tableName As String, fieldName As String)
     On Error GoTo EH
 
     Dim db As DAO.Database
-    Dim tdf As DAO.TableDef
-    Dim fld As DAO.Field
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
 
     Set db = CurrentDb
-    Set tdf = db.TableDefs(tableName)
-    Set fld = tdf.Fields(fieldName)
+    Set table = db.TableDefs(tableName)
+    Set field = table.Fields(fieldName)
 
     On Error Resume Next
-    fld.Properties.Delete "RowSource"
-    fld.Properties.Delete "RowSourceType"
-    fld.Properties.Delete "BoundColumn"
-    fld.Properties.Delete "ColumnCount"
-    fld.Properties.Delete "ColumnHeads"
-    fld.Properties.Delete "ColumnWidths"
-    fld.Properties.Delete "ListRows"
-    fld.Properties.Delete "ListWidth"
-    fld.Properties.Delete "LimitToList"
+    field.Properties.Delete "RowSource"
+    field.Properties.Delete "RowSourceType"
+    field.Properties.Delete "BoundColumn"
+    field.Properties.Delete "ColumnCount"
+    field.Properties.Delete "ColumnHeads"
+    field.Properties.Delete "ColumnWidths"
+    field.Properties.Delete "ListRows"
+    field.Properties.Delete "ListWidth"
+    field.Properties.Delete "LimitToList"
+
+    table.Fields.Refresh
+
     On Error GoTo EH
     Debug.Print "info: RowSource removed from " & tableName & "." & fieldName
     Exit Sub
@@ -33,12 +36,12 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
     On Error GoTo EH
 
     Dim db As DAO.Database
-    Dim tdf As DAO.TableDef
-    Dim fld As DAO.Field
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
 
     Set db = CurrentDb
-    Set tdf = db.TableDefs(tableName)
-    Set fld = tdf.Fields(fieldName)
+    Set table = db.TableDefs(tableName)
+    Set field = table.Fields(fieldName)
 
     ' --- Set lookup display mode ---
     ' RowSourceType "Table/Query" means the RowSource is SQL.
@@ -46,23 +49,25 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
     On Error Resume Next
 
     ' If properties don't exist yet, create them.
-    If PropertyExists(fld, "RowSourceType") Then
-        fld.Properties("RowSourceType") = "Table/Query"
+    If PropertyExists(field, "RowSourceType") Then
+        field.Properties("RowSourceType") = "Table/Query"
     Else
-        fld.Properties.Append fld.CreateProperty("RowSourceType", dbText, "Table/Query")
+        field.Properties.Append field.CreateProperty("RowSourceType", dbText, "Table/Query")
     End If
 
-    If PropertyExists(fld, "RowSource") Then
-        fld.Properties("RowSource") = sqlSource
+    If PropertyExists(field, "RowSource") Then
+        field.Properties("RowSource") = sqlSource
     Else
-        fld.Properties.Append fld.CreateProperty("RowSource", dbMemo, sqlSource)
+        field.Properties.Append field.CreateProperty("RowSource", dbMemo, sqlSource)
     End If
 
     ' Optional but recommended:
     ' Specify which column is stored and how many are shown.
-    AddOrReplaceProperty fld, "BoundColumn", dbInteger, 1
-    AddOrReplaceProperty fld, "ColumnCount", dbInteger, 2
-    AddOrReplaceProperty fld, "ColumnWidths", dbText, "0cm;5cm" ' hide ID, show Name
+    AddOrReplaceProperty field, "BoundColumn", dbInteger, 1
+    AddOrReplaceProperty field, "ColumnCount", dbInteger, 2
+    AddOrReplaceProperty field, "ColumnWidths", dbText, "0cm;5cm" ' hide ID, show Name
+    
+    table.Fields.Refresh
 
     On Error GoTo EH
     MsgBox "RowSource added to field " & tableName & "." & fieldName, vbInformation
@@ -86,9 +91,9 @@ End Sub
 
 ' --- Helper: check if a property exists ---
 Private Function PropertyExists(obj As Object, propName As String) As Boolean
-    Dim p As DAO.property
+    Dim property As DAO.property
     On Error Resume Next
-    Set p = obj.Properties(propName)
+    Set property = obj.Properties(propName)
     PropertyExists = (Err.Number = 0)
     Err.Clear
     On Error GoTo 0
@@ -120,27 +125,28 @@ End Function
 
 Public Function ShowRowSources() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
     Dim rs As DAO.Recordset
-    Dim tdf As DAO.TableDef
-    Dim fld As DAO.Field
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
     Dim rowSource As String
     Dim property As DAO.property
-
+    Set db = CurrentDb
     ShowRowSources = True
-    For Each tdf In CurrentDb.TableDefs
-        If IsDataTable(tdf.Name) Then
-            For Each fld In tdf.Fields
+    For Each table In db.TableDefs
+        If IsDataTable(table.Name) Then
+            For Each field In table.Fields
                 On Error Resume Next
-                Set property = fld.Properties("RowSource")
+                Set property = field.Properties("RowSource")
                 If Err.Number = 0 Then
-                    Debug.Print "RowSource;" & tdf.Name & ";" & fld.Name & ";" & property.Value
+                    Debug.Print "RowSource;" & table.Name & ";" & field.Name & ";" & property.Value
                 End If
                 Err.Clear
                 On Error GoTo 0
                 Set rs = Nothing
-            Next fld
+            Next field
         End If
-    Next tdf
+    Next table
     Exit Function
 ErrorHandler:
     MsgBox "Error verifying original columns: " & Err.Description, vbCritical
@@ -148,21 +154,23 @@ ErrorHandler:
 End Function
 
 Public Function VerifyMappings() As Boolean
-    Dim tdf As DAO.TableDef
-    Dim fld As DAO.Field
+    Dim db As DAO.Database
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
     Dim property As DAO.property
 
+    Set db = CurrentDb
     VerifyMappings = True
-    For Each tdf In CurrentDb.TableDefs
-        If IsDataTable(tdf.Name) Then
-            For Each fld In tdf.Fields
-                If Not IsDataColumn(tdf.Name, fld.Name) Then
-                    Debug.Print "error: NOT FOUND [" & tdf.Name & "] -> [" & fld.Name & "]"
+    For Each table In db.TableDefs
+        If IsDataTable(table.Name) Then
+            For Each field In table.Fields
+                If Not IsDataColumn(table.Name, field.Name) Then
+                    Debug.Print "error: NOT FOUND [" & table.Name & "] -> [" & field.Name & "]"
                     VerifyMappings = False
                 End If
-            Next fld
+            Next field
         End If
-    Next tdf
+    Next table
     If Not VerifyMappings Then
         Debug.Print "error: some original columns were not found. See above."
     Else
@@ -173,22 +181,20 @@ Public Function VerifyMappings() As Boolean
     End If
 End Function
 
-Public Function UpdateExpressions(Optional sCommand As String = "clear") As Boolean
+Public Function DropOriginalExpressions() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
     Dim rs As DAO.Recordset
 
-    UpdateExpressions = True
-    Set rs = CurrentDb.OpenRecordset("SELECT * FROM TranslationMapping WHERE TranslatedExpression <> ''", dbOpenSnapshot)
+    Set db = CurrentDb
+    DropOriginalExpressions = True
+    Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping WHERE TranslatedExpression <> ''", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        If sCommand = "clear" Then
-            CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Expression = ""
-        ElseIf sCommand = "set" Then
-            CurrentDb.TableDefs(rs!TranslatedTable).Fields(rs!TranslatedColumn).Expression = rs!TranslatedExpression
-        End If
+        db.Execute "ALTER TABLE " & SquareBracket(rs!OriginalTable) & " DROP COLUMN " & SquareBracket(rs!OriginalColumn) & ";", dbFailOnError
         If Err.Number <> 0 Then
-            UpdateExpressions = False
-            Debug.Print "error: failed clearing computed expression for " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
+            DropOriginalExpressions = False
+            Debug.Print "error: failed dropping computed column " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
             Err.Clear
         End If
         On Error GoTo 0
@@ -196,48 +202,73 @@ Public Function UpdateExpressions(Optional sCommand As String = "clear") As Bool
     Loop
     rs.Close
     Set rs = Nothing
+    db.TableDefs.Refresh
+    Debug.Print "info: done dropping original expressions!"
     Exit Function
 ErrorHandler:
-    MsgBox "error: failed clearing computed expression: " & Err.Description, vbCritical
-    UpdateExpressions = False
+    MsgBox "error: failed dropping computed column: " & Err.Description, vbCritical
+    DropOriginalExpressions = False
 End Function
 
-
-Public Function ClearComputedExpressions() As Boolean
-    ClearComputedExpressions = UpdateExpressions("clear")
-End Function
-
-Public Function AddComputedExpressions() As Boolean
-    AddComputedExpressions = UpdateExpressions("set")
-End Function
-
-Public RemoveQueries As Boolean
+Public Function AddTranslatedExpressions() As Boolean
     On Error GoTo ErrorHandler
     Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
-
-    RemoveQueries = True
+    Dim rs As DAO.Recordset
+    AddTranslatedExpressions = True
     Set db = CurrentDb
-    For Each qdf In db.QueryDefs
-        If Left(qdf.Name, 4) = "TRN_" Then
-            db.QueryDefs.Delete qdf.Name
-            Debug.Print "info: deleted query " & qdf.Name
+    Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping WHERE TranslatedExpression <> ''", dbOpenSnapshot)
+    Do Until rs.EOF
+        On Error Resume Next
+        db.Execute "ALTER TABLE " & SquareBracket(rs!TranslatedTable) & " ADD COLUMN " & SquareBracket(rs!TranslatedColumn) & " AS (" & rs!TranslatedExpression & ");", dbFailOnError
+        If Err.Number <> 0 Then
+            AddTranslatedExpressions = False
+            Debug.Print "error: failed adding computed column " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
+            Err.Clear
         End If
-    Next qdf
+        On Error GoTo 0
+        rs.MoveNext
+    Loop
+    rs.Close
+    Set rs = Nothing
+    db.TableDefs.Refresh
+    Debug.Print "info: done adding translated expressions!"
+    Exit Function
+ErrorHandler:
+    MsgBox "error: failed adding computed column: " & Err.Description, vbCritical
+    AddTranslatedExpressions = False
+End Function
+
+
+Public Function RemoveOriginalQueries() As Boolean
+    On Error GoTo ErrorHandler
+    Dim db As DAO.Database
+    Dim query As DAO.QueryDef
+    Dim queryName As String
+    RemoveOriginalQueries = True
+    Set db = CurrentDb
+    For Each query In db.QueryDefs
+        Let queryName = query.Name
+        db.QueryDefs.Delete queryName
+        Debug.Print "info: deleted query " & queryName
+    Next query
+    db.QueryDefs.Refresh
+    Debug.Print "info: done removing original queries!"
     Exit Function
 ErrorHandler:
     MsgBox "Error removing queries: " & Err.Description, vbCritical
-    RemoveQueries = False
+    RemoveOriginalQueries = False
 End Function
 
 Public Function ClearRowSource() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
     Dim rs As DAO.Recordset
     ClearRowSource = True
-    Set rs = CurrentDb.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Properties("RowSource") = "SELECT 1 AS DummyID, '' AS DummyValue WHERE False;"
+        db.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Properties("RowSource") = "SELECT 1 AS DummyID, '' AS DummyValue WHERE False;"
         If Err.Number <> 0 Then
             ClearRowSource = False
             Debug.Print "error: failed removing RowSource from " & rs!OriginalTable & "." & rs!OriginalColumn & ": " & Err.Description
@@ -248,65 +279,86 @@ Public Function ClearRowSource() As Boolean
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "info: Done!"
+    db.TableDefs.Refresh
+    Debug.Print "info: done clearing RowSource!"
     Exit Function
 ErrorHandler:
     MsgBox "Error removing RowSource: " & Err.Description, vbCritical
     ClearRowSource = False
 End Function
 
-Public Function RemoveRowSources() As Boolean
+Public Function RemoveOriginalRowSources() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
+    Dim table As DAO.TableDef
     Dim rs As DAO.Recordset
-    RemoveRowSources = True
-    Set rs = CurrentDb.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
+    RemoveOriginalRowSources = True
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
     Do Until rs.EOF
-        RemoveFieldRowSource rs!OriginalTable, rs!OriginalColumn
+        Set table = db.TableDefs(rs!OriginalTable)
+        RemoveRowSource table.Name, rs!OriginalColumn
+        table.Fields.Refresh
         rs.MoveNext
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "info: Done!"
+    db.TableDefs.Refresh
+    Debug.Print "info: done removing original RowSource!"
     Exit Function
 ErrorHandler:
-    MsgBox "error: failed removing RowSource: " & Err.Description, vbCritical
-    RemoveRowSources = False
+    MsgBox "error: failed removing original RowSource: " & Err.Description, vbCritical
+    RemoveOriginalRowSources = False
 End Function
 
-Public Function AddRowSources() As Boolean
+Public Function AddTranslatedRowSources() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
     Dim rs As DAO.Recordset
-    AddRowSources = True
-    Set rs = CurrentDb.OpenRecordset("SELECT [TranslatedTable], [TranslatedColumn], [RowSource] FROM [RowSource]", dbOpenSnapshot)
+    AddTranslatedRowSources = True
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT [TranslatedTable], [TranslatedColumn], [RowSource] FROM [RowSource]", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!TranslatedTable).Fields(rs!TranslatedColumn).Properties("RowSource") = rs!rowSource
+        Set table = db.TableDefs(rs!TranslatedTable)
+        Set field = table.Fields(rs!TranslatedColumn)
+        field.Properties("RowSource") = rs!rowSource
         If Err.Number <> 0 Then
-            AddRowSources = False
+            AddTranslatedRowSources = False
             Debug.Print "error: failed setting RowSource for " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
             Err.Clear
         End If
         On Error GoTo 0
+        table.Fields.Refresh
         rs.MoveNext
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "Done!"
+    db.TableDefs.Refresh
+    Debug.Print "info: done adding translated RowSource!"
     Exit Function
 ErrorHandler:
-    MsgBox "Error removing RowSource: " & Err.Description, vbCritical
-    AddRowSources = False
+    MsgBox "Error adding translated RowSource: " & Err.Description, vbCritical
+    AddTranslatedRowSources = False
 End Function
 
 
 Public Function RenameFields() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
     Dim rs As DAO.Recordset
     RenameFields = True
-    Set rs = CurrentDb.OpenRecordset("SELECT OriginalTable, OriginalColumn, TranslatedColumn FROM TranslationMapping", dbOpenSnapshot)
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT OriginalTable, OriginalColumn, TranslatedColumn FROM TranslationMapping", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Name = rs!TranslatedColumn
+        Set table = db.TableDefs(rs!OriginalTable)
+        Set field = table.Fields(rs!OriginalColumn)
+        field.Name = rs!TranslatedColumn
         If Err.Number = 3265 Then ' Item not found in this collection.
             ' Assume already renamed
         ElseIf Err.Number <> 0 Then
@@ -314,11 +366,13 @@ Public Function RenameFields() As Boolean
         End If
         Err.Clear
         On Error GoTo 0
+        table.Fields.Refresh
         rs.MoveNext
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "info: Done!"
+    db.TableDefs.Refresh
+    Debug.Print "info: done renaming fields!"
     Exit Function
 ErrorHandler:
     MsgBox "Error renaming fields: " & Err.Description, vbCritical
@@ -328,22 +382,30 @@ End Function
 
 Public Function DeleteDeprecatedFields() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
     Dim rs As DAO.Recordset
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field
     DeleteDeprecatedFields = True
-    Set rs = CurrentDb.OpenRecordset("SELECT OriginalTable, OriginalColumn, TranslatedColumn FROM TranslationMapping WHERE DeprecatedFlag = 'YES'", dbOpenSnapshot)
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT OriginalTable, OriginalColumn, TranslatedColumn FROM TranslationMapping WHERE DeprecatedFlag = 'YES'", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!OriginalTable).Fields(rs!OriginalColumn).Delete
+        Set table = db.TableDefs(rs!OriginalTable)
+        Set field = table.Fields(rs!OriginalColumn)
+        field.Delete
         If Err.Number <> 0 Then
             Debug.Print "error: failed deleting field " & rs!OriginalTable & "." & rs!OriginalColumn & ": " & Err.Description
         End If
         Err.Clear
         On Error GoTo 0
+        table.Fields.Refresh
         rs.MoveNext
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "info:Done!"
+    db.TableDefs.Refresh
+    Debug.Print "info: done deleting deprecated fields!"
     Exit Function
 ErrorHandler:
     MsgBox "Error deleting fields: " & Err.Description, vbCritical
@@ -352,65 +414,52 @@ End Function
 
 Public Function RenameTables() As Boolean
     On Error GoTo ErrorHandler
+    Dim db As DAO.Database
+    Dim table As DAO.TableDef
     Dim rs As DAO.Recordset
     RenameTables = True
-    Set rs = CurrentDb.OpenRecordset("SELECT DISTINCT OriginalTable, TranslatedTable FROM TranslationMapping", dbOpenSnapshot)
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT DISTINCT OriginalTable, TranslatedTable FROM TranslationMapping", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        CurrentDb.TableDefs(rs!OriginalTable).Name = rs!TranslatedTable
+        Set table = db.TableDefs(rs!OriginalTable)
+        table.Name = rs!TranslatedTable
         If Err.Number <> 0 Then
             Debug.Print "error: failed renaming table " & rs!OriginalTable & " to " & rs!TranslatedTable & ": " & Err.Description
         End If
         Err.Clear
         On Error GoTo 0
+        table.Fields.Refresh
         rs.MoveNext
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "info: Done!"
+    db.TableDefs.Refresh
+    Debug.Print "info: done renaming tables!"
     Exit Function
 ErrorHandler:
-    MsgBox "Error renaming fields: " & Err.Description, vbCritical
+    MsgBox "Error renaming tables: " & Err.Description, vbCritical
     RenameTables = False
 End Function
 
-Public Function RemoveQueries() As Boolean
+
+Public Function AddTranslatedQueries() As Boolean
     On Error GoTo ErrorHandler
     Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
-
-    RemoveQueries = True
-    Set db = CurrentDb
-    For Each qdf In db.QueryDefs
-        If Left(qdf.Name, 4) = "TRN_" Then
-            db.QueryDefs.Delete qdf.Name
-            Debug.Print "info: deleted query " & qdf.Name
-        End If
-    Next qdf
-    Exit Function
-ErrorHandler:
-    MsgBox "Error removing queries: " & Err.Description, vbCritical
-    RemoveQueries = False
-End Function
-
-
-Public Function AddQueries() As Boolean
-    On Error GoTo ErrorHandler
     Dim rs As DAO.Recordset
-    Dim db As DAO.Database
-    Dim qdf As DAO.QueryDef
+    Dim query As DAO.QueryDef
 
-    AddQueries = True
+    AddTranslatedQueries = True
     Set db = CurrentDb
     Set rs = db.OpenRecordset("SELECT * FROM QueryDefinitions", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
         db.QueryDefs.Delete rs!QueryName
         Err.Clear
-        Set qdf = db.CreateQueryDef(rs!QueryName, rs!SQLText)
+        Set query = db.CreateQueryDef(rs!QueryName, rs!SQLText)
         If Err.Number <> 0 Then
             Debug.Print "error: error adding query " & rs!QueryName & ": " & Err.Description
-            AddQueries = False
+            AddTranslatedQueries = False
             Err.Clear
         End If
         On Error GoTo 0
@@ -418,11 +467,12 @@ Public Function AddQueries() As Boolean
     Loop
     rs.Close
     Set rs = Nothing
-    Debug.Print "info: Done!"
+    db.QueryDefs.Refresh
+    Debug.Print "info: done adding translated queries!"
     Exit Function
 ErrorHandler:
     MsgBox "Error adding queries: " & Err.Description, vbCritical
-    AddQueries = False
+    AddTranslatedQueries = False
 End Function
 
 Public Function RemoveImportedObjects() As Boolean
@@ -435,8 +485,8 @@ Public Function RemoveImportedObjects() As Boolean
     db.TableDefs.Delete "TranslationMapping"
     db.TableDefs.Delete "RowSource"
     db.TableDefs.Delete "QueryDefinitions"
-
-    Debug.Print "info: deleted mapping tables"
+    db.TableDefs.Refresh
+    Debug.Print "info: done removing imported objects!"
     Exit Function
 ErrorHandler:
     MsgBox "Error removing imported objects: " & Err.Description, vbCritical
@@ -454,17 +504,17 @@ Public Function TranslateDatabase() As Boolean
     ' Let isOK = isOK And ImportOrReplaceScript ' Can't replace itself!
 
     Let isOK = isOK And ShowRowSources
-    Let isOK = isOK And ClearComputedExpressions
-    Let isOK = isOK And RemoveRowSources
-    Let isOK = isOK And RemoveQueries
-    Let isOK = isOK And DeleteDeprecatedFields
+    Let isOK = isOK And DropOriginalExpressions
+    Let isOK = isOK And RemoveOriginalRowSources
+    Let isOK = isOK And RemoveOriginalQueries
     Let isOK = isOK And RenameFields
     Let isOK = isOK And RenameTables
-    Let isOK = isOK And AddRowSources
-    Let isOK = isOK And AddComputedExpressions
-    Let isOK = isOK And AddQueries
+    Let isOK = isOK And AddTranslatedRowSources
+    Let isOK = isOK And AddTranslatedExpressions
+    Let isOK = isOK And AddTranslatedQueries
 
-    Let isOK = isOK And RemoveImportedObjects
+    ' Let isOK = isOK And DeleteDeprecatedFields
+    ' Let isOK = isOK And RemoveImportedObjects
 
     TranslateDatabase = isOK
     MsgBox "Table and column translation complete.", vbInformation
