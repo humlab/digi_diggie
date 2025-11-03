@@ -25,8 +25,6 @@ Public Sub RemoveRowSource(tableName As String, fieldName As String)
 
     table.Fields.Refresh
 
-    On Error GoTo EH
-    Debug.Print "info: RowSource removed from " & tableName & "." & fieldName
     Exit Sub
 EH:
     Debug.Print "error: failed to remove RowSource from " & tableName & "." & fieldName & ": " & Err.Description
@@ -68,12 +66,10 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
     
     table.Fields.Refresh
 
-    On Error GoTo EH
-    Debug.Print "info: RowSource added to field " & tableName & "." & fieldName
     Exit Sub
 
 EH:
-    Debug.Print "error: failed setting RowSource: " & Err.Description
+    Debug.Print "error: failed setting RowSource for " & tableName & "." & fieldName & ": " & Err.Description
 End Sub
 
 
