@@ -1,8 +1,6 @@
 Option Compare Database
 Option Explicit
 
-' Public entry point:
-'   ImportExcelSheet "C:\data\myfile.xlsx", "Sheet1", "Staging_MyData"
 Public Function ImportExcelSheet(ByVal filePath As String, _
                                  ByVal sheetName As String, _
                                  ByVal tableName As String) As Boolean
@@ -110,8 +108,8 @@ End Function
 
 Public Function ImportTranslationData() As Boolean
     Dim isOK As Boolean
-    isOK = ImportExcelSheet(CurrentProject.Path & "\TranslationMapping.xlsx", "TranslationMapping", "TranslationMapping")
-    isOK = isOK And ImportExcelSheet(CurrentProject.Path & "\TranslationMapping.xlsx", "RowSource", "RowSource")
-    isOK = isOK And ImportExcelSheet(CurrentProject.Path & "\TranslationMapping.xlsx", "QueryDefinitions", "QueryDefinitions")
+    isOK = ImportExcelSheet(CurrentProject.Path & "\resources\TranslationMapping.xlsx", "TranslationMapping", "TranslationMapping")
+    isOK = isOK And ImportExcelSheet(CurrentProject.Path & "\resources\TranslationMapping.xlsx", "RowSource", "RowSource")
+    isOK = isOK And ImportExcelSheet(CurrentProject.Path & "\resources\TranslationMapping.xlsx", "QueryDefinitions", "QueryDefinitions")
     ImportTranslationData = isOK
 End Function
