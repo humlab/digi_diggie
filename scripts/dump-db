@@ -2,18 +2,18 @@
 
 SHELL=/bin/bash
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
-if [ -f docker/.env ]; then
+if [ -f "$(dirname $0)/docker/.env" ]; then
     set -o allexport
-    grep -v  PASSWORD docker/.env > /tmp/789.env
-    . /tmp/789.env 
-    rm -f /tmp/789.env
+    export $(grep -v 'PASSWORD' "$(dirname $0)/docker/.env" | xargs)
     set +o allexport
 fi
 
+g_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 g_database=${POSTGRES_DB}
-g_schema=
+# g_schema=
 g_host=localhost
 g_user=${POSTGRES_USER:-gudrun}
 g_port=${POSTGRES_PORT:-5433}
@@ -60,58 +60,91 @@ done
 function dump_schema() {
 
     local input_file=$1
-    local output_file=$output_folder/schema.sql
+    local output_folder=$2
+    local output_file="$output_folder"/schema.sql
 
-    mdb-schema --not-null --default-values $input_file postgres > $output_file
+    mdb-schema --not-null --default-values "$input_file" postgres > "$output_file"
 
-    grep -v 'REFERENCES' $output_file > $output_file.tmp
-    mv $output_file.tmp $output_file
+    grep -v 'REFERENCES' "$output_file" > "$output_file.tmp"
+    mv "$output_file.tmp" "$output_file"
 
-    sed -i 's/BOOLEAN NOT NULL DEFAULT FALSE/INTEGER NOT NULL DEFAULT 0/g' $output_file
+    sed -i 's/BOOLEAN NOT NULL DEFAULT FALSE/INTEGER NOT NULL DEFAULT 0/g' "$output_file"
 }
 
 function dump_data() {
     local input_file=$1
-    local output_file=$output_folder/data.sql
+    local output_folder=$2
+    local output_file="$output_folder"/data.sql
 
-    > $output_file
-    for table in $(mdb-tables $input_file); do
-        mdb-export --insert=postgres $input_file $table >> $output_file
+    > "$output_file"
+    for table in $(mdb-tables "$input_file"); do
+        mdb-export --insert=postgres "$input_file" "$table" >> "$output_file"
     done
 }
 
 function execute_sql() {
     local sql=$1
-    psql -p $g_port -h $g_host -d $g_database -U $g_user --no-password -v ON_ERROR_STOP=1 -tac "$sql" >& /dev/null
+    PGPASSFILE=${g_script_dir}/.pgpass -p "$g_port" -h "$g_host" -d "$g_database" -U "$g_user" -v ON_ERROR_STOP=1 -tac "$sql" >& /dev/null
 }
 
 
 function execute_sql_file() {
     local sql=$1
-    psql -p $g_port -h $g_host -d $g_database -U $g_user --no-password -v ON_ERROR_STOP=1 -f "$sql" >& /dev/null
+    PGPASSFILE=${g_script_dir}/.pgpass psql -p "$g_port" -h "$g_host" -d "$g_database" -U "$g_user" -v ON_ERROR_STOP=1 -f "$sql" >& /dev/null
 }
 
 function drop_data() {
-    for table in $(mdb-tables $input_file); do
+    local input_file=$1
+    for table in $(mdb-tables "$input_file"); do
         table="${table,,}"
         execute_sql "drop table if exists \"$table\" cascade;" >& /dev/null
     done
 }
 
-function add_constraints() {
-    local input_file=$1
+# function add_constraints() {
+#     local input_file=$1
+# }
+
+function check_requirements() {
+    if ! command -v mdb-schema &> /dev/null; then
+        echo "Error: mdb-schema command not found. Please install mdb-tools." >&2
+        exit 1
+    fi
+
+    if ! command -v mdb-tables &> /dev/null; then
+        echo "Error: mdb-tables command not found. Please install mdb-tools." >&2
+        exit 1
+    fi
+
+    if ! command -v mdb-export &> /dev/null; then
+        echo "Error: mdb-export command not found. Please install mdb-tools." >&2
+        exit 1
+    fi
+
+    if ! command -v psql &> /dev/null; then
+        echo "Error: psql command not found. Please install PostgreSQL client tools." >&2
+        exit 1
+    fi
 }
+if [ -z "$g_input_file" ]; then
+    usage "missing <input_file.mdb>"
+    exit 1
+fi
 
-add_constraints
+# add_constraints
 
-drop_data
+check_requirements
 
-dump_schema $input_file
-dump_data $input_file
+mkdir -p "$g_output_folder"
 
-execute_sql_file $output_folder/schema.sql
-execute_sql_file $output_folder/data.sql
-execute_sql_file $data_folder/constraints.sql
+drop_data "$g_input_file"
+
+dump_schema "$g_input_file" "$g_output_folder"
+dump_data "$g_input_file" "$g_output_folder"
+
+execute_sql_file "$g_output_folder"/schema.sql
+execute_sql_file "$g_output_folder"/data.sql
+execute_sql_file "$g_data_folder"/constraints.sql
 
 echo "Data imported successfully into $g_database"
-echo "Schema and data dumped to $output_folder"
+echo "Schema and data dumped to $g_output_folder"
