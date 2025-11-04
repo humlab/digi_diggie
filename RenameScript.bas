@@ -557,10 +557,10 @@ Public Function TranslateDatabase() As Boolean
 
     Let isOK = VerifyMappings
 
-    Let isOK = isOK And ImportTranslationMappingExcelSheet
+    Let isOK = isOK And ImportTranslationData
     ' Let isOK = isOK And ImportOrReplaceScript ' Can't replace itself!
 
-    Let isOK = isOK And ShowRowSources
+    ' Let isOK = isOK And ShowRowSources
     Let isOK = isOK And DropOriginalExpressions
     Let isOK = isOK And RemoveOriginalRowSources
     Let isOK = isOK And RemoveOriginalQueries
