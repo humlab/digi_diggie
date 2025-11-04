@@ -8,7 +8,7 @@ Private Sub ImportOrReplaceModule(moduleName As String)
 
     ' Get the folder of the current Access database
     dbPath = CurrentProject.Path
-    modulePath = dbPath & "\" & moduleName & ".bas"
+    modulePath = dbPath & "\src\vba\" & moduleName & ".bas"
 
     On Error Resume Next
     ' Try to delete any existing module with this name
