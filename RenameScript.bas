@@ -503,7 +503,7 @@ End Function
 Public Function RemoveImportedObjects() As Boolean
     On Error GoTo ErrorHandler
     Dim db As DAO.Database
-    Dim tdf As DAO.TableDef
+    Dim table As DAO.TableDef
 
     RemoveImportedObjects = True
     Set db = CurrentDb
