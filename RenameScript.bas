@@ -436,6 +436,7 @@ ErrorHandler:
     DeleteDeprecatedFields = False
 End Function
 
+
 Public Function RenameTables() As Boolean
     On Error GoTo ErrorHandler
     Dim db As DAO.Database
