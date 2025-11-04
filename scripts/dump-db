@@ -106,26 +106,13 @@ function drop_data() {
 # }
 
 function check_requirements() {
-    if ! command -v mdb-schema &> /dev/null; then
-        echo "Error: mdb-schema command not found. Please install mdb-tools." >&2
-        exit 1
-    fi
-
-    if ! command -v mdb-tables &> /dev/null; then
-        echo "Error: mdb-tables command not found. Please install mdb-tools." >&2
-        exit 1
-    fi
-
-    if ! command -v mdb-export &> /dev/null; then
-        echo "Error: mdb-export command not found. Please install mdb-tools." >&2
-        exit 1
-    fi
-
-    if ! command -v psql &> /dev/null; then
-        echo "Error: psql command not found. Please install PostgreSQL client tools." >&2
-        exit 1
-    fi
+  for c in mdb-schema mdb-tables mdb-export psql; do
+    command -v "$c" >/dev/null 2>&1 || { echo "error: missing $c" >&2; exit 1; }
+  done
 }
+
+check_requirements
+
 if [ -z "$g_input_file" ]; then
     usage "missing <input_file.mdb>"
     exit 1
