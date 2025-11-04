@@ -108,10 +108,10 @@ NoTable:
 End Function
 
 
-Public Function ImportTranslationMappingExcelSheet() As Boolean
+Public Function ImportTranslationData() As Boolean
     Dim isOK As Boolean
     isOK = ImportExcelSheet(CurrentProject.Path & "\TranslationMapping.xlsx", "TranslationMapping", "TranslationMapping")
     isOK = isOK And ImportExcelSheet(CurrentProject.Path & "\TranslationMapping.xlsx", "RowSource", "RowSource")
     isOK = isOK And ImportExcelSheet(CurrentProject.Path & "\TranslationMapping.xlsx", "QueryDefinitions", "QueryDefinitions")
-    ImportTranslationMappingExcelSheet = isOK
+    ImportTranslationData = isOK
 End Function

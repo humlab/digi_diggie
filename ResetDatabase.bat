@@ -10,7 +10,7 @@ echo Resetting database using script located at %SCRIPT_DIR%
 set ACCESS_PATH="C:\Program Files\Microsoft Office\root\Office16\MSACCESS.exe"
 set DB_ORIGINAL_PATH="%SCRIPT_DIR%\digidiggie_original.accdb"
 set DB_DEV_PATH="%SCRIPT_DIR%\digidiggie_dev.accdb"
-set LOAD_MACRO="ImportOrReplaceScript"
+set LOAD_MACRO="ImportScriptsAndData"
 
 REM "Kill any running instance of MS Access"
 taskkill /IM MSACCESS.EXE /F >nul 2>&1

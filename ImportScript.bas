@@ -24,8 +24,12 @@ Private Sub ImportOrReplaceModule(moduleName As String)
 End Sub
 
 
-Public Function ImportOrReplaceScript() As Boolean
+Public Function ImportOrReplaceScripts() As Boolean
     Call ImportOrReplaceModule("RenameScript")
     Call ImportOrReplaceModule("HelperScript")
 End Function
 
+Public Function ImportScriptsAndData() As Boolean
+    ImportScriptsAndData = ImportOrReplaceScripts
+    ImportScriptsAndData = ImportScriptsAndData And ImportTranslationData
+End Function
