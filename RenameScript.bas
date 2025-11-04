@@ -311,9 +311,16 @@ Public Function RemoveOriginalRowSources() As Boolean
     Set db = CurrentDb
     Set rs = db.OpenRecordset("SELECT [OriginalTable], [OriginalColumn] FROM [RowSource]", dbOpenSnapshot)
     Do Until rs.EOF
+        On Error Resume Next
         Set table = db.TableDefs(rs!OriginalTable)
         RemoveRowSource table.Name, rs!OriginalColumn
+        If Err.Number <> 0 Then
+            RemoveOriginalRowSources = False
+            Debug.Print "error: failed removing RowSource for " & table.Name & "." & rs!OriginalColumn & ": " & Err.Description
+            Err.Clear
+        End If
         table.Fields.Refresh
+        On Error GoTo 0
         rs.MoveNext
     Loop
     rs.Close
