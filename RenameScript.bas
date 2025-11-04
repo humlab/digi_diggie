@@ -492,10 +492,42 @@ ErrorHandler:
     RemoveImportedObjects = False
 End Function
 
+
+Private Sub CloseIfOpen(ByVal tableName As String)
+    On Error Resume Next
+    If SysCmd(acSysCmdGetObjectState, acTable, tableName) <> 0 Then
+        DoCmd.Close acTable, tableName, acSaveNo
+    End If
+    On Error GoTo 0
+End Sub
+
+Public Sub CloseOpenTables()
+    On Error Resume Next
+    Dim rs As DAO.Recordset
+    Dim db As DAO.Database
+    Set db = CurrentDb
+    Set rs = db.OpenRecordset("SELECT DISTINCT OriginalTable FROM TranslationMapping", dbOpenSnapshot)
+    Do Until rs.EOF
+        CloseIfOpen rs!OriginalTable
+        rs.MoveNext
+    Loop
+    rs.Close
+    Set rs = Nothing
+End Sub
+
+Public Sub PrintVersionInfo()
+    Debug.Print "Access version: "; Application.Version        ' e.g. 16.0 for 2016/365
+    Debug.Print "DB engine:    "; DBEngine.Version             ' e.g. 14.0+ supports calculated fields
+    Debug.Print "File format:  "; CurrentProject.FileFormat    ' 12/ACCDB+ is needed; MDB won’t do it
+End Sub
+
 Public Function TranslateDatabase() As Boolean
     On Error GoTo ErrorHandler
 
     Dim isOK As Boolean
+
+    Call PrintVersionInfo
+    Call CloseOpenTables
 
     Let isOK = VerifyMappings
 
