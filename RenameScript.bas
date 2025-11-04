@@ -1,8 +1,10 @@
 Option Compare Database
 Option Explicit
 
+Private Const dbCalculated As Long = 289
+
 Public Sub RemoveRowSource(tableName As String, fieldName As String)
-    On Error GoTo EH
+    On Error GoTo ErrorHandler
 
     Dim db As DAO.Database
     Dim table As DAO.TableDef
@@ -26,12 +28,12 @@ Public Sub RemoveRowSource(tableName As String, fieldName As String)
     table.Fields.Refresh
 
     Exit Sub
-EH:
+ErrorHandler:
     Debug.Print "error: failed to remove RowSource from " & tableName & "." & fieldName & ": " & Err.Description
 End Sub
 
 Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource As String)
-    On Error GoTo EH
+    On Error GoTo ErrorHandler
 
     Dim db As DAO.Database
     Dim table As DAO.TableDef
@@ -68,7 +70,7 @@ Public Sub SetFieldRowSource(tableName As String, fieldName As String, sqlSource
 
     Exit Sub
 
-EH:
+ErrorHandler:
     Debug.Print "error: failed setting RowSource for " & tableName & "." & fieldName & ": " & Err.Description
 End Sub
 
