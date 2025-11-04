@@ -207,34 +207,52 @@ End Function
 
 Public Function AddTranslatedExpressions() As Boolean
     On Error GoTo ErrorHandler
+
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
-    Dim sSQL As String
+    Dim table As DAO.TableDef
+    Dim field As DAO.Field2
+    Dim tableName As String, fieldName As String, expr As String
+
     AddTranslatedExpressions = True
     Set db = CurrentDb
-    Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping WHERE TranslatedExpression <> ''", dbOpenSnapshot)
+
+
+    Set rs = db.OpenRecordset( _
+        "SELECT TranslatedTable, TranslatedColumn, TranslatedExpression " & _
+        "FROM TranslationMapping WHERE Nz(TranslatedExpression,'')<>''", dbOpenSnapshot)
+
     Do Until rs.EOF
+        tableName = rs!TranslatedTable
+        fieldName = rs!TranslatedColumn
+        expr = rs!TranslatedExpression
+
+        Set table = db.TableDefs(tableName)
+
+        ' If the field exists, delete it first (no ALTER needed)
         On Error Resume Next
-        Let sSQL = "ALTER TABLE " & SquareBracket(rs!TranslatedTable) & " ADD COLUMN " & SquareBracket(rs!TranslatedColumn) & " AS (" & rs!TranslatedExpression & ");"
-        db.Execute sSQL, dbFailOnError
-        If Err.Number <> 0 Then
-            AddTranslatedExpressions = False
-            Debug.Print "error: failed adding computed column " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.Description
-            Debug.Print "  sql: " & sSQL
-            Err.Clear
-        End If
-        On Error GoTo 0
+        table.Fields.Delete fieldName
+        On Error GoTo ErrorHandler
+
+        ' Create a CALCULATED field and set its expression
+        Set field = table.CreateField(fieldName, dbText)   ' Field2
+        field.Expression = expr                            ' e.g. [given_name] & " " & [surname]
+        table.Fields.Append field
+        table.Fields.Refresh
+
         rs.MoveNext
     Loop
-    rs.Close
-    Set rs = Nothing
+
+    rs.Close: Set rs = Nothing
     db.TableDefs.Refresh
     Debug.Print "info: done adding translated expressions!"
     Exit Function
+
 ErrorHandler:
-    MsgBox "error: failed adding computed column: " & Err.Description, vbCritical
+    Debug.Print "error: failed adding computed column " & tableName & "." & fieldName & ": " & Err.Number & " - " & Err.Description
     AddTranslatedExpressions = False
 End Function
+
 
 Public Function RemoveOriginalQueries() As Boolean
     On Error GoTo ErrorHandler
@@ -541,8 +559,8 @@ Public Function TranslateDatabase() As Boolean
     Let isOK = isOK And RenameFields
     Let isOK = isOK And RenameTables
     Let isOK = isOK And AddTranslatedRowSources
-    Let isOK = isOK And AddTranslatedExpressions
     Let isOK = isOK And AddTranslatedQueries
+    Let isOK = isOK And AddTranslatedExpressions
 
     ' Let isOK = isOK And DeleteDeprecatedFields
     ' Let isOK = isOK And RemoveImportedObjects
