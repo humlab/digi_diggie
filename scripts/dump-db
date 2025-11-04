@@ -1,0 +1,90 @@
+#!/bin/bash
+
+SHELL=/bin/bash
+
+set -e
+
+if [ -f docker/.env ]; then
+    set -o allexport
+    grep -v  PASSWORD docker/.env > /tmp/789.env
+    . /tmp/789.env 
+    rm -f /tmp/789.env
+    set +o allexport
+fi
+
+g_database=${POSTGRES_DB}
+g_schema=
+g_host=localhost
+g_user=${POSTGRES_USER:-gudrun}
+g_port=${POSTGRES_PORT:-5433}
+g_timestamp=$(date +'%Y%m%d_%H%M%S')
+
+data_folder=$(dirname $0)/data
+output_folder=${data_folder}/output
+mkdir -p $output_folder
+
+input_file=$1
+
+if [ -z "$input_file" ]; then
+    echo "Usage: $0 <input_file>"
+    exit 1
+fi
+
+function dump_schema() {
+
+    local input_file=$1
+    local output_file=$output_folder/schema.sql
+
+    mdb-schema --not-null --default-values $input_file postgres > $output_file
+
+    grep -v 'REFERENCES' $output_file > $output_file.tmp
+    mv $output_file.tmp $output_file
+
+    sed -i 's/BOOLEAN NOT NULL DEFAULT FALSE/INTEGER NOT NULL DEFAULT 0/g' $output_file
+}
+
+function dump_data() {
+    local input_file=$1
+    local output_file=$output_folder/data.sql
+
+    > $output_file
+    for table in $(mdb-tables $input_file); do
+        mdb-export --insert=postgres $input_file $table >> $output_file
+    done
+}
+
+function execute_sql() {
+    local sql=$1
+    psql -p $g_port -h $g_host -d $g_database -U $g_user --no-password -v ON_ERROR_STOP=1 -tac "$sql" >& /dev/null
+}
+
+
+function execute_sql_file() {
+    local sql=$1
+    psql -p $g_port -h $g_host -d $g_database -U $g_user --no-password -v ON_ERROR_STOP=1 -f "$sql" >& /dev/null
+}
+
+function drop_data() {
+    for table in $(mdb-tables $input_file); do
+        table="${table,,}"
+        execute_sql "drop table if exists \"$table\" cascade;" >& /dev/null
+    done
+}
+
+function add_constraints() {
+    local input_file=$1
+}
+
+add_constraints
+
+drop_data
+
+dump_schema $input_file
+dump_data $input_file
+
+execute_sql_file $output_folder/schema.sql
+execute_sql_file $output_folder/data.sql
+execute_sql_file $data_folder/constraints.sql
+
+echo "Data imported successfully into $g_database"
+echo "Schema and data dumped to $output_folder"
