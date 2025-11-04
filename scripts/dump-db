@@ -19,16 +19,43 @@ g_user=${POSTGRES_USER:-gudrun}
 g_port=${POSTGRES_PORT:-5433}
 g_timestamp=$(date +'%Y%m%d_%H%M%S')
 
-data_folder=$(dirname $0)/data
-output_folder=${data_folder}/output
-mkdir -p $output_folder
+g_input_file=
+g_data_folder=${g_script_dir}/data
+g_output_folder=${g_data_folder}/output
 
-input_file=$1
+usage() {
+    if [ "$1" != "" ]; then
+        echo "error: $1" >&2
+    fi
+  cat <<EOF
+Usage: $(basename "$0") [--database NAME] [--schema NAME] [--host HOST] [--user USER] [--port PORT] <input_file.mdb>
 
-if [ -z "$input_file" ]; then
-    echo "Usage: $0 <input_file>"
-    exit 1
-fi
+Options:
+  --database, -d   Target database name (default: \$POSTGRES_DB or required)
+  --schema,   -s   Target schema (created if missing; search_path set)
+  --host,     -H   PostgreSQL host (default: ${g_host})
+  --user,     -U   PostgreSQL user (default: ${g_user})
+  --port,     -p   PostgreSQL port (default: 5433)
+  --help           Show this help
+
+Auth:
+  Use a .pgpass entry or export PGPASSWORD; script does NOT prompt.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --data-folder|-d) g_data_folder=$2; shift 2 ;;
+    --output-folder|-o) g_output_folder=$2; shift 2 ;;
+    --database|-d) g_database=$2; shift 2 ;;
+    --schema|-s) g_schema=$2; g_schema="${g_schema,,}"; shift 2 ;;
+    --host|-H) g_host=$2; shift 2 ;;
+    --user|-U) g_user=$2; shift 2 ;;
+    --port|-p) g_port=$2; shift 2 ;;
+    --help) usage; exit 0 ;;
+    *) g_input_file=$1; shift ;;
+  esac
+done
 
 function dump_schema() {
 
