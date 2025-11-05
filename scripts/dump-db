@@ -114,8 +114,9 @@ function dump_data() {
     for table in $tables; do
         if [[ ! " ${KNOWN_TABLES[*]} " =~ (^|[[:space:]])${table}([[:space:]]|$) ]]; then
             echo "warning: skipping unknown table $table"
+        else
+            mdb-export --insert=postgres "$input_file" "$table" >> "$output_file"
         fi
-        mdb-export --insert=postgres "$input_file" "$table" >> "$output_file"
     done
     echo "info: data dumped to $output_file"
 
