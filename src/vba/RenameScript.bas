@@ -74,6 +74,28 @@ ErrorHandler:
     Debug.Print "error: failed setting RowSource for " & tableName & "." & fieldName & ": " & Err.Description
 End Sub
 
+Sub SetFieldDescription(tableName As String, fieldName As String, description As String)
+    On Error GoTo ErrorHandler
+    Dim db As DAO.Database
+    Dim td As DAO.TableDef
+    Dim fld As DAO.Field
+
+    Set db = CurrentDb
+    Set td = db.TableDefs(tableName)
+    Set fld = td.Fields(fieldName)
+
+    On Error Resume Next
+    fld.Properties("Description") = description
+    If Err.Number <> 0 Then
+        Err.Clear
+        fld.Properties.Append fld.CreateProperty("Description", dbText, description)
+    End If
+    On Error GoTo 0
+    Exit Sub
+
+ErrorHandler:
+    Debug.Print "error: failed setting description for " & tableName & "." & fieldName & ": " & Err.Description
+End Sub
 
 ' --- Helper: create or update any property ---
 Private Sub AddOrReplaceProperty(obj As Object, propName As String, propType As DAO.DataTypeEnum, propValue As Variant)
@@ -411,17 +433,16 @@ Public Function DeleteDeprecatedFields() As Boolean
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
     Dim table As DAO.TableDef
-    Dim field As DAO.Field
+    Dim field As DAO.field
     DeleteDeprecatedFields = True
     Set db = CurrentDb
-    Set rs = db.OpenRecordset("SELECT OriginalTable, OriginalColumn, TranslatedColumn FROM TranslationMapping WHERE DeprecatedFlag = 'YES'", dbOpenSnapshot)
+    Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping WHERE DeprecateFlag = 'YES'", dbOpenSnapshot)
     Do Until rs.EOF
         On Error Resume Next
-        Set table = db.TableDefs(rs!OriginalTable)
-        Set field = table.Fields(rs!OriginalColumn)
-        field.Delete
+        Set table = db.TableDefs(rs!TranslatedTable)
+        table.Fields.Delete !TranslatedColumn
         If Err.Number <> 0 Then
-            Debug.Print "error: failed deleting field " & rs!OriginalTable & "." & rs!OriginalColumn & ": " & Err.Description
+            Debug.Print "error: failed deleting field " & rs!TranslatedTable & "." & rs!TranslatedColumn & ": " & Err.description
         End If
         Err.Clear
         On Error GoTo 0
@@ -434,9 +455,10 @@ Public Function DeleteDeprecatedFields() As Boolean
     Debug.Print "info: done deleting deprecated fields!"
     Exit Function
 ErrorHandler:
-    MsgBox "Error deleting fields: " & Err.Description, vbCritical
+    MsgBox "Error deleting fields: " & Err.description, vbCritical
     DeleteDeprecatedFields = False
 End Function
+
 
 
 Public Function RenameTables() As Boolean
@@ -500,6 +522,25 @@ Public Function AddTranslatedQueries() As Boolean
 ErrorHandler:
     MsgBox "Error adding queries: " & Err.Description, vbCritical
     AddTranslatedQueries = False
+End Function
+
+Public Function AddComments() As Boolean
+    On Error GoTo ErrorHandler
+    Dim rs As DAO.Recordset
+    Dim db As DAO.Database
+    Set db = CurrentDb
+    AddComments = True
+    Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping", dbOpenSnapshot)
+    Do Until rs.EOF
+        SetFieldDescription rs!TranslatedTable, rs!TranslatedColumn, rs!Comment
+        rs.MoveNext
+    Loop
+    rs.Close
+    Set rs = Nothing
+    Exit Function
+ErrorHandler:
+    Debug.Print "error: Error adding comments: " & Err.Description
+    AddComments = False
 End Function
 
 Public Function RemoveImportedObjects() As Boolean
@@ -571,14 +612,18 @@ Public Function TranslateDatabase() As Boolean
     Let isOK = isOK And AddTranslatedRowSources
     Let isOK = isOK And AddTranslatedQueries
     Let isOK = isOK And AddTranslatedExpressions
-
+    Let isOK = isOK And AddComments
     ' Let isOK = isOK And DeleteDeprecatedFields
     ' Let isOK = isOK And RemoveImportedObjects
 
     TranslateDatabase = isOK
-    MsgBox "Table and column translation complete.", vbInformation
+    If isOK Then
+        Debug.Print "info: database translation completed successfully!"
+    Else
+        Debug.Print "error: database translation completed with errors. See above."
+    End If
     Exit Function
 ErrorHandler:
-    MsgBox "Error translating database: " & Err.Description, vbCritical
+    Debug.Print "error: Error translating database: " & Err.Description
     TranslateDatabase = False
 End Function
