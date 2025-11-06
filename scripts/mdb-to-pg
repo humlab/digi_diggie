@@ -144,6 +144,12 @@ function drop_data() {
     done
 }
 
+function format_sql_file() {
+    if command -v pg_format >/dev/null 2>&1; then
+        local sql_file=$1
+        pg_format -i  "$sql_file"
+    fi
+}
 
 function check_requirements() {
   for c in mdb-schema mdb-tables mdb-export psql; do
@@ -178,6 +184,7 @@ if [ "$g_dump_schema" == "YES" ]; then
 fi
 if [ "$g_dump_data" == "YES" ]; then
     dump_data "$g_input_file" "$g_output_data_file"
+    format_sql_file "$g_output_data_file"
 fi
 if [ "$g_load_schema" == "YES" ]; then
     load_schema "$g_output_schema_file"
