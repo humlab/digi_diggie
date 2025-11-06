@@ -14,37 +14,38 @@ if [ -f "$(dirname $0)/docker/.env" ]; then
     set +o allexport
 fi
 
-KNOWN_TABLES=( "parishes" "communities" "sources" "land_use" "legal_sources" "winners" "seasons" "judgements" "community_names" "persons" "entries" )
+KNOWN_TABLES=( "parishes" "communities" "sources" "land_use" "legal_sources" "winners" "seasons" "judgements" "persons" "entries" )
 
 g_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-g_database=${POSTGRES_DB:-digi_diggie}
+g_database=${POSTGRES_DB:-digidiggie}
 g_schema=public
-g_dump_schema=NO
-g_dump_data=NO
-g_load_data=NO
-g_load_schema=NO
+g_command=
+g_skip_schema=NO
+g_skip_data=NO
 g_host=localhost
 g_user=${POSTGRES_USER:-gudrun}
 g_port=${POSTGRES_PORT:-5433}
 g_timestamp=$(date +'%Y%m%d_%H%M%S')
-g_output_data_file="./data_${g_timestamp}.sql"
-g_output_schema_file="./schema_${g_timestamp}.sql"
+g_data_sql_file="./resources/data.sql"
+g_schema_file="./resources/schema.sql"
 g_input_file=
 
+g_pgpassfile=${g_script_dir}/../.pgpass
+
 usage() {
+    local exit_code=0
     if [ "$1" != "" ]; then
         echo "error: $1" >&2
+        exit_code=64
     fi
   cat <<EOF
-Usage: $(basename "$0") [--database NAME] [--schema NAME] [--host HOST] [--user USER] [--port PORT] <input_file.mdb>
+Usage: $(basename "$0") [dump|load] [--database NAME] [--schema NAME] [--host HOST] [--user USER] [--port PORT] <input_file.mdb>
 
 Options:
   --database,          Target database name (default: \$POSTGRES_DB or required)
   --schema,            Target schema name (default: ${g_schema})
-  --dump-schema,       Dump schema (default: false)
-  --dump-data,         Dump data (default: false)
-  --load-schema,       Load dumped schema into database (default: false)
-  --load-data,         Load dumped data into database (default: false)
+  --skip-schema,       Skip dump/load schema (default: false)
+  --skip-data,         Skip dump/load data (default: false)
   --sql-data-file,     Output data SQL file (default: ./data.sql)
   --sql-schema-file,   Output schema SQL file (default: ./schema.sql)
   --host,              PostgreSQL host (default: ${g_host})
@@ -56,33 +57,58 @@ Auth:
   Use a .pgpass entry or export PGPASSWORD; script does NOT prompt.
 EOF
 
-    exit 64
+    exit ${exit_code}
 }
 
+# ----- subcommand -----
+g_command="${1:-}"
+if [[ -z "$g_command" || "$g_command" == "--help" ]]; then
+  usage; exit 0
+fi
+
+if [[ "$g_command" != "load" && "$g_command" != "dump" ]]; then
+  usage "first arg must be 'dump' or 'load' (got '$g_command')."
+  exit 2
+fi
+shift  # consume subcommand
+
+# ----- options -----
 while [[ $# -gt 0 ]]; do
-  case $1 in
-    --database) g_database=$2; shift 2 ;;
-    --schema) g_schema=$2; shift 2 ;;
-    --sql-data-file) g_output_data_file=$2; shift 2 ;;
-    --sql-schema-file) g_output_schema_file=$2; shift 2 ;;
-    --dump-schema) g_dump_schema=YES; shift 1 ;;
-    --dump-data) g_dump_data=YES; shift 1 ;;
-    --load-schema) g_load_schema=YES; shift 1 ;;
-    --load-data) g_load_data=YES; shift 1 ;;
-    --host) g_host=$2; shift 2 ;;
-    --user) g_user=$2; shift 2 ;;
-    --port) g_port=$2; shift 2 ;;
-    --help) usage; exit 0 ;;
-    *) g_input_file=$1; shift ;;
+  case "$1" in
+    --database)        g_database="$2"; shift 2 ;;
+    --schema)          g_schema="$2"; shift 2 ;;
+    --sql-data-file)   g_data_sql_file="$2"; shift 2 ;;
+    --sql-schema-file) g_schema_file="$2"; shift 2 ;;
+    --skip-schema)     g_skip_schema="YES"; shift ;;
+    --skip-data)       g_skip_data="YES"; shift ;;
+    --host)            g_host="$2"; shift 2 ;;
+    --user)            g_user="$2"; shift 2 ;;
+    --port)            g_port="$2"; shift 2 ;;
+    --help)            usage; exit 0 ;;
+    --)                shift; break ;;   # stop option parsing
+    -*)                echo "Unknown option: $1" >&2; usage; exit 2 ;;
+    *)                 break ;;
   esac
 done
+
+if [[ $# -lt 1 ]]; then
+  usage "missing INPUTFILE."
+  exit 2
+fi
+g_input_file="$1"
+shift
+
+if [[ $# -gt 0 ]]; then
+  echo "Unexpected extra arguments: $*" >&2
+  usage; exit 2
+fi
 
 function dump_schema() {
 
     local input_file=$1
     local output_file=$2
 
-    mdb-schema --not-null --default-values \
+    echo mdb-schema --not-null --default-values \
         --namespace="${g_schema}" \
         --drop-table \
         --not-null \
@@ -106,7 +132,7 @@ function dump_data() {
     if [ "$g_dump_format" == "sql" ]; then
         echo "BEGIN;" > "$output_file"
         for table in "${KNOWN_TABLES[@]}"; do
-            mdb-export --insert=postgres "$input_file" "$table" >> "$output_file"
+            mdb-export --boolean-words --namespace="$g_schema" --insert=postgres "$input_file" "$table" >> "$output_file"
         done
         echo "COMMIT;" >> "$output_file"
     elif [ "$g_dump_format" == "csv" ]; then
@@ -124,13 +150,13 @@ function dump_data() {
 
 function execute_sql() {
     local sql=$1
-    PGPASSFILE=${g_script_dir}/.pgpass -p "$g_port" -h "$g_host" -d "$g_database" -U "$g_user" -v ON_ERROR_STOP=1 -tac "$sql" >& /dev/null
+    PGPASSFILE="${g_pgpassfile}" psql -p "$g_port" -h "$g_host" -d "$g_database" -U "$g_user" -v ON_ERROR_STOP=1 -tac "$sql"
 }
 
 
 function execute_sql_file() {
     local sql=$1
-    PGPASSFILE=${g_script_dir}/.pgpass psql -p "$g_port" -h "$g_host" -d "$g_database" -U "$g_user" -v ON_ERROR_STOP=1 -f "$sql" >& /dev/null
+    PGPASSFILE="${g_pgpassfile}" psql --no-password -p "$g_port" -h "$g_host" -d "$g_database" -U "$g_user" -v ON_ERROR_STOP=1 -f "$sql"
 }
 
 function drop_data() {
@@ -161,7 +187,7 @@ function check_requirements() {
 
 function load_data() {
     local sql_file=$1
-    execute_sql_file "resources/post-load.sql"
+    execute_sql_file "resources/pre-load.sql"
     execute_sql_file "$sql_file"
     execute_sql_file "resources/post-load.sql"
     echo "info: data imported successfully into $g_database"
@@ -169,24 +195,42 @@ function load_data() {
 
 function load_schema() {
     local sql_file=$1
+    echo "info: loading schema from $sql_file ..."
     execute_sql_file "$sql_file"
     echo "info: schema imported successfully into $g_database"
 }
 
 check_requirements
 
-echo "info: dumping database from $g_input_file ..."
+echo "info: processing database $g_input_file ..."
 
-if [ "$g_dump_schema" == "YES" ]; then
-    dump_schema "$g_input_file" "$g_output_schema_file"
+echo "info: target database: $g_database, schema: $g_schema"
+echo "info: skip flags: $g_skip_schema, skip data: $g_skip_data"
+echo "info: data SQL file: $g_data_sql_file, schema SQL file: $g_schema_file"
+
+echo ""
+if [ ! -f "${g_script_dir}/../.pgpass" ]; then
+    echo "warning: no .pgpass file found at ${g_script_dir}/.pgpass; ensure PGPASSWORD is set or you will be prompted for password"
 fi
-if [ "$g_dump_data" == "YES" ]; then
-    dump_data "$g_input_file" "$g_output_data_file"
-    format_sql_file "$g_output_data_file"
+
+if [ "$g_command" == "dump" ]; then
+    if [ "$g_skip_schema" == "NO" ]; then
+        if [ -f "$g_schema_file" ]; then
+            usage "error: schema file $g_schema_file already exists (cannot overwrite)"
+        fi
+        dump_schema "$g_input_file" "$g_schema_file"
+    fi
+    if [ "$g_skip_data" == "NO" ]; then
+        dump_data "$g_input_file" "$g_data_sql_file"
+        format_sql_file "$g_data_sql_file"
+    fi
+elif [ "$g_command" == "load" ]; then
+    echo "info: PostgreSQL host: $g_host, user: $g_user, port: $g_port"
+    if [ "$g_skip_schema" == "NO" ]; then
+        load_schema "$g_schema_file"
+    fi
+    if [ "$g_skip_data" == "NO" ]; then
+        load_data "$g_data_sql_file"
+    fi
 fi
-if [ "$g_load_schema" == "YES" ]; then
-    load_schema "$g_output_schema_file"
-fi
-if [ "$g_load_data" == "YES" ]; then
-    load_data "$g_output_data_file"
-fi
+
