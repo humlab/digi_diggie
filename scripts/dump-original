@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+g_filename="$1"
+
+tables=$(mdb-tables "$g_filename")
+
+for table in $tables; do
+    mdb-export "$g_filename" "$table" > "${table}.csv"
+done
