@@ -2,51 +2,55 @@
 delete from "properties";
 
 insert into "properties" ("property_id", "property_name", "description") values
-    (1, 'External ID', 'External ID of an individual e.g. from a genealogy database'),
-    (2, 'Birth place', 'Birth place of an individual'),
-    (3, 'Death place', 'Death place of an individual'),
-    (4, 'Residence data', 'Residence data of an individual');
+    (1, 'External ID', 'External ID of the individual e.g. from a genealogy database'),
+    (2, 'Birth place', 'Birth place of the individual'),
+    (3, 'Death place', 'Death place of the individual'),
+    (4, 'Residence date', 'Residence date of the individual'),
+    (5, 'Event date', 'Date of the event related to the individual'),
+    (6, 'Event ID', 'Identifier for the event related to the individual'),
+    (7, 'Birth date', 'Birth date (deprecated)'),
+    (8, 'Death date', 'Death date (deprecated)');
 
-insert into "person_properties" ("person_id", "property_id", "specifier", "property_value") 
-    select p."person_id", pr."property_id", 'individual', p."individual_id"::text
-    from "persons" p
-    join "properties" pr on pr."property_name" = 'External ID'
-    where pr."property_name" = 'External ID'
-      and coalesce(p."individual_id", '') <> ''
-    union all
-    select p."person_id", pr."property_id", 'father', p."father_id"::text
-    from "persons" p
-    join "properties" pr on pr."property_name" = 'Father (external ID)'
-    where pr."property_name" = 'Father (external ID)'
-      and coalesce(p."father_id", '') <> ''
-    union all
-    select p."person_id", pr."property_id", 'mother', p."mother_id"::text
-    from "persons" p
-    join "properties" pr on pr."property_name" = 'Mother (external ID)'
-    where pr."property_name" = 'Mother (external ID)'
-        and coalesce(p."mother_id", '') <> ''
-    union all
-    select p."person_id", pr."property_id", null, p."birth_place"::text
-    from "persons" p
-    join "properties" pr on pr."property_name" = 'Birth place'
-    where pr."property_name" = 'Birth place'
-      and coalesce(p."birth_place", '') <> ''
-    union all
-    select p."person_id", pr."property_id", null, p."death_place"::text
-    from "persons" p
-    join "properties" pr on pr."property_name" = 'Death place'
-    where pr."property_name" = 'Death place'
-      and coalesce(p."death_place", '') <> '';
+insert into person_properties (person_id, property_id, specifier, property_value) 
+  select person_id, 1, 'individual', individual_id::text from persons where coalesce(individual_id::text, '') <> ''
+  union all
+  select person_id, 1, 'father', father_id::text from persons where coalesce(father_id::text, '') <> ''
+  union all
+  select person_id, 1, 'mother', mother_id::text from persons where coalesce(mother_id::text, '') <> ''
+  union all
+  select person_id, 2, null, birth_place::text from persons where coalesce(birth_place::text, '') <> ''
+  union all
+  select person_id, 3, null, death_place::text from persons where coalesce(death_place::text, '') <> ''
+  union all
+  select person_id, 4, null, residence_date::text from persons where coalesce(residence_date::text, '') <> ''
+  union all
+  select person_id, 5, null, event_date::text from persons where coalesce(event_date::text, '') <> ''
+  union all
+  select person_id, 6, null, event_id::text from persons where coalesce(event_id::text, '') <> ''
+  union all
+  select person_id, 7, null, birth_date::text from persons where coalesce(birth_date::text, '') <> ''
+  union all
+  select person_id, 8, null, death_date::text from persons where coalesce(death_date::text, '') <> ''
+  ;
 
 alter table "persons"
     drop column "individual_id",
     drop column "father_id",
     drop column "mother_id",
     drop column "birth_place",
-    drop column "death_place";
+    drop column "death_place",
+    drop column "residence_date",
+    drop column "event_date",
+    drop column "event_id",
+    drop column "birth_date",
+    drop column "death_date"
+;
 
-alter column "persons"."full_name" drop stored;
 alter table "persons" drop column "full_name";
 
 alter table "persons"
-    add column "full_name" text generated always as (coalesce("given_name",'') || ' ' || coalesce("patronymic",'') || ' ' || coalesce("surname",'')) stored;
+    add column "full_name" text generated always
+      as (coalesce("given_name",'') || ' ' || coalesce("patronymic",'') || ' ' || coalesce("surname",''))
+        stored;
+
+
