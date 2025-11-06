@@ -144,9 +144,6 @@ function drop_data() {
     done
 }
 
-# function add_constraints() {
-#     local input_file=$1
-# }
 
 function check_requirements() {
   for c in mdb-schema mdb-tables mdb-export psql; do
