@@ -92,9 +92,6 @@ function dump_schema() {
         --relations \
         "$input_file" postgres > "$output_file"
 
-    # grep -v 'REFERENCES' "$output_file" > "$output_file.tmp"
-    # mv "$output_file.tmp" "$output_file"
-    # sed -i 's/BOOLEAN NOT NULL DEFAULT FALSE/INTEGER NOT NULL DEFAULT 0/g' "$output_file"
     echo "info: schema dumped to $output_file"
 }
 
