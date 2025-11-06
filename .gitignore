@@ -3,3 +3,5 @@ archived
 **/*.env
 **/.pgpass
 tmp
+data/csv
+data/ortnamn
