@@ -39,18 +39,18 @@ usage() {
 Usage: $(basename "$0") [--database NAME] [--schema NAME] [--host HOST] [--user USER] [--port PORT] <input_file.mdb>
 
 Options:
-  --database,        -d   Target database name (default: \$POSTGRES_DB or required)
-  --schema,          -s   Target schema name (default: ${g_schema})
-  --no-dump-schema,  -S   Do not dump schema (default: true)
-  --no-dump-data,    -D   Do not dump data (default: true)
-  --load-schema,     -L   Load dumped schema into database (default: false)
-  --load-data,       -l   Load dumped data into database (default: false)
-  --sql-data-file,   -O   Output data SQL file (default: ./data.sql)
-  --sql-schema-file, -O   Output schema SQL file (default: ./schema.sql)
-  --host,            -H   PostgreSQL host (default: ${g_host})
-  --user,            -U   PostgreSQL user (default: ${g_user})
-  --port,            -p   PostgreSQL port (default: 5433)
-  --help                  Show this help
+  --database,          Target database name (default: \$POSTGRES_DB or required)
+  --schema,            Target schema name (default: ${g_schema})
+  --no-dump-schema,    Do not dump schema (default: true)
+  --no-dump-data,      Do not dump data (default: true)
+  --load-schema,       Load dumped schema into database (default: false)
+  --load-data,         Load dumped data into database (default: false)
+  --sql-data-file,     Output data SQL file (default: ./data.sql)
+  --sql-schema-file,   Output schema SQL file (default: ./schema.sql)
+  --host,              PostgreSQL host (default: ${g_host})
+  --user,              PostgreSQL user (default: ${g_user})
+  --port,              PostgreSQL port (default: 5433)
+  --help               Show this help
 
 Auth:
   Use a .pgpass entry or export PGPASSWORD; script does NOT prompt.
@@ -61,17 +61,17 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --database|-d) g_database=$2; shift 2 ;;
-    --schema|-s) g_schema=$2; shift 2 ;;
-    --sql-data-file|-O) g_output_data_file=$2; shift 2 ;;
-    --sql-schema-file|-O) g_output_schema_file=$2; shift 2 ;;
-    --no-dump-schema|-S) g_dump_schema=NO; shift 1 ;;
-    --no-dump-data|-D) g_dump_data=NO; shift 1 ;;
-    --load-schema|-L) g_load_schema=YES; shift 1 ;;
-    --load-data|-l) g_load_data=YES; shift 1 ;;
-    --host|-H) g_host=$2; shift 2 ;;
-    --user|-U) g_user=$2; shift 2 ;;
-    --port|-p) g_port=$2; shift 2 ;;
+    --database) g_database=$2; shift 2 ;;
+    --schema) g_schema=$2; shift 2 ;;
+    --sql-data-file) g_output_data_file=$2; shift 2 ;;
+    --sql-schema-file) g_output_schema_file=$2; shift 2 ;;
+    --no-dump-schema) g_dump_schema=NO; shift 1 ;;
+    --no-dump-data) g_dump_data=NO; shift 1 ;;
+    --load-schema) g_load_schema=YES; shift 1 ;;
+    --load-data) g_load_data=YES; shift 1 ;;
+    --host) g_host=$2; shift 2 ;;
+    --user) g_user=$2; shift 2 ;;
+    --port) g_port=$2; shift 2 ;;
     --help) usage; exit 0 ;;
     *) g_input_file=$1; shift ;;
   esac
