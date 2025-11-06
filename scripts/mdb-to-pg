@@ -41,8 +41,8 @@ Usage: $(basename "$0") [--database NAME] [--schema NAME] [--host HOST] [--user 
 Options:
   --database,          Target database name (default: \$POSTGRES_DB or required)
   --schema,            Target schema name (default: ${g_schema})
-  --no-dump-schema,    Do not dump schema (default: true)
-  --no-dump-data,      Do not dump data (default: true)
+  --dump-schema,       Dump schema (default: false)
+  --dump-data,         Dump data (default: false)
   --load-schema,       Load dumped schema into database (default: false)
   --load-data,         Load dumped data into database (default: false)
   --sql-data-file,     Output data SQL file (default: ./data.sql)
@@ -65,8 +65,8 @@ while [[ $# -gt 0 ]]; do
     --schema) g_schema=$2; shift 2 ;;
     --sql-data-file) g_output_data_file=$2; shift 2 ;;
     --sql-schema-file) g_output_schema_file=$2; shift 2 ;;
-    --no-dump-schema) g_dump_schema=NO; shift 1 ;;
-    --no-dump-data) g_dump_data=NO; shift 1 ;;
+    --dump-schema) g_dump_schema=YES; shift 1 ;;
+    --dump-data) g_dump_data=YES; shift 1 ;;
     --load-schema) g_load_schema=YES; shift 1 ;;
     --load-data) g_load_data=YES; shift 1 ;;
     --host) g_host=$2; shift 2 ;;
@@ -177,6 +177,7 @@ function load_schema() {
 }
 
 check_requirements
+
 echo "info: dumping database from $g_input_file ..."
 
 if [ "$g_dump_schema" == "YES" ]; then
