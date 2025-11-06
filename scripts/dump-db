@@ -14,7 +14,7 @@ if [ -f "$(dirname $0)/docker/.env" ]; then
     set +o allexport
 fi
 
-KNOWN_TABLES=( "communities" "entries" "sources" "land_use" "persons" "legal_sources" "parishes" "winners" "seasons" "judgements" "community_names" )
+KNOWN_TABLES=( "parishes" "communities" "sources" "land_use" "legal_sources" "winners" "seasons" "judgements" "community_names" "persons" "entries" )
 
 g_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 g_database=${POSTGRES_DB:-digi_diggie}

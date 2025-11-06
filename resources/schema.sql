@@ -1,28 +1,60 @@
 
 SET client_encoding = 'UTF-8';
 
+-- install postgis if not exists
+
+create extension if not exists postgis;
+create extension if not exists postgis_topology;
+
+drop table if exists "person_properties";
+drop table if exists "entries";
+drop table if exists "persons";
+drop table if exists "placenames";
 drop table if exists "legal_sources";
+drop table if exists "communities";
+drop table if exists "parishes";
+drop table if exists "seasons";
+drop table if exists "sources";
+drop table if exists "land_use";
+drop table if exists "winners";
+drop table if exists "judgements";
+drop table if exists "properties";
+
+create table if not exists "placenames"
+ (
+    "fid" integer primary key,
+    "geom" geometry,
+    "ortnamn" text,
+    "kvartsruta" text,
+    "nkoordinat" double precision,
+    "ekoordinat" double precision,
+    "lanskod" text,
+    "kommunkod" text,
+    "detaljtyp" text,
+    "sprak" text,
+    "lopnummer" text,
+    "sockenstadkod" text,
+    "sockenstadnamn" text
+);
+
 create table if not exists "legal_sources"
  (
     "legal_source_id" serial primary key,
     "legal_source_name" text not null default ('')
 );
 
-drop table if exists "parishes";
 create table if not exists "parishes"
  (
     "parish_id" serial primary key,
     "parish" text not null default ('')
 );
 
-drop table if exists "seasons";
 create table if not exists "seasons"
  (
     "season_id" serial primary key,
     "season_name" text not null default ('')
 );
 
-drop table if exists "sources";
 create table if not exists "sources"
  (
     "source_id" serial primary key,
@@ -30,14 +62,12 @@ create table if not exists "sources"
     "source_abbreviation" varchar (255)
 );
 
-drop table if exists "land_use";
 create table if not exists "land_use"
  (
     "land_use_id" serial primary key,
     "type" text not null default ('')
 );
 
-drop table if exists "communities";
 create table if not exists "communities"
 (
     "community_id" serial primary key,
@@ -45,21 +75,25 @@ create table if not exists "communities"
     "parish_id" integer null references "parishes"("parish_id")
 );
 
-drop table if exists "winners";
 create table if not exists "winners"
  (
     "winner_id" serial primary key,
     "winner_description" text not null default ('')
 );
 
-drop table if exists "judgements";
 create table if not exists "judgements"
  (
     "judgement_id" serial primary key,
     "sanction" text not null default ('')
 );
 
-drop table if exists "persons";
+create table if not exists "properties"
+(
+    "property_id" serial primary key,
+    "property_name" text,
+    "description" text
+);
+
 create table if not exists "persons"
  (
     "person_id" serial primary key,
@@ -79,10 +113,19 @@ create table if not exists "persons"
     "event_date" varchar (255) null,
     "event_id" integer null,
     "community_name" text null,
-    "full_name" text computed by (coalesce("given_name",'') || ' ' || coalesce("patronymic",'') || ' ' || coalesce("surname",'')) stored
+    "full_name" text generated always as (coalesce("given_name",'') || ' ' || coalesce("patronymic",'') || ' ' || coalesce("surname",'')) stored
 );
 
-drop table if exists "entries";
+create table if not exists "person_properties"
+(
+    "person_property_id" serial primary key,
+    "person_id" integer null references "persons"("person_id"),
+    "property_id" integer null references "properties"("property_id"),
+    "specifier" text null,
+    "property_value" text not null default ('')
+);
+
+
 create table if not exists "entries"
  (
     "entry_id" serial primary key,
@@ -99,7 +142,7 @@ create table if not exists "entries"
     "winner_id" integer null references "winners"("winner_id"),
     "legal_source_id" integer null references "legal_sources"("legal_source_id"),
     "judgement_id" integer null references "judgements"("judgement_id"),
-    "placename_id" integer null references "placenames"("placename_id"),
+    "placename_id" integer null references "placenames"("fid"),
     "lay_judge_involved" boolean not null default false
 );
 
