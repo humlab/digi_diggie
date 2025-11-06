@@ -27,9 +27,9 @@ g_host=localhost
 g_user=${POSTGRES_USER:-gudrun}
 g_port=${POSTGRES_PORT:-5433}
 g_timestamp=$(date +'%Y%m%d_%H%M%S')
-
+g_output_data_file="./data_${g_timestamp}.sql"
+g_output_schema_file="./schema_${g_timestamp}.sql"
 g_input_file=
-g_data_folder=${g_script_dir}/data
 
 usage() {
     if [ "$1" != "" ]; then
@@ -39,17 +39,18 @@ usage() {
 Usage: $(basename "$0") [--database NAME] [--schema NAME] [--host HOST] [--user USER] [--port PORT] <input_file.mdb>
 
 Options:
-  --database,       -d   Target database name (default: \$POSTGRES_DB or required)
-  --schema,         -s   Target schema name (default: ${g_schema})
-  --no-dump-schema, -S   Dump schema (default: true)
-  --no-dump-data,   -D   Dump data (default: true)
-  --load-schema,    -L   Load dumped schema into database (default: false)
-  --load-data,      -l   Load dumped data into database (default: false)
-  --data-folder,    -D   Folder to load from / dump to (default: ${g_data_folder})
-  --host,           -H   PostgreSQL host (default: ${g_host})
-  --user,           -U   PostgreSQL user (default: ${g_user})
-  --port,           -p   PostgreSQL port (default: 5433)
-  --help                 Show this help
+  --database,        -d   Target database name (default: \$POSTGRES_DB or required)
+  --schema,          -s   Target schema name (default: ${g_schema})
+  --no-dump-schema,  -S   Do not dump schema (default: true)
+  --no-dump-data,    -D   Do not dump data (default: true)
+  --load-schema,     -L   Load dumped schema into database (default: false)
+  --load-data,       -l   Load dumped data into database (default: false)
+  --sql-data-file,   -O   Output data SQL file (default: ./data.sql)
+  --sql-schema-file, -O   Output schema SQL file (default: ./schema.sql)
+  --host,            -H   PostgreSQL host (default: ${g_host})
+  --user,            -U   PostgreSQL user (default: ${g_user})
+  --port,            -p   PostgreSQL port (default: 5433)
+  --help                  Show this help
 
 Auth:
   Use a .pgpass entry or export PGPASSWORD; script does NOT prompt.
@@ -60,9 +61,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --data-folder|-d) g_data_folder=$2; shift 2 ;;
     --database|-d) g_database=$2; shift 2 ;;
     --schema|-s) g_schema=$2; shift 2 ;;
+    --sql-data-file|-O) g_output_data_file=$2; shift 2 ;;
+    --sql-schema-file|-O) g_output_schema_file=$2; shift 2 ;;
     --no-dump-schema|-S) g_dump_schema=NO; shift 1 ;;
     --no-dump-data|-D) g_dump_data=NO; shift 1 ;;
     --load-schema|-L) g_load_schema=YES; shift 1 ;;
@@ -74,14 +76,6 @@ while [[ $# -gt 0 ]]; do
     *) g_input_file=$1; shift ;;
   esac
 done
-
-g_output_data_file=${g_data_folder}/output/data.sql
-g_output_schema_file=${g_data_folder}/output/schema.sql
-
-echo "g_dump_schema: $g_dump_schema"
-echo "g_dump_data: $g_dump_data"
-echo "g_load_schema: $g_load_schema"
-echo "g_load_data: $g_load_data"
 
 function dump_schema() {
 
@@ -104,20 +98,29 @@ function dump_schema() {
     echo "info: schema dumped to $output_file"
 }
 
+g_dump_format="sql"
+
 function dump_data() {
     local input_file=$1
     local output_file=$2
 
     local tables=$(mdb-tables "$input_file")
-    
-    > "$output_file"
-    for table in $tables; do
-        if [[ ! " ${KNOWN_TABLES[*]} " =~ (^|[[:space:]])${table}([[:space:]]|$) ]]; then
-            echo "warning: skipping unknown table $table"
-        else
+
+    if [ "$g_dump_format" == "sql" ]; then
+        echo "BEGIN;" > "$output_file"
+        for table in "${KNOWN_TABLES[@]}"; do
             mdb-export --insert=postgres "$input_file" "$table" >> "$output_file"
-        fi
-    done
+        done
+        echo "COMMIT;" >> "$output_file"
+    elif [ "$g_dump_format" == "csv" ]; then
+        for table in $tables; do
+            mdb-export --no-header "$input_file" "$table" > "${table}.csv"
+        done
+    else
+        echo "error: only sql dump format is supported" >&2
+        exit 1
+    fi
+
     echo "info: data dumped to $output_file"
 
 }
@@ -156,14 +159,22 @@ function check_requirements() {
   [ -f "$g_input_file" ] || { usage "error: input file $g_input_file not found" >&2;  }
 }
 
+function load_data() {
+    local sql_file=$1
+    execute_sql_file "resources/post-load.sql"
+    execute_sql_file "$sql_file"
+    execute_sql_file "resources/post-load.sql"
+    echo "info: data imported successfully into $g_database"
+}
+
+function load_schema() {
+    local sql_file=$1
+    execute_sql_file "$sql_file"
+    echo "info: schema imported successfully into $g_database"
+}
+
 check_requirements
 echo "info: dumping database from $g_input_file ..."
-
-# add_constraints
-
-mkdir -p "${g_data_folder}/output"
-
-# drop_data "$g_input_file"
 
 if [ "$g_dump_schema" == "YES" ]; then
     dump_schema "$g_input_file" "$g_output_schema_file"
@@ -172,12 +183,8 @@ if [ "$g_dump_data" == "YES" ]; then
     dump_data "$g_input_file" "$g_output_data_file"
 fi
 if [ "$g_load_schema" == "YES" ]; then
-    echo "info: loading schema from $g_output_schema_file ..."
-    execute_sql_file "$g_output_schema_file"
+    load_schema "$g_output_schema_file"
 fi
 if [ "$g_load_data" == "YES" ]; then
-    echo "info: loading data from $g_output_data_file ..."
-    execute_sql_file "$g_output_data_file"
-    execute_sql_file "$g_data_folder"/constraints.sql
-    echo "info: data imported successfully into $g_database"
+    load_data "$g_output_data_file"
 fi
