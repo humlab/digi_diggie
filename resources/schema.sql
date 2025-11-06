@@ -113,7 +113,7 @@ create table if not exists "persons"
     "event_date" varchar (255) null,
     "event_id" integer null,
     "community_name" text null,
-    "full_name" text generated always as (coalesce("given_name",'') || ' ' || coalesce("patronymic",'') || ' ' || coalesce("surname",'')) stored
+    "full_name" text null -- change after load to computed column
 );
 
 create table if not exists "person_properties"
