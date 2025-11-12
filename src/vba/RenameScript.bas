@@ -74,7 +74,7 @@ ErrorHandler:
     Debug.Print "error: failed setting RowSource for " & tableName & "." & fieldName & ": " & Err.Description
 End Sub
 
-Sub SetFieldDescription(tableName As String, fieldName As String, description As String)
+Function SetFieldDescription(tableName As String, fieldName As String, description As String) As Boolean
     On Error GoTo ErrorHandler
     Dim db As DAO.Database
     Dim td As DAO.TableDef
@@ -91,11 +91,13 @@ Sub SetFieldDescription(tableName As String, fieldName As String, description As
         fld.Properties.Append fld.CreateProperty("Description", dbText, description)
     End If
     On Error GoTo 0
-    Exit Sub
+    SetFieldDescription = True
+    Exit Function
 
 ErrorHandler:
     Debug.Print "error: failed setting description for " & tableName & "." & fieldName & ": " & Err.Description
-End Sub
+    SetFieldDescription = False
+End Function
 
 ' --- Helper: create or update any property ---
 Private Sub AddOrReplaceProperty(obj As Object, propName As String, propType As DAO.DataTypeEnum, propValue As Variant)
@@ -528,11 +530,15 @@ Public Function AddComments() As Boolean
     On Error GoTo ErrorHandler
     Dim rs As DAO.Recordset
     Dim db As DAO.Database
+    Dim success As Boolean
     Set db = CurrentDb
     AddComments = True
     Set rs = db.OpenRecordset("SELECT * FROM TranslationMapping", dbOpenSnapshot)
     Do Until rs.EOF
-        SetFieldDescription rs!TranslatedTable, rs!TranslatedColumn, rs!Comment
+        success = SetFieldDescription(rs!TranslatedTable, rs!TranslatedColumn, rs!Comment)
+        If Not success Then
+            AddComments = False
+        End If
         rs.MoveNext
     Loop
     rs.Close
