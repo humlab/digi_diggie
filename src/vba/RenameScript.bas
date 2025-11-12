@@ -583,7 +583,7 @@ Public Sub CloseOpenTables()
     Set db = CurrentDb
     Set rs = db.OpenRecordset("SELECT DISTINCT OriginalTable FROM TranslationMapping", dbOpenSnapshot)
     Do Until rs.EOF
-        CloseIfOpen rs!OriginalTable
+        CloseIfOpen Replace(Replace(rs!OriginalTable, "[", ""), "]", "")
         rs.MoveNext
     Loop
     rs.Close
