@@ -22,6 +22,7 @@ g_schema=public
 g_command=
 g_skip_schema=NO
 g_skip_data=NO
+g_skip_comments=NO
 g_host=localhost
 g_user=${POSTGRES_USER:-gudrun}
 g_port=${POSTGRES_PORT:-5433}
@@ -46,6 +47,7 @@ Options:
   --schema,            Target schema name (default: ${g_schema})
   --skip-schema,       Skip dump/load schema (default: false)
   --skip-data,         Skip dump/load data (default: false)
+  --skip-comments,     Skip dump/load comments (default: false)
   --sql-data-file,     Output data SQL file (default: ./data.sql)
   --sql-schema-file,   Output schema SQL file (default: ./schema.sql)
   --host,              PostgreSQL host (default: ${g_host})
@@ -80,6 +82,7 @@ while [[ $# -gt 0 ]]; do
     --sql-data-file)   g_data_sql_file="$2"; shift 2 ;;
     --sql-schema-file) g_schema_file="$2"; shift 2 ;;
     --skip-schema)     g_skip_schema="YES"; shift ;;
+    --skip-comments)   g_skip_comments="YES"; shift ;;
     --skip-data)       g_skip_data="YES"; shift ;;
     --host)            g_host="$2"; shift 2 ;;
     --user)            g_user="$2"; shift 2 ;;
@@ -200,6 +203,37 @@ function load_schema() {
     echo "info: schema imported successfully into $g_database"
 }
 
+function extract_comments() {
+    db="${1:?usage: $0 path/to.db.accdb}"
+    out="${2:-comments.sql}"
+    > "$out"
+    mdb-tables -1 "$db" |
+    while IFS= read -r t; do
+    mdb-prop "$db" "$t" |
+        awk -v tbl="$t" -v schema="$g_schema" '
+    function dq_ident(s) { gsub(/"/,"""",s); return "\"" s "\"" }   # " -> ""
+    function esc_sql(s)  {
+      gsub(/\r/," ",s); gsub(/\t/," ",s);                         # keep it one line
+      gsub(/'\''/,"'\'''\''",s);                                   # '\'' -> '' (double single-quotes)
+      return s
+    }
+
+    /^[[:space:]]*name:/ {
+      f=$0; sub(/^[[:space:]]*name:[[:space:]]*/,"",f); next
+    }
+
+    /^[[:space:]]*Description:/ && f!="" && f!="(none)" {
+      d=$0; sub(/^[[:space:]]*Description:[[:space:]]*/,"",d);
+      if (d != "") {
+        printf "COMMENT ON COLUMN %s.%s.%s IS '\''%s'\'';\n",
+               dq_ident(schema), dq_ident(tbl), dq_ident(f), esc_sql(d)
+      }
+    }
+  '
+done >> "$out"
+echo "Wrote $(wc -l < "$out") lines to $out"
+}
+
 check_requirements
 
 echo "info: processing database $g_input_file ..."
@@ -220,6 +254,9 @@ if [ "$g_command" == "dump" ]; then
         fi
         dump_schema "$g_input_file" "$g_schema_file"
     fi
+    if [ "$g_skip_comments" == "NO" ]; then
+        extract_comments "$g_input_file" "resources/comments.sql"
+    fi
     if [ "$g_skip_data" == "NO" ]; then
         dump_data "$g_input_file" "$g_data_sql_file"
         format_sql_file "$g_data_sql_file"
@@ -228,6 +265,9 @@ elif [ "$g_command" == "load" ]; then
     echo "info: PostgreSQL host: $g_host, user: $g_user, port: $g_port"
     if [ "$g_skip_schema" == "NO" ]; then
         load_schema "$g_schema_file"
+    fi
+    if [ "$g_skip_comments" == "NO" ]; then
+        execute_sql_file "resources/comments.sql"
     fi
     if [ "$g_skip_data" == "NO" ]; then
         load_data "$g_data_sql_file"
