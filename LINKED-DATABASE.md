@@ -12,7 +12,7 @@ This guide provides step-by-step instructions for setting up linked tables in Mi
 ## Step 1: Install PostgreSQL ODBC Driver
 
 1. **Download the PostgreSQL ODBC Driver**
-   - Visit the official PostgreSQL ODBC driver page: https://www.postgresql.org/ftp/odbc/versions/msi/
+   - Download the latest official PostgreSQL ODBC driver from: https://www.postgresql.org/ftp/odbc/releases/ or https://github.com/postgresql-interfaces/psqlodbc/releases
    - Download the appropriate version for your system:
      - `psqlodbc_x64.msi` for 64-bit systems (recommended)
      - `psqlodbc_x86.msi` for 32-bit systems
