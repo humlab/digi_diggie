@@ -17,6 +17,7 @@ This guide provides step-by-step instructions for setting up linked tables in Mi
      - `psqlodbc_x64.msi` for 64-bit systems (recommended)
      - `psqlodbc_x86.msi` for 32-bit systems
    - **Important**: If you're using 32-bit MS Access on a 64-bit Windows, you need the 32-bit ODBC driver
+   - **Note**: You can use the mimalloc allocator version for improved performance if you wish
 
 2. **Install the ODBC Driver**
    - Run the downloaded `.msi` file
@@ -85,7 +86,9 @@ This guide provides step-by-step instructions for setting up linked tables in Mi
 
 2. **Start the Import/Link Process**
    - Go to the "External Data" tab in the ribbon
-   - In the "Import & Link" group, click "ODBC Database"
+   - Click "New Data Source"
+   - Select "From other sources"
+   - Select "ODBC Database"
    - Select "Link to the data source by creating a linked table"
    - Click "OK"
 
@@ -99,6 +102,7 @@ This guide provides step-by-step instructions for setting up linked tables in Mi
 4. **Select Tables to Link**
    - A list of available PostgreSQL tables and views will appear
    - Select the tables you want to link (use Ctrl+Click for multiple selections)
+   - Select tables from pulic schema, excluding `spatial_ref_sys`, `geography_columns` and `geometry_columns`
    - Common options:
      - **Save password**: Check to avoid re-entering password (security consideration)
      - **Select unique record identifier**: Access will prompt you to choose a primary key if it can't auto-detect
