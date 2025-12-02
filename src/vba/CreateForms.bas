@@ -1,7 +1,22 @@
 Option Compare Database
 Option Explicit
 
-Public Sub CreateSpecificForms()
+Public Const FORM_PREFIX As String = "frm_"
+Public Const CTRL_PREFIX_COMBO As String = "cbo_"
+Public Const CTRL_PREFIX_TEXT As String = "txt_"
+
+
+Public Function CreateForms() As Boolean
+    On Error GoTo ErrorHandler
+    CreateSpecificForms False, True
+    CreateForms = True
+    Exit Function
+ErrorHandler:
+    Debug.Print "error: CreateForms failed: " & Err.Description
+    CreateForms = False
+End Function
+
+Public Sub CreateSpecificForms(Optional addCtrlPrefixes As Boolean = True, Optional addFormPrefix As Boolean = True)
     Dim db As DAO.Database
     Dim tdf As DAO.TableDef
     Dim fld As DAO.Field
@@ -48,7 +63,7 @@ Public Sub CreateSpecificForms()
     ' ---------------------------------------------------------   
     For i = LBound(arrTables) To UBound(arrTables)
         strTable = arrTables(i)
-        strFormName = "frm_" & strTable
+        strFormName = IIf(addFormPrefix, FORM_PREFIX, "") & strTable
         
         ' Check if table exists (Using db variable to save overhead)
         If Not TableExists(db, strTable) Then
@@ -89,7 +104,11 @@ Public Sub CreateSpecificForms()
                 strSQL = dictLookups(key)
                 
                 With ctl
-                    .Name = "cbo_" & fld.Name ' FIXME: remove prefix?
+                    If addCtrlPrefixes Then
+                        .Name = CTRL_PREFIX_COMBO & fld.Name
+                    Else
+                        .Name = fld.Name
+                    End If
                     .RowSource = strSQL
                     .RowSourceType = "Table/Query"
                     .BoundColumn = 1
@@ -109,7 +128,11 @@ Public Sub CreateSpecificForms()
             Else
                 ' Create Textbox
                 Set ctl = CreateControl(frm.Name, acTextBox, acDetail, , fld.Name, 100, ctlTop, 3000, 300)
-                ctl.Name = "txt_" & fld.Name ' FIXME: remove prefix?
+                If addCtrlPrefixes Then
+                    ctl.Name = CTRL_PREFIX_TEXT & fld.Name
+                Else
+                    ctl.Name = fld.Name
+                End If
             End If
             
             ctlTop = ctlTop + 350
