@@ -19,6 +19,7 @@ Sub ExportQueryCSV(strSQL As String, strFilePath As String)
     Set qdf = db.CreateQueryDef(TEMP_QUERY_NAME, strSQL)
 
     ' Export using TransferText (no import/export spec required)
+    ' NOTE: Creates ANSI or UTF-8 with BOM output depending on Access version
     DoCmd.TransferText acExportDelim, , TEMP_QUERY_NAME, strFilePath, True
 
 CleanExit:
