@@ -11,8 +11,7 @@ Public Function LinkAllTables() As Boolean
     strDSN = "ODBC;DSN=DigiDiggie_PostgreSQL;DATABASE=digidiggie;"
     
     ' Add all your table names
-    ' FIXME: Ensure this list matches the actual table names in your PostgreSQL database
-    arrTables = Array("entries", "communities", "persons", "parishes", "sources", "seasons", "land_use", "winners", "legal_sources", "judgements", "placenames")
+    arrTables = Array("entries", "communities", "persons", "parishes", "sources", "seasons", "land_use", "winners", "legal_sources", "judgements", "placenames", "person_properties", "properties")
     
     ' Link each table
     Dim i As Integer
