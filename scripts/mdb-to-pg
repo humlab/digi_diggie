@@ -111,7 +111,7 @@ function dump_schema() {
     local input_file=$1
     local output_file=$2
 
-    echo mdb-schema --not-null --default-values \
+    mdb-schema --not-null --default-values \
         --namespace="${g_schema}" \
         --drop-table \
         --not-null \
@@ -167,6 +167,7 @@ function drop_data() {
     for table in $(mdb-tables "$input_file"); do
         table="${table,,}"
         execute_sql "drop table if exists \"$table\" cascade;" >& /dev/null
+        echo "info: dropped table $table"
     done
 }
 
@@ -190,8 +191,12 @@ function check_requirements() {
 
 function load_data() {
     local sql_file=$1
+
+    echo "info: loading pre-load SQL ..."
     execute_sql_file "resources/pre-load.sql"
+    echo "info: loading data from $sql_file ..."
     execute_sql_file "$sql_file"
+    echo "info: loading post-load SQL ..."
     execute_sql_file "resources/post-load.sql"
     echo "info: data imported successfully into $g_database"
 }
@@ -263,6 +268,7 @@ if [ "$g_command" == "dump" ]; then
     fi
 elif [ "$g_command" == "load" ]; then
     echo "info: PostgreSQL host: $g_host, user: $g_user, port: $g_port"
+    drop_data "$g_input_file"
     if [ "$g_skip_schema" == "NO" ]; then
         load_schema "$g_schema_file"
     fi
