@@ -210,7 +210,7 @@ function load_schema() {
 
 function extract_comments() {
     db="${1:?usage: $0 path/to.db.accdb}"
-    out="${2:-comments.sql}"
+    out="${2:-descriptions.sql}"
     > "$out"
     mdb-tables -1 "$db" |
     while IFS= read -r t; do
@@ -260,7 +260,7 @@ if [ "$g_command" == "dump" ]; then
         dump_schema "$g_input_file" "$g_schema_file"
     fi
     if [ "$g_skip_comments" == "NO" ]; then
-        extract_comments "$g_input_file" "resources/comments.sql"
+        extract_comments "$g_input_file" "resources/descriptions.sql"
     fi
     if [ "$g_skip_data" == "NO" ]; then
         dump_data "$g_input_file" "$g_data_sql_file"
@@ -273,7 +273,7 @@ elif [ "$g_command" == "load" ]; then
         load_schema "$g_schema_file"
     fi
     if [ "$g_skip_comments" == "NO" ]; then
-        execute_sql_file "resources/comments.sql"
+        execute_sql_file "resources/descriptions.sql"
     fi
     if [ "$g_skip_data" == "NO" ]; then
         load_data "$g_data_sql_file"
