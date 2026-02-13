@@ -10,5 +10,6 @@ dependencies = [
     "psycopg[binary]>=3,<4",
     "pyodbc>=5.3.0",
     "requests>=2.32.5",
+    "sqlglot>=28.10.1",
     "xlsxwriter>=3.2.9",
 ]

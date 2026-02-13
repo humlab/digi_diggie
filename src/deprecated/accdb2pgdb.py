@@ -1,5 +1,6 @@
 import sqlglot
 
+
 def convert_access_to_postgresql(access_sql: str):
     """
     Convert SQL from Microsoft Access to PostgreSQL format.
