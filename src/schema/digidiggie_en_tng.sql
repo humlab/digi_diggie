@@ -31,11 +31,6 @@ create table "entries" (
   "placename_id" int4
 );
 
-create table "judgements" (
-  "judgement_id" serial primary key,
-  "sanction" text not null default ''::text
-);
-
 create table "land_right_status" (
   "land_rights_status_id" int4 not null primary key,
   "land_rights_status" varchar(255) not null
@@ -82,13 +77,6 @@ create table "person_outcomes" (
   "description" text
 );
 
-create table "person_properties" (
-  "person_property_id" serial primary key,
-  "person_id" int4,
-  "property_id" int4,
-  "specifier" text,
-  "property_value" text not null default ''::text
-);
 
 create table "persons" (
   "person_id" serial primary key,
@@ -105,6 +93,7 @@ create table "persons" (
 ) stored
 );
 
+-- FIXME: Update to correspond with placeaname table in the database (see branch "placenames")
 CREATE TABLE "placenames" (
   "fid" int4 NOT NULL primary key, --> placename_id
   "geom" text, 
@@ -120,12 +109,6 @@ CREATE TABLE "placenames" (
   "sockenstadkod" text, --> parish_code
   "sockenstadnamn" text,  --> parish_name
   "geom_point" geometry 
-);
-
-create table "properties" (
-  "property_id" serial primary key,
-  "property_name" text,
-  "description" text
 );
 
 create table "roles" (
@@ -161,10 +144,6 @@ create table "sources" (
   "source_abbreviation" varchar(255)
 );
 
-create table "winners" (
-  "winner_id" serial primary key,
-  "winner_description" text not null default ''::text
-);
 
 -- Indexes
 create index "communities_parish_id_idx" on "communities" using btree (
@@ -237,8 +216,6 @@ alter table "person_entries" add constraint "fk_person_entries_land_right_status
 alter table "person_outcomes" add constraint "person_outcomes_outcome_type_id_fkey" foreign key ("outcome_type_id") references "outcome_types" ("outcome_type_id") on delete no action on update no action;
 alter table "person_outcomes" add constraint "person_outcomes_person_id_fkey" foreign key ("person_id") references "persons" ("person_id") on delete no action on update no action;
 alter table "person_outcomes" add constraint "person_outcomes_ruling_id_fkey" foreign key ("ruling_id") references "rulings" ("ruling_id") on delete cascade on update no action;
-alter table "person_properties" add constraint "person_properties_person_id_fkey" foreign key ("person_id") references "persons" ("person_id") on delete no action on update no action;
-alter table "person_properties" add constraint "person_properties_property_id_fkey" foreign key ("property_id") references "properties" ("property_id") on delete no action on update no action;
 alter table "rulings" add constraint "rulings_court_case_id_fkey" foreign key ("court_case_id") references "court_cases" ("court_case_id") on delete cascade on update no action;
 alter table "rulings" add constraint "rulings_legal_source_id_fkey" foreign key ("legal_source_id") references "legal_sources" ("legal_source_id") on delete no action on update no action;
 alter table "rulings" add constraint "fk_rulings_ruling_type_1" foreign key ("ruling_type_id") references "ruling_type" ("ruling_type_id");
