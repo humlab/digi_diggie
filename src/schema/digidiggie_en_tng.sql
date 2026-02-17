@@ -93,22 +93,21 @@ create table "persons" (
 ) stored
 );
 
--- FIXME: Update to correspond with placeaname table in the database (see branch "placenames")
-CREATE TABLE "placenames" (
-  "fid" int4 NOT NULL primary key, --> placename_id
-  "geom" text, 
-  "ortnamn" text, --> placename
-  "kvartsruta" text,
-  "nkoordinat" float8, --> north_coord
-  "ekoordinat" float8, --> east_coord
-  "lanskod" text, --> county_code
-  "kommunkod" text,  --> municipality_code
-  "detaljtyp" text,
-  "sprak" text, --> language
-  "lopnummer" text,
-  "sockenstadkod" text, --> parish_code
-  "sockenstadnamn" text,  --> parish_name
-  "geom_point" geometry 
+
+CREATE TABLE  "placenames" (
+    "id" serial primary key,
+    "ortnamn" text,
+    "n" double precision,
+    "e" double precision,
+    "lopnr" text,
+    "namntyp_nr" text,
+    "språk_nr" text,
+    "sockenstad_nr" text,
+    "lan_nr" text,
+    "kommun_nr" text,
+    "kombo" text,
+    "sockenstad" text,
+    "nr" text    
 );
 
 create table "roles" (
