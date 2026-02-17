@@ -95,19 +95,19 @@ create table "persons" (
 
 
 CREATE TABLE  "placenames" (
-    "id" serial primary key,
-    "ortnamn" text,
-    "n" double precision,
-    "e" double precision,
-    "lopnr" text,
-    "namntyp_nr" text,
-    "språk_nr" text,
-    "sockenstad_nr" text,
-    "lan_nr" text,
-    "kommun_nr" text,
-    "kombo" text,
-    "sockenstad" text,
-    "nr" text    
+    "id" serial primary key, --> placename_id
+    "ortnamn" text, --> placename
+    "n" double precision, --> north_coord
+    "e" double precision, --> east_coord
+    "lopnr" text, --> serial_number TODO: Check
+    "namntyp_nr" text, --name_type_code
+    "språk_nr" text, --> language_code
+    "sockenstad_nr" text, -- parish_code
+    "lan_nr" text, --> county_code
+    "kommun_nr" text, --> municipality_code
+    "kombo" text, --> combined_placename TODO: Check
+    "sockenstad" text, --> parish_name
+    "nr" text -- FIXME: #4 `nr` seems to be a duplicate of `sockenstad_nr`, but we need to check the data to be sure
 );
 
 create table "roles" (
