@@ -52,8 +52,8 @@ begin
     select source_id, source_name, source_abbreviation
     from digidiggie_tog.sources;
 
-    -- FIXME: 
-    -- placenames (if exists) TODO: Update to correspond with placeaname table in the database (see branch "placenames")
+    -- FIXME: #14 Update to correspond with placeaname table in the database (see branch "placenames")
+    -- placenames (if exists)
     -- insert into digidiggie_tng.placenames (
     --     fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
     --     uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
@@ -122,7 +122,7 @@ end $$;
 
 -- =============================================================================
 -- STEP 4: Create entries in new schema
--- ============================================================================= OK TODO: Check `court_case_id` 1.
+-- ============================================================================= FIXME: #9 Update to handle court_case_id mapping correctly
 
 do $$
 begin
@@ -190,7 +190,7 @@ end $$;
 
 -- =============================================================================
 -- STEP 6: Create rulings from old entries
--- =============================================================================
+-- ============================================================================= FIXME: #11
 
 do $$
 begin
@@ -225,7 +225,7 @@ end $$;
 
 -- =============================================================================
 -- STEP 7: Update sequences
--- =============================================================================
+-- ============================================================================= # FIXME: #12 Update to handle all sequences in the new schema
 
 do $$
 begin
