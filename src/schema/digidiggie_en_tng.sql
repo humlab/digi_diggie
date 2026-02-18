@@ -16,7 +16,7 @@ create table "court_cases" (
   "source_id" int4 not null,
   "reference_number" varchar(16),
   "district_court_name" text,
-  "case_date" date,
+  "case_date" int,
   "source_text" text
 );
 
@@ -24,7 +24,7 @@ create table "entries" (
   "entry_id" serial primary key,
   "court_case_id" int4 not null,
   "year" int4,
-  "description" text,
+  "curated_text" text,
   "season_id" int4,
   "land_use_id" int4,
   "original_placename" varchar(50),
