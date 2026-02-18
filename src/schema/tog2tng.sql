@@ -17,93 +17,63 @@ do $$
 begin
     raise notice 'step 1: migrating simple lookup tables...';
 
-    -- communities
-    insert into digidiggie_tng.communities (community_id, community_name, parish_id)
-        select community_id, community_name, parish_id
-        from public.communities
-        on conflict (community_id) do nothing;
-
-    -- parishes
+    -- parishes OK
     insert into digidiggie_tng.parishes (parish_id, parish)
     select parish_id, parish
-    from public.parishes
-    on conflict (parish_id) do nothing;
+    from digidiggie_tog.parishes;
 
-    -- persons
+    -- communities OK
+    insert into digidiggie_tng.communities (community_id, community_name, parish_id)
+    select community_id, community_name, parish_id
+    from digidiggie_tog.communities;
+
+    -- persons OK
     insert into digidiggie_tng.persons (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
     select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
-    from public.persons
-    on conflict (person_id) do nothing;
-
-    -- judgements
-    insert into digidiggie_tng.judgements (judgement_id, sanction)
-    select judgement_id, sanction
-    from public.judgements
-    on conflict (judgement_id) do nothing;
-
-    -- land use
+    from digidiggie_tog.persons;
+    
+    -- land use OK
     insert into digidiggie_tng.land_use (land_use_id, type)
     select land_use_id, type
-    from public.land_use
-    on conflict (land_use_id) do nothing;
+    from digidiggie_tog.land_use;
 
-    -- legal sources
+    -- legal sources OK
     insert into digidiggie_tng.legal_sources (legal_source_id, legal_source_name)
     select legal_source_id, legal_source_name
-    from public.legal_sources
-    on conflict (legal_source_id) do nothing;
+    from digidiggie_tog.legal_sources;
 
-    -- seasons
+    -- seasons OK
     insert into digidiggie_tng.seasons (season_id, season_name)
     select season_id, season_name
-    from public.seasons
-    on conflict (season_id) do nothing;
+    from digidiggie_tog.seasons;
 
-    -- sources
+    -- sources OK
     insert into digidiggie_tng.sources (source_id, source_name, source_abbreviation)
     select source_id, source_name, source_abbreviation
-    from public.sources
-    on conflict (source_id) do nothing;
+    from digidiggie_tog.sources;
 
-    -- winners
-    insert into digidiggie_tng.winners (winner_id, winner_description)
-    select winner_id, winner_description
-    from public.winners
-    on conflict (winner_id) do nothing;
-
-    -- properties
-    insert into digidiggie_tng.properties (property_id, property_name, description)
-    select property_id, property_name, description
-    from public.properties
-    on conflict (property_id) do nothing;
-
-    -- person properties
-    insert into digidiggie_tng.person_properties (person_property_id, person_id, property_id, property_value)
-    select person_property_id, person_id, property_id, property_value
-    from public.person_properties
-    on conflict (person_property_id) do nothing;
-
-    -- placenames (if exists)
-    insert into digidiggie_tng.placenames (
-        fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
-        uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
-        lan, kommun, socken, geom_point
-    )
-    select 
-        fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
-        uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
-        lan, kommun, socken, geom_point
-    from public.placenames
-    where exists (select 1 from information_schema.tables 
-                where table_schema = 'public' and table_name = 'placenames')
-    on conflict (fid) do nothing;
+    -- FIXME: 
+    -- placenames (if exists) TODO: Update to correspond with placeaname table in the database (see branch "placenames")
+    -- insert into digidiggie_tng.placenames (
+    --     fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
+    --     uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
+    --     lan, kommun, socken, geom_point
+    -- )
+    -- select 
+    --     fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
+    --     uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
+    --     lan, kommun, socken, geom_point
+    -- from digidiggie_tog.placenames
+    -- where exists (select 1 from information_schema.tables 
+    --             where table_schema = 'digidiggie_tog' and table_name = 'placenames')
+    -- on conflict (fid) do nothing;
 
     raise notice 'step 1 completed: simple lookup tables migrated';
 end $$;
 
 -- =============================================================================
 -- STEP 2: Create land_right_status lookup table from old data
--- =============================================================================
+-- ============================================================================= OK
 
 do $$
 begin
@@ -116,19 +86,18 @@ begin
         coalesce(land_rights_status, 'unknown') as land_rights_status
     from (
         select distinct land_rights_status
-        from public.entries
+        from digidiggie_tog.entries
         where land_rights_status is not null and land_rights_status != ''
         union
         select 'unknown' -- ensure we have a default value
-    ) sub
-    on conflict do nothing;
+    ) sub;
 
     raise notice 'step 2 completed: land_right_status lookup created';
 end $$;
 
 -- =============================================================================
 -- STEP 3: Create court_cases from entries
--- =============================================================================
+-- ============================================================================= OK
 
 do $$
 begin
@@ -145,16 +114,15 @@ begin
             else null
         end as case_date,
         null as source_text -- no direct mapping from old schema
-    from public.entries e
-    where e.source_id is not null
-    on conflict do nothing;
+    from digidiggie_tog.entries e
+    where e.source_id is not null;
 
     raise notice 'step 3 completed: court cases created';
 end $$;
 
 -- =============================================================================
 -- STEP 4: Create entries in new schema
--- =============================================================================
+-- ============================================================================= OK TODO: Check `court_case_id` 1.
 
 do $$
 begin
@@ -171,22 +139,22 @@ begin
         e.land_use_id,
         e.original_placename,
         e.placename_id
-    from public.entries e
+    from digidiggie_tog.entries e
     left join digidiggie_tng.court_cases cc on 
         cc.source_id = coalesce(e.source_id, 1) 
         and (cc.reference_number = e.reference_number 
             or (cc.reference_number is null and e.reference_number is null))
         and (extract(year from cc.case_date) = cast(e.year as integer)
             or (cc.case_date is null and e.year is null))
-    where cc.court_case_id is not null
-    on conflict (entry_id) do nothing;
+    where cc.court_case_id is not null;
+    -- on conflict (entry_id) do nothing;
 
     raise notice 'step 4 completed: entries created';
 end $$;
 
 -- =============================================================================
 -- STEP 5: Create person_entries (person involvement in entries)
--- =============================================================================
+-- ============================================================================= OK
 
 do $$
 begin
@@ -211,12 +179,12 @@ begin
         ) as land_rights_status_id,
         null as role_id, -- no direct mapping in old schema
         null as curated_text -- no direct mapping
-    from public.entries e
+    from digidiggie_tog.entries e
     left join digidiggie_tng.land_right_status lrs on 
         lrs.land_rights_status = coalesce(e.land_rights_status, 'unknown')
     where e.entry_id in (select entry_id from digidiggie_tng.entries)
-    and e.actor_id is not null
-    on conflict do nothing;
+    and e.actor_id is not null;
+    -- on conflict do nothing;
 
     raise notice 'step 5 completed: person_entries created';
 end $$;
@@ -242,7 +210,7 @@ begin
         null as ruling_type_id, -- no direct mapping, needs manual population
         e.judgement_id,
         e.legal_source_id
-    from public.entries e
+    from digidiggie_tog.entries e
     inner join digidiggie_tng.court_cases cc on 
         cc.source_id = coalesce(e.source_id, 1)
         and (cc.reference_number = e.reference_number 
