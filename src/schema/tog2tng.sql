@@ -17,37 +17,37 @@ do $$
 begin
     raise notice 'step 1: migrating simple lookup tables...';
 
-    -- parishes OK
+    -- parishes
     insert into digidiggie_tng.parishes (parish_id, parish)
     select parish_id, parish
     from digidiggie_tog.parishes;
 
-    -- communities OK
+    -- communities
     insert into digidiggie_tng.communities (community_id, community_name, parish_id)
     select community_id, community_name, parish_id
     from digidiggie_tog.communities;
 
-    -- persons OK
+    -- persons
     insert into digidiggie_tng.persons (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
     select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
     from digidiggie_tog.persons;
     
-    -- land use OK
+    -- land use
     insert into digidiggie_tng.land_use (land_use_id, type)
     select land_use_id, type
     from digidiggie_tog.land_use;
 
-    -- legal sources OK
+    -- legal sources
     insert into digidiggie_tng.legal_sources (legal_source_id, legal_source_name)
     select legal_source_id, legal_source_name
     from digidiggie_tog.legal_sources;
 
-    -- seasons OK
+    -- seasons
     insert into digidiggie_tng.seasons (season_id, season_name)
     select season_id, season_name
     from digidiggie_tog.seasons;
 
-    -- sources OK
+    -- sources
     insert into digidiggie_tng.sources (source_id, source_name, source_abbreviation)
     select source_id, source_name, source_abbreviation
     from digidiggie_tog.sources;
@@ -73,7 +73,7 @@ end $$;
 
 -- =============================================================================
 -- STEP 2: Create land_right_status lookup table from old data
--- ============================================================================= OK
+-- =============================================================================
 
 do $$
 begin
@@ -97,7 +97,7 @@ end $$;
 
 -- =============================================================================
 -- STEP 3: Create court_cases from entries
--- ============================================================================= OK
+-- =============================================================================
 
 do $$
 begin
@@ -154,7 +154,7 @@ end $$;
 
 -- =============================================================================
 -- STEP 5: Create person_entries (person involvement in entries)
--- ============================================================================= OK
+-- =============================================================================
 
 do $$
 begin
@@ -184,7 +184,6 @@ begin
         lrs.land_rights_status = coalesce(e.land_rights_status, 'unknown')
     where e.entry_id in (select entry_id from digidiggie_tng.entries)
     and e.actor_id is not null;
-    -- on conflict do nothing;
 
     raise notice 'step 5 completed: person_entries created';
 end $$;
