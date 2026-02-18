@@ -205,7 +205,8 @@ alter table "communities" add constraint "communities_parish_id_fkey" foreign ke
 alter table "court_cases" add constraint "court_cases_source_id_fkey" foreign key ("source_id") references "sources" ("source_id") on delete no action on update no action;
 alter table "entries" add constraint "entries_court_case_id_fkey" foreign key ("court_case_id") references "court_cases" ("court_case_id") on delete cascade on update no action;
 alter table "entries" add constraint "entries_land_use_id_fkey" foreign key ("land_use_id") references "land_use" ("land_use_id") on delete no action on update no action;
-alter table "entries" add constraint "entries_placename_id_fkey" foreign key ("placename_id") references "placenames" ("fid") on delete no action on update no action;
+-- FIXME: #13 Update to constraint to reference correct column in `placenames`.
+-- alter table "entries" add constraint "entries_placename_id_fkey" foreign key ("placename_id") references "placenames" ("fid") on delete no action on update no action;
 alter table "entries" add constraint "entries_season_id_fkey" foreign key ("season_id") references "seasons" ("season_id") on delete no action on update no action;
 alter table "person_entries" add constraint "person_entries_actor_id_fkey" foreign key ("actor_id") references "persons" ("person_id") on delete no action on update no action;
 alter table "person_entries" add constraint "person_entries_community_id_fkey" foreign key ("community_id") references "communities" ("community_id") on delete no action on update no action;
