@@ -47,6 +47,11 @@ begin
     select season_id, season_name
     from digidiggie_tog.seasons;
 
+    -- ruling types
+    insert into digidiggie_tng.ruling_type (ruling_type_id, ruling_type)
+    select judgement_id as ruling_type_id, sanction as ruling_type
+    from digidiggie_tog.judgements;
+
     -- sources
     insert into digidiggie_tng.sources (source_id, source_name, source_abbreviation)
     select source_id, source_name, source_abbreviation
@@ -105,49 +110,41 @@ begin
 
     -- create court_cases by grouping entries that belong to the same case
     -- a court case is identified by unique combinations of source_id + reference_number
-    insert into digidiggie_tng.court_cases (source_id, reference_number, case_date, source_text)
-    select distinct
-        coalesce(e.source_id, 1) as source_id,
-        e.reference_number,
-        case 
-            when e.year is not null then make_date(cast(e.year as integer), 1, 1)
-            else null
-        end as case_date,
-        null as source_text -- no direct mapping from old schema
-    from digidiggie_tog.entries e
-    where e.source_id is not null;
+    insert into digidiggie_tng.court_cases (source_id, reference_number, case_date, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
+    -- select distinct source_id, reference_number, "year" as case_date, null as source_text
+    -- from digidiggie_tog.entries;
+    select source_id, reference_number, "year" as case_date, string_agg(distinct description, '; ') -- FIXME: No constraint
+    from digidiggie_tog.entries
+	group by 1,2,3;
 
     raise notice 'step 3 completed: court cases created';
 end $$;
 
 -- =============================================================================
 -- STEP 4: Create entries in new schema
--- ============================================================================= FIXME: #9 Update to handle court_case_id mapping correctly
+-- ============================================================================= FIXME: #9 Update to handle court_case_id mapping correctly. Fixed?
 
 do $$
 begin
     raise notice 'step 4: creating entries in new schema...';
 
     -- create entries linked to court_cases
-    insert into digidiggie_tng.entries (entry_id, court_case_id, year, description, season_id, land_use_id, original_placename, placename_id)
+    insert into digidiggie_tng.entries (entry_id, court_case_id, "year", curated_text, season_id, land_use_id, original_placename, placename_id)
     select 
         e.entry_id,
         cc.court_case_id,
-        cast(e.year as integer) as year,
-        e.description,
+        cast(e.year as integer) as "year",
+        e.description as curated_text,
         e.season_id,
         e.land_use_id,
         e.original_placename,
         e.placename_id
     from digidiggie_tog.entries e
     left join digidiggie_tng.court_cases cc on 
-        cc.source_id = coalesce(e.source_id, 1) 
-        and (cc.reference_number = e.reference_number 
-            or (cc.reference_number is null and e.reference_number is null))
-        and (extract(year from cc.case_date) = cast(e.year as integer)
-            or (cc.case_date is null and e.year is null))
+        cc.source_id = e.source_id
+      and (cc.reference_number = e.reference_number)
+      and (cc.case_date = e.year)
     where cc.court_case_id is not null;
-    -- on conflict (entry_id) do nothing;
 
     raise notice 'step 4 completed: entries created';
 end $$;
@@ -200,12 +197,16 @@ begin
     -- note: ruling_type is a new concept, we'll need to populate it separately
     insert into digidiggie_tng.rulings (
         court_case_id,
+        year,
+        description,
         ruling_type_id,
-        judgement_id,
+        judgement_id, -- FIXME: Not in new schema
         legal_source_id
     )
     select distinct
         cc.court_case_id,
+        e.year, -- NOTE: Check,
+        null as description, -- no direct mapping, needs manual population
         null as ruling_type_id, -- no direct mapping, needs manual population
         e.judgement_id,
         e.legal_source_id
