@@ -20,17 +20,17 @@ begin
     raise notice 'step 1: migrating simple lookup tables...';
 
     -- parishes
-    insert into digidiggie_tng.parishes (parish_id, parish)
+    insert into digidiggie_tng.parish (parish_id, parish)
         select parish_id, parish
         from digidiggie_tog.parishes;
 
     -- communities
-    insert into digidiggie_tng.communities (community_id, community_name, parish_id)
+    insert into digidiggie_tng.community (community_id, community_name, parish_id)
         select community_id, community_name, parish_id
         from digidiggie_tog.communities;
 
     -- persons
-    insert into digidiggie_tng.persons (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
+    insert into digidiggie_tng.person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
         select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
         from digidiggie_tog.persons;
     
@@ -40,12 +40,12 @@ begin
         from digidiggie_tog.land_use;
 
     -- legal sources
-    insert into digidiggie_tng.legal_sources (legal_source_id, legal_source_name)
+    insert into digidiggie_tng.legal_source (legal_source_id, legal_source_name)
         select legal_source_id, legal_source_name
         from digidiggie_tog.legal_sources;
 
     -- seasons
-    insert into digidiggie_tng.seasons (season_id, season_name)
+    insert into digidiggie_tng.season (season_id, season_name)
         select season_id, season_name
         from digidiggie_tog.seasons;
 
@@ -55,7 +55,7 @@ begin
         from digidiggie_tog.judgements;
 
     -- sources
-    insert into digidiggie_tng.sources (source_id, source_name, source_abbreviation)
+    insert into digidiggie_tng.source (source_id, source_name, source_abbreviation)
         select source_id, source_name, source_abbreviation
         from digidiggie_tog.sources;
 
@@ -73,19 +73,19 @@ begin
                (4, 'Annan', 'Annan typ av domstolsavgörande'),
                (5, 'Okänd', 'Okänd typ av domstolsavgörande');
 
-    insert into digidiggie_tng.roles ("role_id", "role_name", "description")
-        values (1, 'Klagande', 'Part som klagar på en annan part'),
-               (2, 'Svarande', 'Part som svarar på en klagan'),
-               (3, 'Vittne', 'Person som vittnar i en rättegång'),
-               (4, 'Annan', 'Annan roll i en rättegång'),
-               (5, 'Okänd', 'Okänd roll i en rättegång');
+    insert into digidiggie_tng.role ("role_id", "role_name", "description")
+        values (1, 2, 'Klagande', 'Part som klagar på en annan part'),
+               (2, 2, 'Svarande', 'Part som svarar på en klagan'),
+               (3, 2, 'Vittne', 'Person som vittnar i en rättegång'),
+               (4, 2, 'Annan', 'Annan roll i en rättegång'),
+               (5, 2, 'Okänd', 'Okänd roll i en rättegång'),
+               (6, 1, 'Same', 'Person som är same'),
+               (7, 1, 'Nybyggare', 'Person som är nybyggare'),
+               (8, 1, 'Bonde', 'Person som är bonde');
 
     insert into digidiggie_tng.role_type ("role_id", "role_name", "description")
-        values (1, 'Klagande', 'Part som klagar på en annan part'),
-               (2, 'Svarande', 'Part som svarar på en klagan'),
-               (3, 'Vittne', 'Person som vittnar i en rättegång'),
-               (4, 'Annan', 'Annan roll i en rättegång'),
-               (5, 'Okänd', 'Okänd roll i en rättegång');
+        values (1, 'Social', 'Social roll, t.ex. bonde, kyrkoherde, fogde'),
+               (2, 'Juridisk', 'Juridisk roll, t.ex. klagande, svarande, vittne');
 
 select *
 from digidiggie_tog.judgements;
