@@ -30,9 +30,10 @@ create table entries (
     "placename_id" integer
 );
 
-create table land_right_status (
-  "land_rights_status_id" integer not null primary key,
-  "land_rights_status" varchar(255) not null
+create table land_rights_status (
+  "land_rights_status_id" serial primary key,
+  "land_rights_status" varchar(255) not null,
+  "description" text not null
 );
 
 create table legal_sources (
