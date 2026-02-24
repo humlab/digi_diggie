@@ -223,8 +223,7 @@ begin
         and (extract(year from cc.case_date) = cast(e.year as integer)
             or (cc.case_date is null and e.year is null))
     where (e.judgement_id is not null or e.legal_source_id is not null)
-    and cc.court_case_id is not null
-    on conflict do nothing;
+    and cc.court_case_id is not null;
 
     raise notice 'step 6 completed: rulings created';
 end $$;
