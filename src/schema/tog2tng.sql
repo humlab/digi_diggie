@@ -230,55 +230,30 @@ end $$;
 
 do $$
 begin
-    raise notice 'step 7: updating sequences...';
-
-    -- update all sequences to reflect the migrated data
-    select setval('digidiggie_tng.communities_community_id_seq', 
-        coalesce((select max(community_id) from digidiggie_tng.communities), 1));
-
-    select setval('digidiggie_tng.parishes_parish_id_seq', 
-        coalesce((select max(parish_id) from digidiggie_tng.parishes), 1));
-
-    select setval('digidiggie_tng.persons_person_id_seq', 
-        coalesce((select max(person_id) from digidiggie_tng.persons), 1));
-
-    select setval('digidiggie_tng.judgements_judgement_id_seq', 
-        coalesce((select max(judgement_id) from digidiggie_tng.judgements), 1));
-
-    select setval('digidiggie_tng.land_use_land_use_id_seq', 
-        coalesce((select max(land_use_id) from digidiggie_tng.land_use), 1));
-
-    select setval('digidiggie_tng.legal_sources_legal_source_id_seq', 
-        coalesce((select max(legal_source_id) from digidiggie_tng.legal_sources), 1));
-
-    select setval('digidiggie_tng.seasons_season_id_seq', 
-        coalesce((select max(season_id) from digidiggie_tng.seasons), 1));
-
-    select setval('digidiggie_tng.sources_source_id_seq', 
-        coalesce((select max(source_id) from digidiggie_tng.sources), 1));
-
-    select setval('digidiggie_tng.winners_winner_id_seq', 
-        coalesce((select max(winner_id) from digidiggie_tng.winners), 1));
-
-    select setval('digidiggie_tng.properties_property_id_seq', 
-        coalesce((select max(property_id) from digidiggie_tng.properties), 1));
-
-    select setval('digidiggie_tng.person_properties_person_property_id_seq', 
-        coalesce((select max(person_property_id) from digidiggie_tng.person_properties), 1));
-
-    select setval('digidiggie_tng.court_cases_court_case_id_seq', 
-        coalesce((select max(court_case_id) from digidiggie_tng.court_cases), 1));
-
-    select setval('digidiggie_tng.entries_entry_id_seq', 
-        coalesce((select max(entry_id) from digidiggie_tng.entries), 1));
-
-    select setval('digidiggie_tng.person_entries_person_entry_id_seq', 
-        coalesce((select max(person_entry_id) from digidiggie_tng.person_entries), 1));
-
-    select setval('digidiggie_tng.rulings_ruling_id_seq', 
-        coalesce((select max(ruling_id) from digidiggie_tng.rulings), 1));
-
-    raise notice 'step 7 completed: sequences updated';
+  for r in
+    select
+      ns.nspname      as schema_name,
+      seq.relname     as sequence_name,
+      tbl_ns.nspname  as table_schema,
+      tbl.relname     as table_name,
+      att.attname     as column_name,
+      format('%I.%I', ns.nspname, seq.relname) as seq_fqname,
+      format('%I.%I', tbl_ns.nspname, tbl.relname) as tbl_fqname
+    from pg_class seq
+    join pg_namespace ns on ns.oid = seq.relnamespace
+    join pg_depend dep on dep.objid = seq.oid
+    join pg_class tbl on tbl.oid = dep.refobjid
+    join pg_namespace tbl_ns on tbl_ns.oid = tbl.relnamespace
+    join pg_attribute att on att.attrelid = tbl.oid and att.attnum = dep.refobjsubid
+    where seq.relkind = 'S'
+      and dep.deptype IN ('a', 'n')
+      and tbl.relkind IN ('r', 'p')
+      and ns.nspname = 'digidiggie_tng'
+  loop
+    execute format( 'SELECT GREATEST(COALESCE(MAX(%1$I), 0) + 1, 1) FROM %2$s', r.column_name, r.tbl_fqname)
+        into next_value;
+    execute format('SELECT setval(%L::regclass, %s, false)', r.seq_fqname, next_value);
+  end loop;
 end $$;
 
 -- =============================================================================
