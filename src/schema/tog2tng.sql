@@ -57,9 +57,16 @@ begin
 
     -- sources
     insert into digidiggie_tng.sources (source_id, source_name, source_abbreviation)
-    select source_id, source_name, source_abbreviation
-    from digidiggie_tog.sources;
+        select source_id, source_name, source_abbreviation
+        from digidiggie_tog.sources;
 
+    -- land right status
+    insert into digidiggie_tng.land_rights_status (land_rights_status_id, land_rights_status, description)
+        values (1, 'Nja', 'Land rights status uncertain'),
+               (2, 'Ja', 'Owned land'),
+               (3, 'Nej', 'Not owned land');
+
+        
     -- FIXME: #14 Update to correspond with placeaname table in the database (see branch "placenames")
     -- placenames (if exists)
     -- insert into digidiggie_tng.placenames (
@@ -77,30 +84,6 @@ begin
     -- on conflict (fid) do nothing;
 
     raise notice 'step 1 completed: simple lookup tables migrated';
-end $$;
-
-/***********************************************************************************************************
-** STEP 2: Create land_right_status lookup table from old data
-************************************************************************************************************/
-
-do $$
-begin
-    raise notice 'step 2: creating land_right_status lookup table...';
-
-    -- Insert distinct land_rights_status values
-    insert into digidiggie_tng.land_right_status (land_rights_status_id, land_rights_status)
-    select 
-        row_number() over (order by coalesce(land_rights_status, 'unknown')) as land_rights_status_id,
-        coalesce(land_rights_status, 'unknown') as land_rights_status
-    from (
-        select distinct land_rights_status
-        from digidiggie_tog.entries
-        where land_rights_status is not null and land_rights_status != ''
-        union
-        select 'unknown' -- ensure we have a default value
-    ) sub;
-
-    raise notice 'step 2 completed: land_right_status lookup created';
 end $$;
 
 /***********************************************************************************************************
