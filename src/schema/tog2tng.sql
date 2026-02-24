@@ -111,6 +111,7 @@ do $$
 begin
     raise notice 'step 3: creating court cases...';
 
+    -- TODO: #17 Add  `district_court_name` to court_cases table and populate it from old schema if possible. No direct mapping in old schema, may require manual population or inference from source_id.
     -- create court_cases by grouping entries that belong to the same case
     -- a court case is identified by unique combinations of source_id + reference_number
     insert into digidiggie_tng.court_cases (source_id, reference_number, case_date, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
