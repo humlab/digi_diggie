@@ -174,7 +174,8 @@ create index "communities_parish_id_idx" on "communities" using btree (
   "parish_id" "pg_catalog"."int4_ops" asc nulls last
 );
 create index "court_cases_case_date_idx" on "court_cases" using btree (
-  "case_date" "pg_catalog"."date_ops" asc nulls last
+  -- "case_date" "pg_catalog"."date_ops" asc nulls last -- FIXME: #16 `case_date` is currently an integer, should it be changed to a date type?
+  "case_date" "pg_catalog"."int4_ops" asc nulls last
 );
 create index "court_cases_reference_number_idx" on "court_cases" using btree (
   "reference_number" "pg_catalog"."text_ops" asc nulls last
