@@ -1,3 +1,6 @@
+-- Ensure PostGIS extension exists in public schema
+create extension if not exists postgis schema public;
+
 drop schema if exists digidiggie_tog cascade;
 create schema digidiggie_tog;
 
@@ -73,7 +76,7 @@ create table persons (
 );
 
 
-create table placenames (
+create table digidiggie_tog.placenames (
     "fid" integer primary key,
     "geom" text,
     "ortnamn" text,
