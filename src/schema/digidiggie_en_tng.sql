@@ -1,3 +1,6 @@
+-- Enable PostGIS extension for geometry types in public schema
+create extension if not exists postgis schema public;
+
 drop schema if exists digidiggie_tng cascade;
 create schema digidiggie_tng;
 
@@ -23,11 +26,11 @@ create table court_cases (
 create table entries (
     "entry_id" serial primary key,
     "court_case_id" integer not null,
-    "year" integer,
+    "entry_year" integer,
     "curated_text" text,
+    "source_placename" text,
     "season_id" integer,
     "land_use_id" integer,
-    "original_placename" varchar(50),
     "placename_id" integer
 );
 
@@ -94,21 +97,20 @@ create table persons (
     ) stored
 );
 
-
 create table  placenames (
-    "id" serial primary key, --> placename_id
-    "ortnamn" text, --> placename
-    "n" double precision, --> north_coord
-    "e" double precision, --> east_coord
-    "lopnr" text, --> serial_number TODO: Check
-    "namntyp_nr" text, --name_type_code
-    "språk_nr" text, --> language_code
-    "sockenstad_nr" text, -- parish_code
-    "lan_nr" text, --> county_code
-    "kommun_nr" text, --> municipality_code
-    "kombo" text, --> combined_placename TODO: Check
-    "sockenstad" text, --> parish_name
-    "nr" text -- FIXME: #4 `nr` seems to be a duplicate of `sockenstad_nr`, but we need to check the data to be sure
+    "placename_id" serial primary key,  --> id
+    "placename" text,                   --> ortnamn
+    "northing" integer,                 --> n SWEREF 99 TM (EPSG:3006)
+    "easting" integer,                  --> e SWEREF 99 TM (EPSG:3006)
+    "serial_number" text,               --> lopnr
+    "name_type_code" text,              --> namntyp_nr
+    "language_code" text,               --> språk_nr
+    "parish_code" text,                 --> sockenstad_nr
+    "county_code" text,                 --> lan_nr
+    "municipality_code" text,           --> kommun_nr
+    "combined_placename" text,          --> kombo TODO: Check
+    "parish_name" text,
+    "geom" geometry(Point, 4326)        --> WGS84 (EPSG:4326)
 );
 
 create table roles (
@@ -159,7 +161,7 @@ alter table "person_entries" add constraint "person_entries_actor_id_fkey" forei
 alter table "person_entries" add constraint "person_entries_community_id_fkey" foreign key ("community_id") references "communities" ("community_id") on delete no action on update no action;
 alter table "person_entries" add constraint "person_entries_entry_id_fkey" foreign key ("entry_id") references "entries" ("entry_id") on delete cascade on update no action;
 alter table "person_entries" add constraint "person_entries_role_id_fkey" foreign key ("role_id") references "roles" ("role_id") on delete no action on update no action;
-alter table "person_entries" add constraint "fk_person_entries_land_right_status_1" foreign key ("land_rights_status_id") references "land_right_status" ("land_rights_status_id");
+alter table "person_entries" add constraint "fk_person_entries_land_rights_status_1" foreign key ("land_rights_status_id") references "land_rights_status" ("land_rights_status_id");
 alter table "person_outcomes" add constraint "person_outcomes_outcome_type_id_fkey" foreign key ("outcome_type_id") references "outcome_types" ("outcome_type_id") on delete no action on update no action;
 alter table "person_outcomes" add constraint "person_outcomes_person_id_fkey" foreign key ("person_id") references "persons" ("person_id") on delete no action on update no action;
 alter table "person_outcomes" add constraint "person_outcomes_ruling_id_fkey" foreign key ("ruling_id") references "rulings" ("ruling_id") on delete cascade on update no action;
@@ -175,9 +177,8 @@ alter table "rulings" add constraint "fk_rulings_ruling_type_1" foreign key ("ru
 create index "communities_parish_id_idx" on "communities" using btree (
   "parish_id" "pg_catalog"."int4_ops" asc nulls last
 );
-create index "court_cases_case_date_idx" on "court_cases" using btree (
-  -- "case_date" "pg_catalog"."date_ops" asc nulls last -- FIXME: #16 `case_date` is currently an integer, should it be changed to a date type?
-  "case_date" "pg_catalog"."int4_ops" asc nulls last
+create index "court_cases_case_year_idx" on "court_cases" using btree (
+  "case_year" "pg_catalog"."int4_ops" asc nulls last
 );
 create index "court_cases_reference_number_idx" on "court_cases" using btree (
   "reference_number" "pg_catalog"."text_ops" asc nulls last
