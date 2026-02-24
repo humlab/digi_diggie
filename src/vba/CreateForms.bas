@@ -51,8 +51,7 @@ Public Sub CreateSpecificForms(Optional addCtrlPrefixes As Boolean = True, Optio
     AddConfig dictLookups, "entries", "winner_id", "SELECT [winners].[winner_id], [winners].[winner_description] FROM [winners] ORDER BY [winner_description]"
     AddConfig dictLookups, "entries", "legal_source_id", "SELECT [legal_sources].[legal_source_id], [legal_sources].[legal_source_name] FROM [legal_sources] ORDER BY [legal_source_name]"
     AddConfig dictLookups, "entries", "judgement_id", "SELECT [judgements].[judgement_id], [judgements].[sanction] FROM [judgements] ORDER BY [sanction]"
-    ' FIXME: Update to use placenames table
-    ' AddConfig dictLookups, "entries", "placename_id", "SELECT [Ortnamn_ny1].[ID], [Ortnamn_ny1].[Kombo] FROM Ortnamn_ny1 ORDER BY [Kombo]"
+    AddConfig dictLookups, "entries", "placename_id", "SELECT [placenames].[id], [placenames].[kombo] FROM [placenames] ORDER BY [kombo]"
     AddConfig dictLookups, "persons", "community_name", "SELECT [communities].[community_name] FROM [communities] ORDER BY [community_name]"
 
     ' Define the list of tables to process
