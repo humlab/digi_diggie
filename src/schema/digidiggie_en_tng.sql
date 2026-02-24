@@ -154,28 +154,45 @@ create table source (
     "source_abbreviation" varchar(255)
 );
 
+create table person_relationship (
+    "person_relationship_id" serial primary key,
+    "person_1_id" integer not null references "person" ("person_id"),
+    "person_2_id" integer not null references "person" ("person_id"),
+    "relationship_type_id" integer not null references "relationship_type" ("relationship_type_id"),
+    "description" text
+);
+
+create table relationship_type (
+    "relationship_type_id" serial primary key,
+    "relationship_type_name" text not null,
+    "description" text not null,
+    constraint "relationship_types_relationship_type_name_key" unique ("relationship_type_name")
+);
+
 /***********************************************************************************************************
 ** Foreign key constraints
 ************************************************************************************************************/
 
-alter table "community" add constraint "community_parish_id_fkey" foreign key ("parish_id") references "parish" ("parish_id") on delete no action on update no action;
-alter table "court_case" add constraint "court_case_source_id_fkey" foreign key ("source_id") references "source" ("source_id") on delete no action on update no action;
-alter table "entry" add constraint "entry_court_case_id_fkey" foreign key ("court_case_id") references "court_case" ("court_case_id") on delete cascade on update no action;
-alter table "entry" add constraint "entry_land_use_id_fkey" foreign key ("land_use_id") references "land_use" ("land_use_id") on delete no action on update no action;
--- FIXME: #13 Update to constraint to reference correct column in `placename`.
--- alter table "entry" add constraint "entry_placename_id_fkey" foreign key ("placename_id") references "placename" ("fid") on delete no action on update no action;
-alter table "entry" add constraint "entry_season_id_fkey" foreign key ("season_id") references "season" ("season_id") on delete no action on update no action;
-alter table "person_entry" add constraint "person_entry_actor_id_fkey" foreign key ("actor_id") references "person" ("person_id") on delete no action on update no action;
-alter table "person_entry" add constraint "person_entry_community_id_fkey" foreign key ("community_id") references "community" ("community_id") on delete no action on update no action;
-alter table "person_entry" add constraint "person_entry_entry_id_fkey" foreign key ("entry_id") references "entry" ("entry_id") on delete cascade on update no action;
-alter table "person_entry" add constraint "person_entry_role_id_fkey" foreign key ("role_id") references "role" ("role_id") on delete no action on update no action;
+alter table "community" add constraint "community_parish_id_fkey" foreign key ("parish_id") references "parish" ("parish_id");
+alter table "court_case" add constraint "court_case_source_id_fkey" foreign key ("source_id") references "source" ("source_id");
+alter table "entry" add constraint "entry_court_case_id_fkey" foreign key ("court_case_id") references "court_case" ("court_case_id");
+alter table "entry" add constraint "entry_land_use_id_fkey" foreign key ("land_use_id") references "land_use" ("land_use_id");
+-- alter table "entry" add constraint "entry_placename_id_fkey" foreign key ("placename_id") references "placename" ("fid");
+alter table "entry" add constraint "entry_season_id_fkey" foreign key ("season_id") references "season" ("season_id");
+alter table "person_entry" add constraint "person_entry_actor_id_fkey" foreign key ("actor_id") references "person" ("person_id");
+alter table "person_entry" add constraint "person_entry_community_id_fkey" foreign key ("community_id") references "community" ("community_id");
+alter table "person_entry" add constraint "person_entry_entry_id_fkey" foreign key ("entry_id") references "entry" ("entry_id");
+alter table "person_entry" add constraint "person_entry_role_id_fkey" foreign key ("role_id") references "role" ("role_id");
 alter table "person_entry" add constraint "fk_person_entry_land_rights_status_1" foreign key ("land_rights_status_id") references "land_rights_status" ("land_rights_status_id");
-alter table "person_outcomes" add constraint "person_outcomes_outcome_type_id_fkey" foreign key ("outcome_type_id") references "outcome_types" ("outcome_type_id") on delete no action on update no action;
-alter table "person_outcomes" add constraint "person_outcomes_person_id_fkey" foreign key ("person_id") references "person" ("person_id") on delete no action on update no action;
-alter table "person_outcomes" add constraint "person_outcomes_ruling_id_fkey" foreign key ("ruling_id") references "rulings" ("ruling_id") on delete cascade on update no action;
-alter table "rulings" add constraint "rulings_court_case_id_fkey" foreign key ("court_case_id") references "court_cases" ("court_case_id") on delete cascade on update no action;
-alter table "rulings" add constraint "rulings_legal_source_id_fkey" foreign key ("legal_source_id") references "legal_sources" ("legal_source_id") on delete no action on update no action;
-alter table "rulings" add constraint "fk_rulings_ruling_type_1" foreign key ("ruling_type_id") references "ruling_type" ("ruling_type_id");
+alter table "person_outcome" add constraint "person_outcomes_outcome_type_id_fkey" foreign key ("outcome_type_id") references "outcome_type" ("outcome_type_id") on delete no action on update no action;
+alter table "person_outcome" add constraint "person_outcomes_person_id_fkey" foreign key ("person_id") references "person" ("person_id") on delete no action on update no action;
+alter table "person_outcome" add constraint "person_outcomes_ruling_id_fkey" foreign key ("ruling_id") references "ruling" ("ruling_id") on delete cascade on update no action;
+alter table "ruling" add constraint "rulings_court_case_id_fkey" foreign key ("court_case_id") references "court_case" ("court_case_id") on delete cascade on update no action;
+alter table "ruling" add constraint "rulings_legal_source_id_fkey" foreign key ("legal_source_id") references "legal_source" ("legal_source_id") on delete no action on update no action;
+alter table "ruling" add constraint "fk_rulings_ruling_type_1" foreign key ("ruling_type_id") references "ruling_type" ("ruling_type_id");
+alter table "person_relationship" add constraint "person_relationship_person_1_id_fkey" foreign key ("person_1_id") references "person" ("person_id");
+alter table "person_relationship" add constraint "person_relationship_person_2_id_fkey" foreign key ("person_2_id") references "person" ("person_id");
+alter table "person_relationship" add constraint "person_relationship_relationship_type_id_fkey" foreign key ("relationship_type_id") references "relationship_type" ("relationship_type_id");
 
 
 /***********************************************************************************************************
