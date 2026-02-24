@@ -15,8 +15,9 @@ create table court_cases (
     "source_id" integer not null,
     "reference_number" varchar(16),
     "district_court_name" text,
-    "case_date" integer,
-    "source_text" text
+    "case_year" integer,
+    "source_text" text,
+    constraint "court_cases_source_id_key" unique ("source_id", "reference_number", "case_year")
 );
 
 create table entries (
