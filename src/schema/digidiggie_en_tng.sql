@@ -7,31 +7,31 @@ set role gudrun;
 create table communities (
     "community_id" serial not null primary key,
     "community_name" text not null default ''::text,
-    "parish_id" int4
+    "parish_id" integer
 );
 
 create table court_cases (
     "court_case_id" serial primary key,
-    "source_id" int4 not null,
+    "source_id" integer not null,
     "reference_number" varchar(16),
     "district_court_name" text,
-    "case_date" int,
+    "case_date" integer,
     "source_text" text
 );
 
 create table entries (
     "entry_id" serial primary key,
-    "court_case_id" int4 not null,
-    "year" int4,
+    "court_case_id" integer not null,
+    "year" integer,
     "curated_text" text,
-    "season_id" int4,
-    "land_use_id" int4,
+    "season_id" integer,
+    "land_use_id" integer,
     "original_placename" varchar(50),
-    "placename_id" int4
+    "placename_id" integer
 );
 
 create table land_right_status (
-  "land_rights_status_id" int4 not null primary key,
+  "land_rights_status_id" integer not null primary key,
   "land_rights_status" varchar(255) not null
 );
 
@@ -53,11 +53,11 @@ create table parishes (
 
 create table person_entries (
     "person_entry_id" serial primary key,
-    "entry_id" int4 not null,
-    "actor_id" int4 not null,
-    "community_id" int4,
-    "land_rights_status_id" int4 not null,
-    "role_id" int4,
+    "entry_id" integer not null,
+    "actor_id" integer not null,
+    "community_id" integer,
+    "land_rights_status_id" integer not null,
+    "role_id" integer,
     "curated_text" text
 );
 
@@ -70,9 +70,9 @@ create table outcome_types (
 
 create table "person_outcomes" (
     "person_outcome_id" serial primary key,
-    "ruling_id" int4 not null,
-    "person_id" int4 not null,
-    "outcome_type_id" int4 not null,
+    "ruling_id" integer not null,
+    "person_id" integer not null,
+    "outcome_type_id" integer not null,
     "description" text
 );
 
@@ -85,6 +85,7 @@ create table persons (
     "birth_year" integer,
     "death_year" integer,
     "community_name" text,
+    "note" text null,
     "full_name" text generated always as (
         ((((coalesce("given_name", ''::text) || ' '::text) ||
             coalesce("patronymic", ''::text)) || ' '::text) ||
@@ -122,17 +123,17 @@ create table seasons (
 );
 
 create table ruling_type (
-    "ruling_type_id" int4 not null primary key,
+    "ruling_type_id" serial primary key,
     "ruling_type" varchar(255) not null
 );
 
 create table rulings (
     "ruling_id" serial primary key,
-    "court_case_id" int4 not null,
-    "year" int4,
+    "court_case_id" integer not null,
+    "year" integer,
     "description" text,
-    "ruling_type_id" int4 not null,
-    "legal_source_id" int4,
+    "ruling_type_id" integer not null,
+    "legal_source_id" integer,
     constraint "rulings_court_case_id_key" unique ("court_case_id")
 );
 
