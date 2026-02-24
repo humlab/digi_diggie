@@ -51,8 +51,8 @@ begin
 
     -- TODO: ruling types
     insert into digidiggie_tng.ruling_type (ruling_type_id, ruling_type)
-    select judgement_id as ruling_type_id, sanction as ruling_type
-    from digidiggie_tog.judgements;
+        select judgement_id as ruling_type_id, sanction as ruling_type
+        from digidiggie_tog.judgements;
 
     -- sources
     insert into digidiggie_tng.sources (source_id, source_name, source_abbreviation)
@@ -65,46 +65,62 @@ begin
                (2, 'Ja', 'Owned land'),
                (3, 'Nej', 'Not owned land');
 
-        
-    -- FIXME: #14 Update to correspond with placeaname table in the database (see branch "placenames")
-    -- placenames (if exists)
-    -- insert into digidiggie_tng.placenames (
-    --     fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
-    --     uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
-    --     lan, kommun, socken, geom_point
-    -- )
-    -- select 
-    --     fid, objektidentitet, objektversion, objekttypnr, objekttyp, 
-    --     uuid, versiongiltigfran, namn, namntyp, naturrumtyp, language, 
-    --     lan, kommun, socken, geom_point
-    -- from digidiggie_tog.placenames
-    -- where exists (select 1 from information_schema.tables 
-    --             where table_schema = 'digidiggie_tog' and table_name = 'placenames')
-    -- on conflict (fid) do nothing;
-
-    raise notice 'step 1 completed: simple lookup tables migrated';
 
     /***********************************************************************************************************
-    ** STEP 3: Create court_cases from entries
+    ** STEP    Populate placenames (if exists))
+    ************************************************************************************************************/
+
+    -- FIXME: #14 Update to correspond with placeaname table in the database (see branch "placenames")
+    -- placenames (if exists)
+    insert into digidiggie_tng.placenames (
+        "placename_id",
+        "placename",
+        "northing",
+        "easting",
+        "serial_number",
+        "name_type_code",
+        "language_code",
+        "parish_code",
+        "county_code",
+        "municipality_code",
+        "combined_placename",
+        "parish_name"
+    )
+    select 
+        "fid" as "placename_id",
+        "ortnamn" as "placename",
+        "nkoordinat" as "northing",
+        "ekoordinat" as "easting",
+        "lopnummer"::numeric(10,1)::int as "serial_number",
+        "detaljtyp" as "name_type_code",
+        "sprak" as "language_code",
+        "sockenstadkod" as "parish_code",
+        "lanskod" as "county_code",
+        "kommunkod" as "municipality_code",
+        -- "kombo" as "combined_placename",
+        "sockenstadnamn" as "parish_name",
+        st_transform(st_setsrid(st_makepoint(622159, 7286643), 3006), 4326) as geom
+    from digidiggie_tog.placenames
+    
+    on conflict (fid) do nothing;
+
+select * from digidiggie_tog.placenames limit 10
+    /***********************************************************************************************************
+    ** STEP    Create court_cases from entries
     **         A Court Case SHOULD be uniquely identified by source_id + reference_number
     ** FIX     Added "case_year" to uniquely identify cases
     ** FIX     Case "description" is now aggregated from all entries linked to the same case, separated by "; "
     **         It should however be noted that the case description is supposed to be true to the source.
+    ** TODD    Where does "district_courrt_name" come from? Is it in the source data? If not, we can leave it null for now and populate it later if needed.
     ************************************************************************************************************/
 
-    raise notice 'step 3: creating court cases...';
-
-    -- TODO: #17 Add  `district_court_name` to court_cases table and populate it from old schema if possible. No direct mapping in old schema, may require manual population or inference from source_id.
-    -- create court_cases by grouping entries that belong to the same case
-    -- a court case is identified by unique combinations of source_id + reference_number
-    insert into digidiggie_tng.court_cases (source_id, reference_number, case_date, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
-    -- select distinct source_id, reference_number, "year" as case_date, null as source_text
-    -- from digidiggie_tog.entries;
-    select source_id, reference_number, "year" as case_date, string_agg(distinct description, '; ') -- FIXME: No constraint
-    from digidiggie_tog.entries
-	group by 1,2,3;
+    insert into digidiggie_tng.court_cases (source_id, reference_number, case_year, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
+        select source_id, reference_number, "year" as case_year, string_agg(distinct description, '; ') -- FIXME: No constraint
+        from digidiggie_tog.entries
+        group by 1, 2, 3;
 
     raise notice 'step 3 completed: court cases created';
+
 end $$;
 
 
