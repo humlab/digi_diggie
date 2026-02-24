@@ -7,17 +7,16 @@
 
 -- create schema digidiggie_tng;
 
+
 do $$
 begin
+
     raise notice 'Starting migration from old TOG to new TNG digidiggie_tng schema...';
-end $$;
 
-/***********************************************************************************************************
-** STEP 1: Migrate simple lookup tables (direct copies)
-************************************************************************************************************/
+    /***********************************************************************************************************
+    ** STEP 1: Migrate simple lookup tables (direct copies)
+    ************************************************************************************************************/
 
-do $$
-begin
     raise notice 'step 1: migrating simple lookup tables...';
 
     -- parishes
@@ -50,7 +49,7 @@ begin
         select season_id, season_name
         from digidiggie_tog.seasons;
 
-    -- ruling types
+    -- TODO: ruling types
     insert into digidiggie_tng.ruling_type (ruling_type_id, ruling_type)
     select judgement_id as ruling_type_id, sanction as ruling_type
     from digidiggie_tog.judgements;
@@ -84,14 +83,15 @@ begin
     -- on conflict (fid) do nothing;
 
     raise notice 'step 1 completed: simple lookup tables migrated';
-end $$;
 
-/***********************************************************************************************************
-** STEP 3: Create court_cases from entries
-************************************************************************************************************/
+    /***********************************************************************************************************
+    ** STEP 3: Create court_cases from entries
+    **         A Court Case SHOULD be uniquely identified by source_id + reference_number
+    ** FIX     Added "case_year" to uniquely identify cases
+    ** FIX     Case "description" is now aggregated from all entries linked to the same case, separated by "; "
+    **         It should however be noted that the case description is supposed to be true to the source.
+    ************************************************************************************************************/
 
-do $$
-begin
     raise notice 'step 3: creating court cases...';
 
     -- TODO: #17 Add  `district_court_name` to court_cases table and populate it from old schema if possible. No direct mapping in old schema, may require manual population or inference from source_id.
@@ -106,6 +106,7 @@ begin
 
     raise notice 'step 3 completed: court cases created';
 end $$;
+
 
 -- FIXME: #9 Update to handle court_case_id mapping correctly. Fixed?
 /***********************************************************************************************************
@@ -131,7 +132,7 @@ begin
     left join digidiggie_tng.court_cases cc on 
         cc.source_id = e.source_id
       and (cc.reference_number = e.reference_number)
-      and (cc.case_date = e.year)
+      and (cc.case_year = e.year)
     where cc.court_case_id is not null;
 
     raise notice 'step 4 completed: entries created';
