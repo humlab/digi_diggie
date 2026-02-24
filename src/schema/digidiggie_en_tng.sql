@@ -130,12 +130,15 @@ create table role (
 
 create table season (
     "season_id" serial primary key,
-    "season_name" text not null default ''::text
+    "season_name" text not null default ''::text,
+    constraint "seasons_season_name_key" unique ("season_name")
 );
 
 create table ruling_type (
     "ruling_type_id" serial primary key,
-    "ruling_type" varchar(255) not null
+    "ruling_type" varchar(255) not null,
+    "description" text not null,
+    constraint "ruling_types_ruling_type_key" unique ("ruling_type")
 );
 
 create table ruling (
