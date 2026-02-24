@@ -304,12 +304,12 @@ begin
     raise notice '========================================';
     raise notice 'Migration Summary:';
     raise notice '========================================';
-    raise notice 'Communities migrated: %', communities_count;
-    raise notice 'Parishes migrated: %', parishes_count;
-    raise notice 'Persons migrated: %', persons_count;
-    raise notice 'Court cases created: %', court_cases_count;
-    raise notice 'Entries migrated: %', entries_count;
-    raise notice 'Person entries created: %', person_entries_count;
+    raise notice ' Communities migrated: %', communities_count;
+    raise notice ' Parishes migrated: %', parishes_count;
+    raise notice ' Persons migrated: %', persons_count;
+    raise notice ' Court cases created: %', court_cases_count;
+    raise notice ' Entries migrated: %', entries_count;
+    raise notice ' Person entries created: %', person_entries_count;
     raise notice '========================================';
     raise notice 'Migration completed successfully!';
     raise notice '========================================';
