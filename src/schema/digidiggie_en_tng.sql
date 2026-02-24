@@ -156,9 +156,9 @@ create table source (
 
 create table person_relationship (
     "person_relationship_id" serial primary key,
-    "person_1_id" integer not null references "person" ("person_id"),
-    "person_2_id" integer not null references "person" ("person_id"),
-    "relationship_type_id" integer not null references "relationship_type" ("relationship_type_id"),
+    "person_1_id" integer not null,
+    "person_2_id" integer not null,
+    "relationship_type_id" integer not null,
     "description" text
 );
 
