@@ -1,15 +1,22 @@
+-- run drop_all first to ensure clean state
 
-alter table placenames alter column geom type text using geom::text;
+drop table if exists public.placenames cascade;
 
-\copy placenames(fid, geom, ortnamn, kvartsruta, nkoordinat, ekoordinat, lanskod, kommunkod, detaljtyp, sprak, lopnummer, sockenstadkod, sockenstadnamn) FROM 'resources/ortnamn.csv' WITH (FORMAT csv, HEADER true);
+create table if not exists "placenames"
+ (
+    "id" serial primary key,
+    "ortnamn" text,
+    "n" double precision,
+    "e" double precision,
+    "lopnr" text,
+    "namntyp_nr" text,
+    "språk_nr" text,
+    "sockenstad_nr" text,
+    "lan_nr" text,
+    "kommun_nr" text,
+    "kombo" text,
+    "sockenstad" text,
+    "nr" text    
+);
 
-alter table placenames
-  add column geom_point geometry(point, 3006);  -- or 4326, depending on crs
-
-update placenames
-  set geom_point = st_setsrid(st_makepoint(ekoordinat, nkoordinat), 3006);
-
-
-/* example use:
-SELECT ST_AsGeoJSON(ST_Transform(geom, 4326)) FROM placenames;
-*/
+\copy placenames(id, ortnamn, n, e, lopnr, namntyp_nr, språk_nr, sockenstad_nr, lan_nr, kommun_nr, kombo, sockenstad, nr) FROM 'resources/placenames.csv' WITH (FORMAT csv, HEADER true, ENCODING 'WIN1252');

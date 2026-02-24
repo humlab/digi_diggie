@@ -18,5 +18,4 @@ dev:
 
 
 load-test-db: 
-	@./scripts/mdb-to-pg load --database $(TEST_POSTGRES_DB) --schema public --host $(HOST) --user $(TEST_POSTGRES_USER) --port $(TEST_POSTGRES_PORT) data/digidiggie_original.accdb
-
+	@./scripts/mdb-to-pg load --database $(TEST_POSTGRES_DB) --schema public --host $(HOST) --user $(TEST_POSTGRES_USER) --port $(TEST_POSTGRES_PORT) data/digidiggie_dev.accdb
