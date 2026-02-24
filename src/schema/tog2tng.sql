@@ -37,18 +37,18 @@ begin
     
     -- land use
     insert into digidiggie_tng.land_use (land_use_id, description)
-    select land_use_id, type as description
-    from digidiggie_tog.land_use;
+        select land_use_id, type as description
+        from digidiggie_tog.land_use;
 
     -- legal sources
     insert into digidiggie_tng.legal_sources (legal_source_id, legal_source_name)
-    select legal_source_id, legal_source_name
-    from digidiggie_tog.legal_sources;
+        select legal_source_id, legal_source_name
+        from digidiggie_tog.legal_sources;
 
     -- seasons
     insert into digidiggie_tng.seasons (season_id, season_name)
-    select season_id, season_name
-    from digidiggie_tog.seasons;
+        select season_id, season_name
+        from digidiggie_tog.seasons;
 
     -- ruling types
     insert into digidiggie_tng.ruling_type (ruling_type_id, ruling_type)
