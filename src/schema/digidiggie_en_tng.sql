@@ -199,57 +199,21 @@ alter table "person_relationship" add constraint "person_relationship_relationsh
 ** Indexes
 ************************************************************************************************************/
 
-create index "communities_parish_id_idx" on "community" using btree (
-  "parish_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "court_cases_case_year_idx" on "court_cases" using btree (
-  "case_year" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "court_cases_reference_number_idx" on "court_case" using btree (
-  "reference_number" "pg_catalog"."text_ops" asc nulls last
-);
-create index "court_cases_source_id_idx" on "court_case" using btree (
-  "source_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "entries_reference_number_idx" on "entry" using btree (
-  "reference_number" "pg_catalog"."text_ops" asc nulls last
-);
-create index "entries_court_case_id_idx" on "entry" using btree (
-  "court_case_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "entries_land_use_id_idx" on "entry" using btree (
-  "land_use_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "entries_placename_id_idx" on "entry" using btree (
-  "placename_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "rulings_legal_source_id_idx" on "rulings" using btree (
-  "legal_source_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "entries_season_id_idx" on "entry" using btree (
-  "season_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "parishes_parish_idx" on "parish" using btree (
-  "parish" "pg_catalog"."text_ops" asc nulls last
-);
-create index "person_entries_actor_id_idx" on "person_entry" using btree (
-  "actor_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "person_entries_community_id_idx" on "person_entry" using btree (
-  "community_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "person_entries_entry_id_idx" on "person_entries" using btree (
-  "entry_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "person_outcomes_outcome_type_id_idx" on "person_outcomes" using btree (
-  "outcome_type_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "person_outcomes_person_id_idx" on "person_outcomes" using btree (
-  "person_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "person_outcomes_ruling_id_idx" on "person_outcomes" using btree (
-  "ruling_id" "pg_catalog"."int4_ops" asc nulls last
-);
-create index "seasons_season_name_idx" on "seasons" using btree (
-  "season_name" "pg_catalog"."text_ops" asc nulls last
-);
+create index "communities_parish_id_idx" on "community" ( "parish_id");
+create index "court_cases_case_year_idx" on "court_case" ( "case_year" );
+create index "court_cases_reference_number_idx" on "court_case" ( "reference_number" );
+create index "court_cases_source_id_idx" on "court_case" ( "source_id" );
+create index "entries_reference_number_idx" on "entry" ( "reference_number" );
+create index "entries_court_case_id_idx" on "entry" ( "court_case_id" );
+create index "entries_land_use_id_idx" on "entry" ( "land_use_id" );
+create index "entries_placename_id_idx" on "entry" ( "placename_id" );
+create index "rulings_legal_source_id_idx" on "ruling" ( "legal_source_id" );
+create index "entries_season_id_idx" on "entry" ( "season_id" );
+create index "parishes_parish_idx" on "parish" ( "parish" );
+create index "person_entries_actor_id_idx" on "person_entry" ( "actor_id" );
+create index "person_entries_community_id_idx" on "person_entry" ( "community_id" );
+create index "person_entries_entry_id_idx" on "person_entry" ( "entry_id" );
+create index "person_outcomes_outcome_type_id_idx" on "person_outcome" ( "outcome_type_id" );
+create index "person_outcomes_person_id_idx" on "person_outcome" ( "person_id" );
+create index "person_outcomes_ruling_id_idx" on "person_outcome" ( "ruling_id" );
+create index "seasons_season_name_idx" on "season" ( "season_name" );
