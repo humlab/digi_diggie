@@ -65,6 +65,30 @@ begin
                (2, 'Ja', 'Owned land'),
                (3, 'Nej', 'Not owned land');
 
+    -- Ruling types
+    insert into digidiggie_tng.ruling_type ("ruling_type_id", "ruling_type", "description")
+        values (1, 'Dom', 'Dom utfärdad av tinget'),
+               (2, 'Förlikning', 'Förlikning mellan parterna'),
+               (3, 'Hänvisning', 'Hänvisning till annan domstol eller myndighet'),
+               (4, 'Annan', 'Annan typ av domstolsavgörande'),
+               (5, 'Okänd', 'Okänd typ av domstolsavgörande');
+
+    insert into digidiggie_tng.roles ("role_id", "role_name", "description")
+        values (1, 'Klagande', 'Part som klagar på en annan part'),
+               (2, 'Svarande', 'Part som svarar på en klagan'),
+               (3, 'Vittne', 'Person som vittnar i en rättegång'),
+               (4, 'Annan', 'Annan roll i en rättegång'),
+               (5, 'Okänd', 'Okänd roll i en rättegång');
+
+    insert into digidiggie_tng.role_type ("role_id", "role_name", "description")
+        values (1, 'Klagande', 'Part som klagar på en annan part'),
+               (2, 'Svarande', 'Part som svarar på en klagan'),
+               (3, 'Vittne', 'Person som vittnar i en rättegång'),
+               (4, 'Annan', 'Annan roll i en rättegång'),
+               (5, 'Okänd', 'Okänd roll i en rättegång');
+
+select *
+from digidiggie_tog.judgements;
 
     /***********************************************************************************************************
     ** STEP    Populate placenames (if exists))
@@ -101,10 +125,8 @@ begin
         "sockenstadnamn" as "parish_name",
         st_transform(st_setsrid(st_makepoint(622159, 7286643), 3006), 4326) as geom
     from digidiggie_tog.placenames
-    
-    on conflict (fid) do nothing;
+    on conflict (placename_id) do nothing;
 
-select * from digidiggie_tog.placenames limit 10
     /***********************************************************************************************************
     ** STEP    Create court_cases from entries
     **         A Court Case SHOULD be uniquely identified by source_id + reference_number
@@ -261,45 +283,4 @@ begin
         into next_value;
     execute format('SELECT setval(%L::regclass, %s, false)', r.seq_fqname, next_value);
   end loop;
-end $$;
-
-/***********************************************************************************************************
-** Summary
-************************************************************************************************************/
-
-do $$
-declare
-    communities_count integer;
-    parishes_count integer;
-    persons_count integer;
-    entries_count integer;
-    court_cases_count integer;
-    person_entries_count integer;
-begin
-    select count(*) into communities_count from digidiggie_tng.communities;
-    select count(*) into parishes_count from digidiggie_tng.parishes;
-    select count(*) into persons_count from digidiggie_tng.persons;
-    select count(*) into entries_count from digidiggie_tng.entries;
-    select count(*) into court_cases_count from digidiggie_tng.court_cases;
-    select count(*) into person_entries_count from digidiggie_tng.person_entries;
-    
-    raise notice '========================================';
-    raise notice 'Migration Summary:';
-    raise notice '========================================';
-    raise notice ' Communities migrated: %', communities_count;
-    raise notice ' Parishes migrated: %', parishes_count;
-    raise notice ' Persons migrated: %', persons_count;
-    raise notice ' Court cases created: %', court_cases_count;
-    raise notice ' Entries migrated: %', entries_count;
-    raise notice ' Person entries created: %', person_entries_count;
-    raise notice '========================================';
-    raise notice 'Migration completed successfully!';
-    raise notice '========================================';
-    raise notice '';
-    raise notice 'NOTE: The following tables were created but may need manual data entry:';
-    raise notice '  - roles (new concept, no source data)';
-    raise notice '  - outcome_types (new concept, no source data)';
-    raise notice '  - person_outcomes (new concept, no source data)';
-    raise notice '  - ruling_type (new concept, no source data)';
-    raise notice '  - rulings.ruling_type_id needs to be populated';
 end $$;
