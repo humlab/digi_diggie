@@ -116,7 +116,6 @@ create table  placename (
 create table role_type (
     "role_type_id" serial primary key,
     "role_type_name" text not null,
-    "role_type_id" integer not null,
     "description" text not null,
     constraint "role_types_role_type_name_key" unique ("role_type_name")
 );
@@ -124,6 +123,7 @@ create table role_type (
 create table role (
     "role_id" serial primary key,
     "role_name" text not null,
+    "role_type_id" integer not null,
     "description" text not null,
     constraint "roles_role_name_key" unique ("role_name")
 );
