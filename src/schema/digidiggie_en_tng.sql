@@ -42,14 +42,13 @@ create table legal_sources (
 
 create table land_use (
     "land_use_id" serial primary key,
-    "type" text default ''::text not null
+    "description" text default ''::text not null
 );
 
 create table parishes (
     "parish_id" serial primary key,
     "parish" text not null default ''::text
 );
-
 
 create table person_entries (
     "person_entry_id" serial primary key,

@@ -36,8 +36,8 @@ begin
         from digidiggie_tog.persons;
     
     -- land use
-    insert into digidiggie_tng.land_use (land_use_id, type)
-    select land_use_id, type
+    insert into digidiggie_tng.land_use (land_use_id, description)
+    select land_use_id, description
     from digidiggie_tog.land_use;
 
     -- legal sources
