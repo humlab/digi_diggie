@@ -22,18 +22,18 @@ begin
 
     -- parishes
     insert into digidiggie_tng.parishes (parish_id, parish)
-    select parish_id, parish
-    from digidiggie_tog.parishes;
+        select parish_id, parish
+        from digidiggie_tog.parishes;
 
     -- communities
     insert into digidiggie_tng.communities (community_id, community_name, parish_id)
-    select community_id, community_name, parish_id
-    from digidiggie_tog.communities;
+        select community_id, community_name, parish_id
+        from digidiggie_tog.communities;
 
     -- persons
     insert into digidiggie_tng.persons (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
-    select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
-    from digidiggie_tog.persons;
+        select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
+        from digidiggie_tog.persons;
     
     -- land use
     insert into digidiggie_tng.land_use (land_use_id, type)
