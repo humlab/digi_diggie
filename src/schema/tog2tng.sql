@@ -205,7 +205,7 @@ begin
         year,
         description,
         ruling_type_id,
-        judgement_id, -- FIXME: Not in new schema
+        judgement_id, -- FIXME: Not in new schema. This is located in `person_outcomes` in new schema.
         legal_source_id
     )
     select distinct
