@@ -37,7 +37,7 @@ begin
     
     -- land use
     insert into digidiggie_tng.land_use (land_use_id, description)
-    select land_use_id, description
+    select land_use_id, type as description
     from digidiggie_tog.land_use;
 
     -- legal sources
