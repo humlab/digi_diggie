@@ -27,7 +27,7 @@ begin
     insert into digidiggie_tng.community (community_id, community_name, parish_id)
         select community_id, community_name, parish_id
         from digidiggie_tog.communities;
-    
+   
     -- land use
     insert into digidiggie_tng.land_use (land_use_id, description)
         select land_use_id, type as description
@@ -129,7 +129,7 @@ begin
         "sockenstadnamn" as "parish_name",
         st_transform(st_setsrid(st_makepoint(622159, 7286643), 3006), 4326) as geom
     from digidiggie_tog.placenames
-    on conflict (placename_id) do nothing;
+      on conflict (placename_id) do nothing;
 
     /***********************************************************************************************************
     ** Person: Create person_entry from old entries
@@ -156,15 +156,15 @@ begin
         from digidiggie_tog.entries
         group by 1, 2, 3;
 
-/***********************************************************************************************************
+    /***********************************************************************************************************
     ** STEP     Create court case entries
     ** FIXME    Can entry_year vary over season/land_use/placename???
     ** NOTE     We need to aggregate description and original_placename to avoid duplicates when
     **          multiple entries link to the same case/season/land_use/placename combination.
-************************************************************************************************************/
+    ************************************************************************************************************/
 
     insert into digidiggie_tng.court_case_entry (court_case_id, entry_year, season_id, land_use_id, placename_id, curated_text, original_placename) --original_placename)
-    select 
+        select
             -- Court Case:
             cc.court_case_id                                as court_case_id,
             cast(e.year as integer)                         as entry_year,
@@ -183,12 +183,12 @@ begin
         group by cc.court_case_id, e.year, e.season_id, e.land_use_id, e.placename_id
         ;
 
-
-/***********************************************************************************************************
+    
+    /***********************************************************************************************************
     ** Person Case Entries: Create person_entry from old entries
     ** FIXME: Many NULL values in role_id
     ** FIXME: Perhaps role_id should be not null, and set to "not specified" if NULL
-************************************************************************************************************/
+    ************************************************************************************************************/
 
     insert into digidiggie_tng.person_entry (
         court_case_entry_id, 
@@ -215,7 +215,7 @@ begin
              and lower(trim(cc.reference_number)) = lower(trim(tog.reference_number))
              and tog."year"::int = tng.entry_year
         )
-    select 
+        select 
             m.tng_id as court_case_entry_id,
             coalesce(tog.actor_id, 0) as person_id,
             tog.community_id as community_id,
@@ -321,3 +321,17 @@ begin
     execute format('SELECT setval(%L::regclass, %s, false)', r.seq_fqname, next_value);
   end loop;
 end $$;
+
+
+tog_to_tng as (
+            select tog.entry_id as tog_id, tng.court_case_entry_id as tng_id
+            from digidiggie_tog.entries tog
+            join digidiggie_tng.court_case_entry tng
+              on tog.season_id = tng.season_id
+             and tog.land_use_id = tng.land_use_id
+             and coalesce(tog.placename_id, -1) = coalesce(tng.placename_id, -1)
+            join digidiggie_tng.court_case cc
+              on tng.court_case_id = cc.court_case_id
+             and lower(trim(cc.reference_number)) = lower(trim(tog.reference_number))
+             and tog."year"::int = tng.entry_year
+        )
