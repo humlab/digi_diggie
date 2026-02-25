@@ -96,12 +96,12 @@ begin
             (10, 'Oavgjort', 'Målet slutade oavgjort');
 
     /***********************************************************************************************************
-    ** STEP    Populate placenames (if exists))
+    ** STEP     Populate placename
+    ** FIXME    Can this table be reduced e.g. only placenames in northern Sweden?
     ************************************************************************************************************/
 
-    -- FIXME: #14 Update to correspond with placeaname table in the database (see branch "placenames")
-    -- placenames (if exists)
-    insert into digidiggie_tng.placenames (
+    -- placenames
+    insert into digidiggie_tng.placename (
         "placename_id",
         "placename",
         "northing",
