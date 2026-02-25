@@ -49,11 +49,6 @@ begin
         select season_id, season_name
         from digidiggie_tog.seasons;
 
-    -- TODO: ruling types
-    insert into digidiggie_tng.ruling_type (ruling_type_id, ruling_type)
-        select judgement_id as ruling_type_id, sanction as ruling_type
-        from digidiggie_tog.judgements;
-
     -- sources
     insert into digidiggie_tng.source (source_id, source_name, source_abbreviation)
         select source_id, source_name, source_abbreviation
