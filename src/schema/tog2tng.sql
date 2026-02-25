@@ -156,12 +156,6 @@ begin
         from digidiggie_tog.entries
         group by 1, 2, 3;
 
-    raise notice 'step 3 completed: court cases created';
-
-end $$;
-
-
--- FIXME: #9 Update to handle court_case_id mapping correctly. Fixed?
 /***********************************************************************************************************
 ** STEP 4: Create entries in new schema
 ************************************************************************************************************/
