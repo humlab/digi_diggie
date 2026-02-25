@@ -198,8 +198,7 @@ function check_requirements() {
 function load_data() {
     local sql_file=$1
 
-    echo -e "${INFO}info: loading pre-load SQL ...${NC}"
-    execute_sql_file "resources/pre-load.sql"
+    
     echo -e "${INFO}info: loading data from $sql_file ...${NC}"
     execute_sql_file "$sql_file"
     echo -e "${INFO}info: loading post-load SQL ...${NC}"
@@ -209,6 +208,8 @@ function load_data() {
 
 function load_schema() {
     local sql_file=$1
+    echo -e "${INFO}info: loading pre-load SQL ...${NC}"
+    execute_sql_file "resources/pre-load.sql"
     echo -e "${INFO}info: loading schema from $sql_file ...${NC}"
     execute_sql_file "$sql_file"
     echo -e "${SUCCESS}success: schema imported successfully into $g_database${NC}"

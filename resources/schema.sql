@@ -1,201 +1,145 @@
 
 SET client_encoding = 'UTF-8';
--- FIXME: Remove hardcoded schema name "public" and use the default schema instead
 
 -- install postgis if not exists
-
 create extension if not exists postgis;
 create extension if not exists postgis_topology;
 
-DROP TABLE IF EXISTS "public"."seasons" cascade;
-DROP TABLE IF EXISTS "public"."communities" cascade;
-DROP TABLE IF EXISTS "public"."entries" cascade;
-DROP TABLE IF EXISTS "public"."sources" cascade;
-DROP TABLE IF EXISTS "public"."land_use" cascade;
-DROP TABLE IF EXISTS "public"."persons" cascade;
-DROP TABLE IF EXISTS "public"."legal_sources" cascade;
-DROP TABLE IF EXISTS "public"."parishes" cascade;
-DROP TABLE IF EXISTS "public"."winners" cascade;
-DROP TABLE IF EXISTS "public"."translationmapping" cascade;
-DROP TABLE IF EXISTS "public"."rowsource" cascade;
-DROP TABLE IF EXISTS "public"."querydefinitions" cascade;
-DROP TABLE IF EXISTS "public"."judgements" cascade;
-DROP TABLE IF EXISTS "public"."placenames" cascade;
-DROP TABLE IF EXISTS "public"."person_properties" cascade;
-DROP TABLE IF EXISTS "public"."properties" cascade;
+-- drop tables if they exist
+drop table if exists "seasons" cascade;
+drop table if exists "communities" cascade;
+drop table if exists "entries" cascade;
+drop table if exists "sources" cascade;
+drop table if exists "land_use" cascade;
+drop table if exists "persons" cascade;
+drop table if exists "legal_sources" cascade;
+drop table if exists "parishes" cascade;
+drop table if exists "winners" cascade;
+drop table if exists "translationmapping" cascade;
+drop table if exists "rowsource" cascade;
+drop table if exists "querydefinitions" cascade;
+drop table if exists "judgements" cascade;
 
-CREATE TABLE IF NOT EXISTS "public"."seasons"
- (
-	"season_id"			SERIAL, 
-	"season_name"			VARCHAR (255)
+
+-- create tables
+create table if not exists "legal_sources" (
+    "legal_source_id" serial primary key,
+    "legal_source_name" text not null default ('')
 );
 
--- CREATE INDEXES ...
-CREATE INDEX "seasons_årstid_idx" ON "public"."seasons" ("season_name");
-ALTER TABLE "public"."seasons" ADD CONSTRAINT "seasons_pkey" PRIMARY KEY ("season_id");
-
-CREATE TABLE IF NOT EXISTS "public"."communities"
- (
-	"community_id"			SERIAL, 
-	"community_name"			VARCHAR (255), 
-	"parish_id"			INTEGER
+create table if not exists "parishes" (
+    "parish_id" serial primary key,
+    "parish" text not null default ('')
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."communities" ADD CONSTRAINT "communities_pkey" PRIMARY KEY ("community_id");
-
-CREATE TABLE IF NOT EXISTS "public"."entries"
- (
-	"entry_id"			SERIAL, 
-	"actor_id"			INTEGER, 
-	"community_id"			INTEGER, 
-	"year"			DOUBLE PRECISION, 
-	"description"			VARCHAR (250), 
-	"land_rights_status"			VARCHAR (255), 
-	"source_id"			INTEGER, 
-	"reference_number"			VARCHAR (16), 
-	"season_id"			INTEGER, 
-	"land_use_id"			INTEGER, 
-	"original_placename"			VARCHAR (50), 
-	"winner_id"			INTEGER, 
-	"legal_source_id"			INTEGER, 
-	"judgement_id"			INTEGER, 
-	"placename_id"			INTEGER, 
-	"lay_judge_involved"			BOOLEAN NOT NULL DEFAULT FALSE
+create table if not exists "seasons" (
+    "season_id" serial primary key,
+    "season_name" text not null default ('')
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."entries" ADD CONSTRAINT "entries_pkey" PRIMARY KEY ("entry_id");
-CREATE INDEX "entries_refnr_idx" ON "public"."entries" ("reference_number");
-
-CREATE TABLE IF NOT EXISTS "public"."sources"
- (
-	"source_id"			SERIAL, 
-	"source_name"			VARCHAR (255), 
-	"source_abbreviation"			VARCHAR (255)
+create table if not exists "sources" (
+    "source_id" serial primary key,
+    "source_name" text not null default (''),
+    "source_abbreviation" varchar (255)
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."sources" ADD CONSTRAINT "sources_pkey" PRIMARY KEY ("source_id");
-
-
-CREATE TABLE IF NOT EXISTS "public"."land_use"
- (
-	"land_use_id"			SERIAL, 
-	"type"			VARCHAR (255)
+create table if not exists "land_use" (
+    "land_use_id" serial primary key,
+    "type" text not null default ('')
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."land_use" ADD CONSTRAINT "land_use_pkey" PRIMARY KEY ("land_use_id");
-
-
-CREATE TABLE IF NOT EXISTS "public"."persons"
- (
-	"person_id"			SERIAL, 
-	"individual_id"			VARCHAR (255), 
-	"father_id"			VARCHAR (255), 
-	"mother_id"			VARCHAR (255), 
-	"given_name"			VARCHAR (255), 
-	"patronymic"			VARCHAR (255), 
-	"surname"			VARCHAR (255), 
-	"birth_date"			INTEGER, 
-	"birth_year"			INTEGER, 
-	"birth_place"			VARCHAR (255), 
-	"residence_date"			INTEGER, 
-	"death_date"			VARCHAR (255), 
-	"death_year"			INTEGER, 
-	"death_place"			VARCHAR (255), 
-	"event_date"			VARCHAR (255), 
-	"event_id"			INTEGER, 
-	"community_name"			VARCHAR (255), 
-	"full_name"			VARCHAR (254)
+create table if not exists "communities" (
+    "community_id" serial primary key,
+    "community_name" text not null default (''),
+    "parish_id" integer null references "parishes"("parish_id")
 );
 
--- CREATE INDEXES ...
-CREATE INDEX "persons_id_father_idx" ON "public"."persons" ("father_id");
-CREATE INDEX "persons_id_individu_idx" ON "public"."persons" ("individual_id");
-CREATE INDEX "persons_id_mother_idx" ON "public"."persons" ("mother_id");
-ALTER TABLE "public"."persons" ADD CONSTRAINT "persons_pkey" PRIMARY KEY ("person_id");
-
-CREATE TABLE IF NOT EXISTS "public"."legal_sources"
- (
-	"legal_source_id"			SERIAL, 
-	"legal_source_name"			VARCHAR (255)
+create table if not exists "winners" (
+    "winner_id" serial primary key,
+    "winner_description" text not null default ('')
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."legal_sources" ADD CONSTRAINT "legal_sources_pkey" PRIMARY KEY ("legal_source_id");
-
-CREATE TABLE IF NOT EXISTS "public"."parishes"
- (
-	"parish"			VARCHAR (255), 
-	"parish_id"			SERIAL
+create table if not exists "judgements" (
+    "judgement_id" serial primary key,
+    "sanction" text not null default ('')
 );
 
--- CREATE INDEXES ...
-CREATE INDEX "parishes_norm_orderbyindex_idx" ON "public"."parishes" ("parish");
-ALTER TABLE "public"."parishes" ADD CONSTRAINT "parishes_pkey" PRIMARY KEY ("parish_id");
-
-CREATE TABLE IF NOT EXISTS "public"."winners"
- (
-	"winner_id"			SERIAL, 
-	"winner_description"			VARCHAR (255)
+create table if not exists "persons" (
+    "person_id" serial primary key,
+    "individual_id" varchar (255),
+    "father_id" varchar (255),
+    "mother_id" varchar (255),
+    "given_name" text null,
+    "patronymic" text null,
+    "surname" text null,
+    "birth_date" integer null,
+    "birth_year" integer null,
+    "birth_place" text null,
+    "residence_date" integer null,
+    "death_date" varchar (255) null,
+    "death_year" integer null,
+    "death_place" varchar (255) null,
+    "event_date" varchar (255) null,
+    "event_id" integer null,
+    "community_name" text null,
+    "full_name" text null -- change after load to computed column
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."winners" ADD CONSTRAINT "winners_pkey" PRIMARY KEY ("winner_id");
-
-CREATE TABLE IF NOT EXISTS "public"."translationmapping"
- (
-	"originaltable"			VARCHAR (255), 
-	"translatedtable"			VARCHAR (255), 
-	"originalcolumn"			VARCHAR (255), 
-	"translatedcolumn"			VARCHAR (255), 
-	"comment"			VARCHAR (255), 
-	"deprecateflag"			VARCHAR (255), 
-	"translatedexpression"			VARCHAR (255)
+create table if not exists "entries" (
+    "entry_id" serial primary key,
+    "actor_id" integer null references "persons"("person_id"),
+    "community_id" integer null references "communities"("community_id"),
+    "year" double precision,
+    "description" text,
+    "land_rights_status" varchar (255),
+    "source_id" integer null references "sources"("source_id"),
+    "reference_number" varchar (16),
+    "season_id" integer null references "seasons"("season_id"),
+    "land_use_id" integer null references "land_use"("land_use_id"),
+    "original_placename" varchar (50),
+    "winner_id" integer null references "winners"("winner_id"),
+    "legal_source_id" integer null references "legal_sources"("legal_source_id"),
+    "judgement_id" integer null references "judgements"("judgement_id"),
+    "placename_id" integer null references "placenames"("id"),
+    "lay_judge_involved" boolean not null default false
 );
 
--- CREATE INDEXES ...
-
-CREATE TABLE IF NOT EXISTS "public"."rowsource"
- (
-	"originaltable"			VARCHAR (255), 
-	"originalcolumn"			VARCHAR (255), 
-	"translatedtable"			VARCHAR (255), 
-	"translatedcolumn"			VARCHAR (255), 
-	"rowsource"			VARCHAR (255)
+create table if not exists "translationmapping" (
+	"originaltable"	varchar (255),
+	"translatedtable" varchar (255), 
+	"originalcolumn" varchar (255), 
+	"translatedcolumn" varchar (255), 
+	"comment" varchar (255), 
+	"deprecateflag" varchar (255), 
+	"translatedexpression" varchar (255)
 );
 
--- CREATE INDEXES ...
-
-CREATE TABLE IF NOT EXISTS "public"."querydefinitions"
- (
-	"queryname"			VARCHAR (255), 
-	"sqltext"			TEXT
+create table if not exists "rowsource" (
+	"originaltable"	varchar (255), 
+	"originalcolumn" varchar (255), 
+	"translatedtable" varchar (255), 
+	"translatedcolumn" varchar (255), 
+	"rowsource"	varchar (255)
 );
 
--- CREATE INDEXES ...
-
-CREATE TABLE IF NOT EXISTS "public"."judgements"
- (
-	"judgement_id"			SERIAL, 
-	"sanction"			VARCHAR (255)
+create table if not exists "querydefinitions" (
+	"queryname" varchar (255), 
+	"sqltext" text
 );
 
--- CREATE INDEXES ...
-ALTER TABLE "public"."judgements" ADD CONSTRAINT "judgements_pkey" PRIMARY KEY ("judgement_id");
-
-
--- CREATE Relationships ...
--- ALTER TABLE "public"."MSysNavPaneGroups" ADD CONSTRAINT "msysnavpanegroups_groupcategoryid_fk" FOREIGN KEY ("groupcategoryid") REFERENCES "public"."MSysNavPaneGroupCategories"("id") ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
--- ALTER TABLE "public"."MSysNavPaneGroupToObjects" ADD CONSTRAINT "msysnavpanegrouptoobjects_groupid_fk" FOREIGN KEY ("groupid") REFERENCES "public"."MSysNavPaneGroups"("id") ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE;
--- Relationship from "public"."entries" ("judgement_id") to "public"."judgements"("judgement_id") does not enforce integrity.
--- Relationship from "public"."entries" ("source_id") to "public"."sources"("source_id") does not enforce integrity.
--- Relationship from "public"."entries" ("community_id") to "public"."communities"("community_id") does not enforce integrity.
--- Relationship from "public"."entries" ("land_use_id") to "public"."land_use"("land_use_id") does not enforce integrity.
--- Relationship from "public"."entries" ("actor_id") to "public"."persons"("person_id") does not enforce integrity.
--- Relationship from "public"."entries" ("legal_source_id") to "public"."legal_sources"("legal_source_id") does not enforce integrity.
--- Relationship from "public"."communities" ("parish_id") to "public"."parishes"("parish_id") does not enforce integrity.
--- Relationship from "public"."entries" ("winner_id") to "public"."winners"("winner_id") does not enforce integrity.
--- Relationship from "public"."entries" ("season_id") to "public"."seasons"("season_id") does not enforce integrity.
+-- create indexes
+create index "persons_id_father_idx" on "persons" ("father_id");
+create index "persons_id_individu_idx" on "persons" ("individual_id");
+create index "persons_id_mother_idx" on "persons" ("mother_id");
+create index "parishes_parish_idx" on "parishes" ("parish");
+create index "communities_parish_id_idx" ON "communities" ("parish_id");
+create index "seasons_season_name_idx" ON "seasons" ("season_name");
+create index "entries_reference_number_idx" on "entries" ("reference_number");
+create index "entries_actor_id_idx" on "entries" ("actor_id");
+create index "entries_community_id_idx" on "entries" ("community_id");
+create index "entries_season_id_idx" on "entries" ("season_id");
+create index "entries_land_use_id_idx" on "entries" ("land_use_id");
+create index "entries_winner_id_idx" on "entries" ("winner_id");
+create index "entries_legal_source_id_idx" on "entries" ("legal_source_id");
+create index "entries_judgement_id_idx" on "entries" ("judgement_id");
+create index "entries_placename_id_idx" on "entries" ("placename_id");

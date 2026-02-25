@@ -1,6 +1,6 @@
 -- run drop_all first to ensure clean state
 
-drop table if exists public.placenames cascade;
+drop table if exists placenames cascade;
 
 create table if not exists "placenames"
  (
