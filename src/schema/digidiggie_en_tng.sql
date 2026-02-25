@@ -1,10 +1,21 @@
 -- Enable PostGIS extension for geometry types in public schema
-create extension if not exists postgis schema public;
-
+do $$
+begin
+    if not exists (select 1 from pg_extension where extname = 'postgis') then
+        create extension postgis schema public;
+    end if;
 drop schema if exists digidiggie_tng cascade;
-create schema digidiggie_tng;
+end;
+$$;
 
-set search_path  to digidiggie_tng, public;
+do $$
+begin
+create schema digidiggie_tng;
+end;
+$$;
+
+
+set search_path to digidiggie_tng;
 set role gudrun;
 
 create table community (
