@@ -28,11 +28,6 @@ begin
     insert into digidiggie_tng.community (community_id, community_name, parish_id)
         select community_id, community_name, parish_id
         from digidiggie_tog.communities;
-
-    -- persons
-    insert into digidiggie_tng.person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
-        select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
-        from digidiggie_tog.persons;
     
     -- land use
     insert into digidiggie_tng.land_use (land_use_id, description)
@@ -138,12 +133,23 @@ begin
     on conflict (placename_id) do nothing;
 
     /***********************************************************************************************************
-    ** STEP    Create court_cases from entries
-    **         A Court Case SHOULD be uniquely identified by source_id + reference_number
-    ** FIX     Added "case_year" to uniquely identify cases
-    ** FIX     Case "description" is now aggregated from all entries linked to the same case, separated by "; "
-    **         It should however be noted that the case description is supposed to be true to the source.
-    ** TODD    Where does "district_courrt_name" come from? Is it in the source data? If not, we can leave it null for now and populate it later if needed.
+    ** Person: Create person_entry from old entries
+    ************************************************************************************************************/
+
+    insert into digidiggie_tng.person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
+        select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
+        from digidiggie_tog.persons;
+ 
+    insert into digidiggie_tng.person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
+        values (0, 'Ej namngiven', '', '', null, null, null);
+        
+    /***********************************************************************************************************
+    ** STEP     Create court_cases from entries
+    **          A Court Case SHOULD be uniquely identified by source_id + reference_number
+    ** FIX      Added "case_year" to uniquely identify cases
+    ** FIX      Case "description" is now aggregated from all entries linked to the same case, separated by "; "
+    **          It should however be noted that the case description is supposed to be true to the source.
+    ** TODD     Where does "district_courrt_name" come from? Is it in the source data? If not, we can leave it null for now and populate it later if needed.
     ************************************************************************************************************/
 
     insert into digidiggie_tng.court_cases (source_id, reference_number, case_year, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
