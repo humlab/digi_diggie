@@ -23,12 +23,12 @@ create table court_case (
     constraint "court_cases_source_id_key" unique ("source_id", "reference_number", "case_year")
 );
 
-create table entry (
-    "entry_id" serial primary key,
+create table court_case_entry (
+    "court_case_entry_id" serial primary key,
     "court_case_id" integer not null,
     "entry_year" integer,
     "curated_text" text,
-    "source_placename" text,
+    "original_placename" text,
     "season_id" integer,
     "land_use_id" integer,
     "placename_id" integer
@@ -178,13 +178,12 @@ create table relationship_type (
 
 alter table "community" add constraint "community_parish_id_fkey" foreign key ("parish_id") references "parish" ("parish_id");
 alter table "court_case" add constraint "court_case_source_id_fkey" foreign key ("source_id") references "source" ("source_id");
-alter table "entry" add constraint "entry_court_case_id_fkey" foreign key ("court_case_id") references "court_case" ("court_case_id");
-alter table "entry" add constraint "entry_land_use_id_fkey" foreign key ("land_use_id") references "land_use" ("land_use_id");
--- alter table "entry" add constraint "entry_placename_id_fkey" foreign key ("placename_id") references "placename" ("fid");
-alter table "entry" add constraint "entry_season_id_fkey" foreign key ("season_id") references "season" ("season_id");
-alter table "person_entry" add constraint "person_entry_actor_id_fkey" foreign key ("actor_id") references "person" ("person_id");
+alter table "court_case_entry" add constraint "entry_court_case_id_fkey" foreign key ("court_case_id") references "court_case" ("court_case_id");
+alter table "court_case_entry" add constraint "entry_land_use_id_fkey" foreign key ("land_use_id") references "land_use" ("land_use_id");
+alter table "court_case_entry" add constraint "entry_season_id_fkey" foreign key ("season_id") references "season" ("season_id");
+alter table "person_entry" add constraint "person_entry_person_id_fkey" foreign key ("person_id") references "person" ("person_id");
 alter table "person_entry" add constraint "person_entry_community_id_fkey" foreign key ("community_id") references "community" ("community_id");
-alter table "person_entry" add constraint "person_entry_entry_id_fkey" foreign key ("entry_id") references "entry" ("entry_id");
+alter table "person_entry" add constraint "person_entry_entry_id_fkey" foreign key ("court_case_entry_id") references "court_case_entry" ("court_case_entry_id");
 alter table "person_entry" add constraint "person_entry_role_id_fkey" foreign key ("role_id") references "role" ("role_id");
 alter table "person_entry" add constraint "fk_person_entry_land_rights_status_1" foreign key ("land_rights_status_id") references "land_rights_status" ("land_rights_status_id");
 alter table "person_outcome" add constraint "person_outcomes_outcome_type_id_fkey" foreign key ("outcome_type_id") references "outcome_type" ("outcome_type_id") on delete no action on update no action;
