@@ -73,7 +73,13 @@ begin
                (4, 'Annan', 'Annan typ av domstolsavgörande'),
                (5, 'Okänd', 'Okänd typ av domstolsavgörande');
 
-    insert into digidiggie_tng.role ("role_id", "role_name", "description")
+    -- Role Type
+    insert into digidiggie_tng.role_type ("role_type_id", "role_type_name", "description")
+        values (1, 'Social', 'Social roll, t.ex. bonde, kyrkoherde, fogde'),
+               (2, 'Juridisk', 'Juridisk roll, t.ex. klagande, svarande, vittne');
+
+    -- Role
+    insert into digidiggie_tng.role ("role_id", "role_type_id", "role_name", "description")
         values (1, 2, 'Klagande', 'Part som klagar på en annan part'),
                (2, 2, 'Svarande', 'Part som svarar på en klagan'),
                (3, 2, 'Vittne', 'Person som vittnar i en rättegång'),
@@ -81,7 +87,8 @@ begin
                (5, 2, 'Okänd', 'Okänd roll i en rättegång'),
                (6, 1, 'Same', 'Person som är same'),
                (7, 1, 'Nybyggare', 'Person som är nybyggare'),
-               (8, 1, 'Bonde', 'Person som är bonde');
+               (8, 1, 'Bonde', 'Person som är bonde'),
+               (9, 1, 'Renskötare', 'Person som är renskötare');
 
     insert into digidiggie_tng.role_type ("role_id", "role_name", "description")
         values (1, 'Social', 'Social roll, t.ex. bonde, kyrkoherde, fogde'),
