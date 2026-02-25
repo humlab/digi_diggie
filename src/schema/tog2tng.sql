@@ -7,7 +7,6 @@
 
 -- create schema digidiggie_tng;
 
-
 do $$
 begin
 
