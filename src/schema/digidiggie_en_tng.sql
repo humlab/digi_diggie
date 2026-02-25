@@ -208,7 +208,6 @@ alter table "person_relationship" add constraint "person_relationship_person_1_i
 alter table "person_relationship" add constraint "person_relationship_person_2_id_fkey" foreign key ("person_2_id") references "person" ("person_id");
 alter table "person_relationship" add constraint "person_relationship_relationship_type_id_fkey" foreign key ("relationship_type_id") references "relationship_type" ("relationship_type_id");
 
-
 /***********************************************************************************************************
 ** Indexes
 ************************************************************************************************************/
