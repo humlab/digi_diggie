@@ -151,8 +151,8 @@ begin
     ** TODD     Where does "district_courrt_name" come from? Is it in the source data? If not, we can leave it null for now and populate it later if needed.
     ************************************************************************************************************/
 
-    insert into digidiggie_tng.court_cases (source_id, reference_number, case_year, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
-        select source_id, reference_number, "year" as case_year, string_agg(distinct description, '; ') -- FIXME: No constraint
+    insert into digidiggie_tng.court_case (source_id, reference_number, case_year, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
+        select source_id, reference_number, cast("year" as integer) as case_year, string_agg(distinct description, '; ') -- FIXME: No constraint
         from digidiggie_tog.entries
         group by 1, 2, 3;
 
