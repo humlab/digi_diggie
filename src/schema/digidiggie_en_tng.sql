@@ -45,6 +45,22 @@ create table court_case_entry (
     "placename_id" integer
 );
 
+create table person (
+    "person_id" serial primary key,
+    "given_name" text,
+    "patronymic" text,
+    "surname" text,
+    "birth_year" integer,
+    "death_year" integer,
+    "community_name" text,
+    "note" text null,
+    "full_name" text generated always as (
+        ((((coalesce("given_name", ''::text) || ' '::text) ||
+            coalesce("patronymic", ''::text)) || ' '::text) ||
+            coalesce("surname", ''::text))
+    ) stored
+);
+
 create table land_rights_status (
   "land_rights_status_id" serial primary key,
   "land_rights_status" varchar(255) not null,
@@ -89,23 +105,6 @@ create table person_outcome (
     "person_id" integer not null,
     "outcome_type_id" integer not null,
     "description" text
-);
-
-
-create table person (
-    "person_id" serial primary key,
-    "given_name" text,
-    "patronymic" text,
-    "surname" text,
-    "birth_year" integer,
-    "death_year" integer,
-    "community_name" text,
-    "note" text null,
-    "full_name" text generated always as (
-        ((((coalesce("given_name", ''::text) || ' '::text) ||
-            coalesce("patronymic", ''::text)) || ' '::text) ||
-            coalesce("surname", ''::text))
-    ) stored
 );
 
 create table  placename (
