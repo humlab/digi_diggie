@@ -24,7 +24,7 @@ KNOWN_TABLES=( "parishes" "communities" "sources" "land_use" "legal_sources" "wi
 
 g_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 g_database=${POSTGRES_DB:-digidiggie}
-g_schema=public
+g_schema=public # FIXME: #23 schema is currently hardcoded to `digidiggie_tog` in the SQL files, but should be made configurable
 g_command=
 g_skip_schema=NO
 g_skip_data=NO
