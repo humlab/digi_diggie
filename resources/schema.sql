@@ -1,6 +1,8 @@
 
 SET client_encoding = 'UTF-8';
 
+set search_path to "digidiggie_tog";
+
 -- install postgis if not exists
 create extension if not exists postgis;
 create extension if not exists postgis_topology;

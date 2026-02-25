@@ -1,5 +1,8 @@
 -- run drop_all first to ensure clean state
 
+-- set schema to "digidiggie_tog" for all operations in this file
+set search_path to "digidiggie_tog";
+
 drop table if exists placenames cascade;
 
 create table if not exists "placenames"

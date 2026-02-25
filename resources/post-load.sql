@@ -1,6 +1,8 @@
 
 -- TODO: "properties" and "person_properties" might be removed in new model, but for now we keep them to avoid losing data.
 
+set search_path to "digidiggie_tog";
+
 drop table if exists "person_properties" cascade;
 drop table if exists "properties" cascade;
 
@@ -74,7 +76,7 @@ alter table "persons"
         stored;
 
 -- Add function to get table and column metadata, including PK/FK info
-CREATE OR REPLACE FUNCTION fn_table_columns(p_schema_name text DEFAULT 'public'::text) RETURNS TABLE(table_schema information_schema.sql_identifier, table_name information_schema.sql_identifier, column_name information_schema.sql_identifier, ordinal_position information_schema.cardinal_number, data_type information_schema.character_data, numeric_precision information_schema.cardinal_number, numeric_scale information_schema.cardinal_number, character_maximum_length information_schema.cardinal_number, is_nullable information_schema.yes_or_no, is_pk information_schema.yes_or_no, is_fk information_schema.yes_or_no, fk_table_name information_schema.sql_identifier, fk_column_name information_schema.sql_identifier)
+CREATE OR REPLACE FUNCTION fn_table_columns(p_schema_name text DEFAULT 'digidiggie_tog'::text) RETURNS TABLE(table_schema information_schema.sql_identifier, table_name information_schema.sql_identifier, column_name information_schema.sql_identifier, ordinal_position information_schema.cardinal_number, data_type information_schema.character_data, numeric_precision information_schema.cardinal_number, numeric_scale information_schema.cardinal_number, character_maximum_length information_schema.cardinal_number, is_nullable information_schema.yes_or_no, is_pk information_schema.yes_or_no, is_fk information_schema.yes_or_no, fk_table_name information_schema.sql_identifier, fk_column_name information_schema.sql_identifier)
     LANGUAGE plpgsql
     AS $$ begin return query with fk_constraint as (
         select distinct fk.conrelid,
