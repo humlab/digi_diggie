@@ -157,28 +157,32 @@ begin
         group by 1, 2, 3;
 
 /***********************************************************************************************************
-** STEP 4: Create entries in new schema
+    ** STEP     Create court case entries
+    ** FIXME    Can entry_year vary over season/land_use/placename???
+    ** NOTE     We need to aggregate description and original_placename to avoid duplicates when
+    **          multiple entries link to the same case/season/land_use/placename combination.
 ************************************************************************************************************/
 
     insert into digidiggie_tng.court_case_entry (court_case_id, entry_year, season_id, land_use_id, placename_id, curated_text, original_placename) --original_placename)
     select 
-        e.entry_id,
-        cc.court_case_id,
-        cast(e.year as integer) as "year",
-        e.description as curated_text,
-        e.season_id,
-        e.land_use_id,
-        e.original_placename,
-        e.placename_id
-    from digidiggie_tog.entries e
-    left join digidiggie_tng.court_cases cc on 
-        cc.source_id = e.source_id
-      and (cc.reference_number = e.reference_number)
-      and (cc.case_year = e.year)
-    where cc.court_case_id is not null;
+            -- Court Case:
+            cc.court_case_id                                as court_case_id,
+            cast(e.year as integer)                         as entry_year,
+            -- Entry keys
+            e.season_id                                     as season_id,
+            e.land_use_id                                   as land_use_id,
+            e.placename_id                                  as placename_id,
+            -- extra information about the entry: (must be aggregated to avoid duplicates)
+            string_agg(distinct e.description, ';')         as curated_text,
+            string_agg(distinct e.original_placename, ';')  as original_placename
+        from digidiggie_tng.court_case cc
+        join digidiggie_tog.entries e
+          on e.source_id = cc.source_id
+         and e.reference_number = cc.reference_number
+         and cast(e.year as integer) = cc.case_year
+        group by cc.court_case_id, e.year, e.season_id, e.land_use_id, e.placename_id
+        ;
 
-    raise notice 'step 4 completed: entries created';
-end $$;
 
 /***********************************************************************************************************
 ** STEP 5: Create person_entries (person involvement in entries)
