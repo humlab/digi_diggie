@@ -261,12 +261,11 @@ begin
     -- create rulings for cases that have winner_id, judgement_id, or legal_source_id
     -- note: ruling_type is a new concept, we'll need to populate it separately
     insert into digidiggie_tng.rulings (
-        court_case_id,
-        year,
-        description,
-        ruling_type_id,
-        judgement_id, -- FIXME: Not in new schema. This is located in `person_outcomes` in new schema.
-        legal_source_id
+        "court_case_id",
+        "ruling_year",
+        "description",
+        "ruling_type_id",
+        "legal_source_id"
     )
     select distinct
         cc.court_case_id,
