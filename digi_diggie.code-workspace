@@ -5,6 +5,50 @@
 		}
 	],
 	"settings": {
+		"python.analysis.exclude": [
+			"**/.venv",
+			"**/node_modules",
+			"**/__pycache__",
+			"data/**",
+			"archive/**",
+			"ortnamn_data/**",
+			"tmp/**",
+			"docker/**",
+			"resources/**",
+			".git/**"
+		],
+		"python.analysis.ignore": [
+			"**/.venv",
+			"data/**",
+			"archive/**",
+			"ortnamn_data/**",
+			"tmp/**",
+			"docker/**",
+			"resources/**"
+		],
+		"files.exclude": {
+			"**/.venv": true,
+			"**/__pycache__": true,
+			"**/*.pyc": true
+		},
+		"files.watcherExclude": {
+			"**/.venv/**": true,
+			"**/__pycache__/**": true,
+			"data/**": true,
+			"archive/**": true,
+			"ortnamn_data/**": true,
+			"tmp/**": true,
+			".git/objects/**": true,
+			".git/subtree-cache/**": true,
+			"**/node_modules/**": true
+		},
+		"search.exclude": {
+			"**/.venv": true,
+			"data/**": true,
+			"archive/**": true,
+			"ortnamn_data/**": true,
+			"tmp/**": true
+		},
 		"workbench.colorCustomizations": {
 			"activityBar.activeBackground": "#b41706",
 			"activityBar.background": "#b41706",
