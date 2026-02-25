@@ -160,12 +160,7 @@ begin
 ** STEP 4: Create entries in new schema
 ************************************************************************************************************/
 
-do $$
-begin
-    raise notice 'step 4: creating entries in new schema...';
-
-    -- create entries linked to court_cases
-    insert into digidiggie_tng.entries (entry_id, court_case_id, "year", curated_text, season_id, land_use_id, original_placename, placename_id)
+    insert into digidiggie_tng.court_case_entry (court_case_id, entry_year, season_id, land_use_id, placename_id, curated_text, original_placename) --original_placename)
     select 
         e.entry_id,
         cc.court_case_id,
