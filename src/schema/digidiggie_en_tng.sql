@@ -82,16 +82,6 @@ create table parish (
     "parish" text not null default ''::text
 );
 
-create table person_entry (
-    "person_entry_id" serial primary key,
-    "entry_id" integer not null,
-    "actor_id" integer not null,
-    "community_id" integer,
-    "land_rights_status_id" integer not null,
-    "role_id" integer,
-    "curated_text" text
-);
-
 create table outcome_type (
     "outcome_type_id" serial primary key,
     "outcome_type_name" text not null,
@@ -120,7 +110,19 @@ create table  placename (
     "municipality_code" text,           --> kommun_nr
     "combined_placename" text,          --> kombo TODO: Check
     "parish_name" text,
-    "geom" geometry(Point, 4326)        --> WGS84 (EPSG:4326)
+    "geom" public.geometry(Point, 4326)        --> WGS84 (EPSG:4326)
+);
+
+create table person_entry (
+    "person_entry_id" serial primary key,
+    "court_case_entry_id" integer not null,
+    "person_id" integer not null,
+    "community_id" integer,
+    "land_rights_status_id" integer not null,
+    "role_id" integer, 
+    -- "judicial_role_id" integer, 
+    -- "social_role_id" integer, 
+    "curated_text" text
 );
 
 create table role_type (
