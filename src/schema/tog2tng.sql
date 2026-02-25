@@ -90,12 +90,20 @@ begin
                (8, 1, 'Bonde', 'Person som är bonde'),
                (9, 1, 'Renskötare', 'Person som är renskötare');
 
-    insert into digidiggie_tng.role_type ("role_id", "role_name", "description")
-        values (1, 'Social', 'Social roll, t.ex. bonde, kyrkoherde, fogde'),
-               (2, 'Juridisk', 'Juridisk roll, t.ex. klagande, svarande, vittne');
-
-select *
-from digidiggie_tog.judgements;
+    -- Outcome Type
+    insert into digidiggie_tng.outcome_type ("outcome_type_id", "outcome_type_name", "description")
+        values
+            (0, 'Okänd', 'Okänd utgång av målet'),
+            (1, 'Skadestånd', 'Personen förlorade målet'),  -- 'Svarande'
+            (2, 'Vite', 'Personen fick vite'),              -- 'Svarande'
+            (3, 'Böter', 'Personen fick böter'),            -- 'Svarande'
+            (4, 'Friad', 'Personen blev friad'),            -- 'Svarande'
+            (5, 'Döden', 'Personen dömdes till döden'),     -- 'Svarande'
+            (6, 'Fängelse', 'Personen fick fängelse'),      -- 'Svarande'
+            (7, 'Förmaning', 'Personen fick förmaning'),    -- 'Svarande'
+            (8, 'Annan', 'Annan utgång av målet'),
+            (9, 'Vinnare', 'Personen vann målet'),          -- 'Klagande'
+            (10, 'Oavgjort', 'Målet slutade oavgjort');
 
     /***********************************************************************************************************
     ** STEP    Populate placenames (if exists))
