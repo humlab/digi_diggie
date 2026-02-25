@@ -185,39 +185,69 @@ begin
 
 
 /***********************************************************************************************************
-** STEP 5: Create person_entries (person involvement in entries)
+    ** Person Case Entries: Create person_entry from old entries
+    ** FIXME: Many NULL values in role_id
+    ** FIXME: Perhaps role_id should be not null, and set to "not specified" if NULL
 ************************************************************************************************************/
 
-do $$
-begin
-    raise notice 'step 5: creating person_entries...';
-
-    -- create person_entries from old entries
-    -- actor_id in old schema becomes the person reference in person_entries
-    insert into digidiggie_tng.person_entries (
-        entry_id, 
-        actor_id, 
+    insert into digidiggie_tng.person_entry (
+        court_case_entry_id, 
+        person_id, 
         community_id, 
         land_rights_status_id,
         role_id,
         curated_text
     )
+        with winner_to_role (winner_id, role_id) as (values 
+            (1, 7), --	Nybyggare
+            (2, 8), --	Bonde
+            (3, 6), --	Same
+            (4, 9) --	Renskötare
+        ), tog_to_tng as (
+            select tog.entry_id as tog_id, tng.court_case_entry_id as tng_id
+            from digidiggie_tog.entries tog
+            join digidiggie_tng.court_case_entry tng
+              on tog.season_id = tng.season_id
+             and tog.land_use_id = tng.land_use_id
+             and coalesce(tog.placename_id, -1) = coalesce(tng.placename_id, -1)
+            join digidiggie_tng.court_case cc
+              on tng.court_case_id = cc.court_case_id
+             and lower(trim(cc.reference_number)) = lower(trim(tog.reference_number))
+             and tog."year"::int = tng.entry_year
+        )
     select 
-        e.entry_id,
-        coalesce(e.actor_id, 0) as actor_id, -- actor_id refers to person_id
-        e.community_id,
-        coalesce(lrs.land_rights_status_id, 
-                (select land_rights_status_id from digidiggie_tng.land_right_status where land_rights_status = 'unknown' limit 1)
-        ) as land_rights_status_id,
-        null as role_id, -- FIXME: #18 Add role_id mapping if possible, otherwise will need manual population. No direct mapping in old schema.
-        null as curated_text -- FIXME: #19 Add curated_text if possible, otherwise will need manual population. No direct mapping in old schema.
-    from digidiggie_tog.entries e
-    left join digidiggie_tng.land_right_status lrs on 
-        lrs.land_rights_status = coalesce(e.land_rights_status, 'unknown')
-    where e.entry_id in (select entry_id from digidiggie_tng.entries)
-    and e.actor_id is not null;
+            m.tng_id as court_case_entry_id,
+            coalesce(tog.actor_id, 0) as person_id,
+            tog.community_id as community_id,
+            lrs.land_rights_status_id as land_rights_status_id,
+            r.role_id as role_id,
+            tog.description as curated_text
+        from digidiggie_tog.entries tog
+		join tog_to_tng m
+		  on m.tog_id = tog.entry_id
+        join digidiggie_tng.land_rights_status lrs
+          on upper(lrs.land_rights_status) = upper(trim(tog.land_rights_status))
+        left join winner_to_role r
+          on r.winner_id = tog.winner_id;
 
-    raise notice 'step 5 completed: person_entries created';
+
+    -- Winners svarar på frågan vem som vann????
+    select *
+    from digidiggie_tog.entries
+    where winner_id in (5,6,7)
+
+    select *
+    from digidiggie_tng.ruling r
+    insert into digidiggie_tng.ruling (
+        "court_case_id",
+        "ruling_year",
+        "description",
+        "ruling_type_id",
+        "legal_source_id"
+    ) 
+        select cc.court_case_id, cc.case_year, null, null --, e.legal_source_id
+        from digidiggie_tng.court_case cc
+
 end $$;
 
 /***********************************************************************************************************
