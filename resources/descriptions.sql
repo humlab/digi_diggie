@@ -1,3 +1,5 @@
+set search_path to "digidiggie_tog";
+
 COMMENT ON COLUMN "seasons"."season_id" IS 'Primary key for the seasons table.';
 COMMENT ON COLUMN "seasons"."season_name" IS 'The name of the season when the disputed resource was primarily used (e.g., ''Winter'', ''Summer'').';
 COMMENT ON COLUMN "communities"."community_id" IS 'Primary key for the communities table.';

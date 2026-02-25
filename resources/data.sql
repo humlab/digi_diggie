@@ -1,3 +1,5 @@
+set search_path to "digidiggie_tog";
+
 BEGIN;
 INSERT INTO "parishes" ("parish", "parish_id")
 VALUES
