@@ -15,73 +15,57 @@ import psycopg
 
 @click.command()
 @click.option(
-    '--host',
-    default='localhost',
-    help='PostgreSQL host address',
+    "--host", default="localhost", help="PostgreSQL host address", show_default=True
+)
+@click.option(
+    "--port", default=5432, type=int, help="PostgreSQL port", show_default=True
+)
+@click.option("--database", "-d", required=True, help="PostgreSQL database name")
+@click.option("--user", "-u", required=True, help="PostgreSQL username")
+@click.option(
+    "--password",
+    "-p",
+    help="PostgreSQL password (uses .pgpass if not provided)",
+)
+@click.option(
+    "--prompt-password",
+    is_flag=True,
+    help="Prompt for password interactively",
+)
+@click.option(
+    "--schema",
+    "-s",
+    default="public",
+    help="Database schema to export",
     show_default=True,
 )
 @click.option(
-    '--port',
-    default=5432,
-    type=int,
-    help='PostgreSQL port',
-    show_default=True,
-)
-@click.option(
-    '--database',
-    '-d',
-    required=True,
-    help='PostgreSQL database name',
-)
-@click.option(
-    '--user',
-    '-u',
-    required=True,
-    help='PostgreSQL username',
-)
-@click.option(
-    '--password',
-    '-p',
-    help='PostgreSQL password (prompted if not provided)',
-)
-@click.option(
-    '--schema',
-    '-s',
-    default='public',
-    help='Database schema to export',
-    show_default=True,
-)
-@click.option(
-    '--output',
-    '-o',
+    "--output",
+    "-o",
     type=click.Path(path_type=Path),
     required=True,
-    help='Output Excel file path',
+    help="Output Excel file path",
 )
 @click.option(
-    '--exclude',
-    '-e',
+    "--exclude",
+    "-e",
     multiple=True,
-    help='Tables to exclude (can be specified multiple times)',
+    help="Tables to exclude (can be specified multiple times)",
 )
 @click.option(
-    '--include',
-    '-i',
+    "--include",
+    "-i",
     multiple=True,
-    help='Tables to include (if specified, only these tables will be exported)',
+    help="Tables to include (if specified, only these tables will be exported)",
 )
-@click.option(
-    '--verbose',
-    '-v',
-    is_flag=True,
-    help='Enable verbose output',
-)
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 def export_db_to_excel(
     host: str,
     port: int,
     database: str,
     user: str,
     password: Optional[str],
+    prompt_password: bool,
     schema: str,
     output: Path,
     exclude: tuple[str, ...],
@@ -92,13 +76,19 @@ def export_db_to_excel(
 
     Each table will be exported to a separate sheet in the Excel file.
     Sheet names will match table names (truncated to 31 characters if needed).
+    
+    By default, uses .pgpass for authentication if no password is provided.
     """
-    # Prompt for password if not provided
-    if not password:
-        password = click.prompt('Password', hide_input=True)
+    # Prompt for password if --prompt-password flag is set
+    if prompt_password and not password:
+        password = click.prompt("Password", hide_input=True)
 
     # Build connection string
-    conninfo = f"host={host} port={port} dbname={database} user={user} password={password}"
+    # If password is not provided, psycopg will use .pgpass file
+    conninfo_parts = [f"host={host}", f"port={port}", f"dbname={database}", f"user={user}"]
+    if password:
+        conninfo_parts.append(f"password={password}")
+    conninfo = " ".join(conninfo_parts)
 
     try:
         # Connect to database
@@ -140,11 +130,11 @@ def export_db_to_excel(
 
 def get_table_list(conn: psycopg.Connection, schema: str) -> list[str]:
     """Get list of all tables in the specified schema.
-    
+
     Args:
         conn: Database connection
         schema: Schema name
-    
+
     Returns:
         List of table names
     """
@@ -164,17 +154,15 @@ def get_table_list(conn: psycopg.Connection, schema: str) -> list[str]:
 
 
 def filter_tables(
-    tables: list[str],
-    include: tuple[str, ...],
-    exclude: tuple[str, ...]
+    tables: list[str], include: tuple[str, ...], exclude: tuple[str, ...]
 ) -> list[str]:
     """Filter table list based on include/exclude patterns.
-    
+
     Args:
         tables: List of all tables
         include: Tables to include (if specified, only these are kept)
         exclude: Tables to exclude
-    
+
     Returns:
         Filtered list of tables
     """
@@ -197,7 +185,7 @@ def export_tables_to_excel(
     verbose: bool,
 ) -> None:
     """Export tables to Excel file with separate sheets.
-    
+
     Args:
         conn: Database connection
         schema: Schema name
@@ -206,7 +194,7 @@ def export_tables_to_excel(
         verbose: Enable verbose output
     """
     # Create Excel writer
-    with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
         for table_name in tables:
             if verbose:
                 click.echo(f"Exporting table: {table_name}")
@@ -217,10 +205,10 @@ def export_tables_to_excel(
             try:
                 df = pd.read_sql_query(query, conn)
 
-                    # Excel sheet names are limited to 31 characters
+                # Excel sheet names are limited to 31 characters
                 sheet_name = table_name[:31]
 
-                    # Write to Excel
+                # Write to Excel
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
 
                 if verbose:
@@ -231,5 +219,5 @@ def export_tables_to_excel(
                 continue
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     export_db_to_excel()  # type: ignore ; # pylint: disable=no-value-for-parameter
