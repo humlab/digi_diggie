@@ -62,9 +62,9 @@ create table person (
 );
 
 create table land_rights_status (
-  "land_rights_status_id" serial primary key,
-  "land_rights_status" varchar(255) not null,
-  "description" text not null
+    "land_rights_status_id" serial primary key,
+    "land_rights_status" varchar(255) not null,
+    "description" text not null
 );
 
 create table legal_source (
@@ -110,7 +110,7 @@ create table  placename (
     "municipality_code" text,           --> kommun_nr
     "combined_placename" text,          --> kombo TODO: Check
     "parish_name" text,
-    "geom" public.geometry(Point, 4326)        --> WGS84 (EPSG:4326)
+    "geom" public.geometry(Point, 4326) --> WGS84 (EPSG:4326)
 );
 
 create table person_entry (
