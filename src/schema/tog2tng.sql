@@ -65,11 +65,15 @@ begin
 
     -- Ruling types
     insert into digidiggie_tng.ruling_type ("ruling_type_id", "ruling_type", "description")
-        values (1, 'Dom', 'Dom utfärdad av tinget'),
+        values (0, '', 'Uppgift ej angiven'),
+               (1, 'Dom', 'Dom utfärdad av tinget'),
                (2, 'Förlikning', 'Förlikning mellan parterna'),
                (3, 'Hänvisning', 'Hänvisning till annan domstol eller myndighet'),
                (4, 'Annan', 'Annan typ av domstolsavgörande'),
-               (5, 'Okänd', 'Okänd typ av domstolsavgörande');
+               (5, 'Okänd', 'Okänd typ av domstolsavgörande'),
+               (6, 'Oavgjort', 'Målet slutade oavgjort'),
+               (7, 'Ogillas/ingen ändring', 'Målet ogillas eller ingen ändring i tidigare dom'),
+               (8, 'Ekonomisk uppgörelse', 'Ekonomisk uppgörelse mellan parterna');
 
     -- Role Type
     insert into digidiggie_tng.role_type ("role_type_id", "role_type_name", "description")
