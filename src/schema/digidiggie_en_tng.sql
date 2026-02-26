@@ -156,7 +156,7 @@ create table ruling_type (
 create table ruling (
     "ruling_id" serial primary key,
     "court_case_id" integer not null,
-    "year" integer,
+    "ruling_year" integer, 
     "description" text,
     "ruling_type_id" integer not null,
     "legal_source_id" integer,
