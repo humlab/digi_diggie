@@ -139,18 +139,17 @@ begin
         "parish_name"
     )
     select 
-        "fid" as "placename_id",
+        "id" as "placename_id",
         "ortnamn" as "placename",
-        "nkoordinat" as "northing",
-        "ekoordinat" as "easting",
-        "lopnummer"::numeric(10,1)::int as "serial_number",
-        "detaljtyp" as "name_type_code",
-        "sprak" as "language_code",
-        "sockenstadkod" as "parish_code",
-        "lanskod" as "county_code",
-        "kommunkod" as "municipality_code",
-        -- "kombo" as "combined_placename",
-        "sockenstadnamn" as "parish_name",
+        "n" as "northing",
+        "e" as "easting",
+        "lopnr"::numeric(10,1)::int as "serial_number",
+        "språk_nr" as "language_code",
+        "sockenstad_nr" as "parish_code",
+        "lan_nr" as "county_code",
+        "kommun_nr" as "municipality_code",
+        "kombo" as "kombo",
+        "sockenstad" as "parish_name",
         st_transform(st_setsrid(st_makepoint(622159, 7286643), 3006), 4326) as geom
     from digidiggie_tog.placenames
       on conflict (placename_id) do nothing;
