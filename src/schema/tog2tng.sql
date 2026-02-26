@@ -23,7 +23,7 @@ begin
     ** STEP 1: Migrate simple lookup tables (direct copies)
     ************************************************************************************************************/
 
-    raise notice 'step 1: migrating simple lookup tables...';
+    raise notice 'step: migrating lookup tables...';
 
     -- parishes
     insert into digidiggie_tng.parish (parish_id, parish)
@@ -121,6 +121,8 @@ begin
     ** FIXME    Can this table be reduced e.g. only placenames in northern Sweden?
     ************************************************************************************************************/
 
+    raise notice 'step: migrating placenames...';
+
     -- placenames
     insert into digidiggie_tng.placename (
         "placename_id",
@@ -157,6 +159,8 @@ begin
     ** Person: Create person_entry from old entries
     ************************************************************************************************************/
 
+    raise notice 'step: migrating persons...';
+
     insert into digidiggie_tng.person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name)
         select person_id, given_name, patronymic, surname, birth_year, death_year, community_name
         from digidiggie_tog.persons;
@@ -173,6 +177,8 @@ begin
     ** TODD     Where does "district_courrt_name" come from? Is it in the source data? If not, we can leave it null for now and populate it later if needed.
     ************************************************************************************************************/
 
+    raise notice 'step: migrating court cases...';
+
     insert into digidiggie_tng.court_case (source_id, reference_number, case_year, source_text) -- FIXME: #15 create source_text from documets if possible. Concatenate from all curated texts per case in entries if not.
         select source_id, reference_number, cast("year" as integer) as case_year, string_agg(distinct description, '; ') -- FIXME: No constraint
         from digidiggie_tog.entries
@@ -184,6 +190,8 @@ begin
     ** NOTE     We need to aggregate description and original_placename to avoid duplicates when
     **          multiple entries link to the same case/season/land_use/placename combination.
     ************************************************************************************************************/
+
+    raise notice 'step: migrating court case entries...';
 
     insert into digidiggie_tng.court_case_entry (court_case_id, entry_year, season_id, land_use_id, placename_id, curated_text, original_placename) --original_placename)
         select
@@ -211,6 +219,8 @@ begin
     ** FIXME: Many NULL values in role_id
     ** FIXME: Perhaps role_id should be not null, and set to "not specified" if NULL
     ************************************************************************************************************/
+
+    raise notice 'step: migrating person entries...';
 
     insert into digidiggie_tng.person_entry (
         court_case_entry_id, 
@@ -304,8 +314,10 @@ begin
             or (cc.case_date is null and e.year is null))
     where (e.judgement_id is not null or e.legal_source_id is not null)
     and cc.court_case_id is not null;
+*/
 
-    raise notice 'step 6 completed: rulings created';
+    raise notice 'step: migrating persons'' outcomes...';
+
 end $$;
 
 /***********************************************************************************************************
