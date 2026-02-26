@@ -229,3 +229,70 @@ create index person_outcomes_outcome_type_id_idx on "person_outcome" ("outcome_t
 create index person_outcomes_person_id_idx on "person_outcome" ("person_id");
 create index person_outcomes_ruling_id_idx on "person_outcome" ("ruling_id");
 create index seasons_season_name_idx on "season" ("season_name");
+
+
+/***********************************************************************************************************
+** Procedures Create a single JSON snapshot of the entire schema.
+** This is useful for exporting the data for use in a static website or similar.
+** select export_schema_as_json('digidiggie_tog')
+************************************************************************************************************/
+
+-- drop function if exists export_schema_as_json(text);
+create or replace function export_schema_as_json(p_schema text)
+returns jsonb
+language plpgsql as $$
+declare
+  r record;
+  tables jsonb := '{}'::jsonb;
+  rows jsonb;
+begin
+  for r in
+    select tablename
+    from pg_catalog.pg_tables
+    where schemaname = p_schema
+    order by tablename
+  loop
+    execute format(
+      'select coalesce(jsonb_agg(to_jsonb(t) order by 1), ''[]''::jsonb) from %I.%I t',
+      p_schema, r.tablename
+    ) into rows;
+    tables := tables || jsonb_build_object(r.tablename, rows);
+  end loop;
+  return jsonb_build_object(
+    'meta', jsonb_build_object('exported_at', now()),
+    'schema', p_schema,
+    'tables', tables
+  );
+end $$;
+
+create or replace procedure sync_sequences()
+language plpgsql as $$
+declare
+  r record;
+  next_value bigint;
+begin
+  for r in
+    select
+      ns.nspname      as schema_name,
+      seq.relname     as sequence_name,
+      tbl_ns.nspname  as table_schema,
+      tbl.relname     as table_name,
+      att.attname     as column_name,
+      format('%I.%I', ns.nspname, seq.relname) as seq_fqname,
+      format('%I.%I', tbl_ns.nspname, tbl.relname) as tbl_fqname
+    from pg_class seq
+    join pg_namespace ns on ns.oid = seq.relnamespace
+    join pg_depend dep on dep.objid = seq.oid
+    join pg_class tbl on tbl.oid = dep.refobjid
+    join pg_namespace tbl_ns on tbl_ns.oid = tbl.relnamespace
+    join pg_attribute att on att.attrelid = tbl.oid and att.attnum = dep.refobjsubid
+    where seq.relkind = 'S'
+      and dep.deptype IN ('a', 'n')
+      and tbl.relkind IN ('r', 'p')
+      and ns.nspname = 'digidiggie_tng'
+  loop
+    execute format( 'SELECT GREATEST(COALESCE(MAX(%1$I), 0) + 1, 1) FROM %2$s', r.column_name, r.tbl_fqname)
+        into next_value;
+    execute format('SELECT setval(%L::regclass, %s, false)', r.seq_fqname, next_value);
+  end loop;
+end $$;
