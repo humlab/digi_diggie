@@ -11,6 +11,7 @@ from typing import Optional
 import click
 import pandas as pd
 import psycopg
+from sqlalchemy import create_engine
 
 
 @click.command()
@@ -28,9 +29,7 @@ import psycopg
     help="PostgreSQL password (uses .pgpass if not provided)",
 )
 @click.option(
-    "--prompt-password",
-    is_flag=True,
-    help="Prompt for password interactively",
+    "--prompt-password", is_flag=True, help="Prompt for password interactively"
 )
 @click.option(
     "--schema",
@@ -76,18 +75,31 @@ def export_db_to_excel(
 
     Each table will be exported to a separate sheet in the Excel file.
     Sheet names will match table names (truncated to 31 characters if needed).
-    
+
     By default, uses .pgpass for authentication if no password is provided.
     """
     # Prompt for password if --prompt-password flag is set
     if prompt_password and not password:
         password = click.prompt("Password", hide_input=True)
 
-    # Build connection string
+    # Build connection strings for both psycopg and SQLAlchemy
     # If password is not provided, psycopg will use .pgpass file
-    conninfo_parts = [f"host={host}", f"port={port}", f"dbname={database}", f"user={user}"]
+    conninfo_parts = [
+        f"host={host}",
+        f"port={port}",
+        f"dbname={database}",
+        f"user={user}",
+    ]
+
+    # SQLAlchemy connection string
     if password:
         conninfo_parts.append(f"password={password}")
+        sqlalchemy_url = (
+            f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}"
+        )
+    else:
+        sqlalchemy_url = f"postgresql+psycopg://{user}@{host}:{port}/{database}"
+
     conninfo = " ".join(conninfo_parts)
 
     try:
@@ -95,6 +107,7 @@ def export_db_to_excel(
         if verbose:
             click.echo(f"Connecting to database '{database}' at {host}:{port}...")
 
+        # Use psycopg for getting table list
         with psycopg.connect(conninfo) as conn:
             # Get list of tables
             tables = get_table_list(conn, schema)
@@ -115,8 +128,11 @@ def export_db_to_excel(
                 for table in tables:
                     click.echo(f"  - {table}")
 
-            # Export tables to Excel
-            export_tables_to_excel(conn, schema, tables, output, verbose)
+        # Create SQLAlchemy engine for pandas operations
+        engine = create_engine(sqlalchemy_url)
+
+        # Export tables to Excel
+        export_tables_to_excel(engine, schema, tables, output, verbose)
 
         click.echo(f"✓ Successfully exported {len(tables)} table(s) to {output}")
 
@@ -178,7 +194,7 @@ def filter_tables(
 
 
 def export_tables_to_excel(
-    conn: psycopg.Connection,
+    engine,
     schema: str,
     tables: list[str],
     output_path: Path,
@@ -187,7 +203,7 @@ def export_tables_to_excel(
     """Export tables to Excel file with separate sheets.
 
     Args:
-        conn: Database connection
+        engine: SQLAlchemy engine
         schema: Schema name
         tables: List of table names to export
         output_path: Path to output Excel file
@@ -203,8 +219,7 @@ def export_tables_to_excel(
             query = f'SELECT * FROM "{schema}"."{table_name}"'
 
             try:
-                df = pd.read_sql_query(query, conn)
-
+                df = pd.read_sql_query(query, engine)
                 # Excel sheet names are limited to 31 characters
                 sheet_name = table_name[:31]
 
