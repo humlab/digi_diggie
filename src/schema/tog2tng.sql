@@ -94,6 +94,15 @@ begin
             (9, 'Vinnare', 'Personen vann målet'),          -- 'Klagande'
             (10, 'Oavgjort', 'Målet slutade oavgjort');
 
+    -- Relationship Type
+    insert into digidiggie_tng.relationship_type ("relationship_type_id", "relationship_type_name", "description")
+        values (1, 'Far', 'Person är far till person'),
+               (2, 'Mor', 'Person är mor till person'),
+               (3, 'Syskon', 'Person är syskon till person'),
+               (4, 'Make/Maka', 'Person är make/maka till person'),
+               (5, 'Annan', 'Annan typ av relation mellan personer'),
+               (0, 'Okänd', 'Okänd typ av relation mellan personer');
+
     /***********************************************************************************************************
     ** STEP     Populate placename
     ** FIXME    Can this table be reduced e.g. only placenames in northern Sweden?
