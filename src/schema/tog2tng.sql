@@ -302,47 +302,4 @@ end $$;
 ** STEP 7: Update sequences
 ************************************************************************************************************/
 
-do $$
-declare
-  r record;
-  next_value bigint;
-begin
-  for r in
-    select
-      ns.nspname      as schema_name,
-      seq.relname     as sequence_name,
-      tbl_ns.nspname  as table_schema,
-      tbl.relname     as table_name,
-      att.attname     as column_name,
-      format('%I.%I', ns.nspname, seq.relname) as seq_fqname,
-      format('%I.%I', tbl_ns.nspname, tbl.relname) as tbl_fqname
-    from pg_class seq
-    join pg_namespace ns on ns.oid = seq.relnamespace
-    join pg_depend dep on dep.objid = seq.oid
-    join pg_class tbl on tbl.oid = dep.refobjid
-    join pg_namespace tbl_ns on tbl_ns.oid = tbl.relnamespace
-    join pg_attribute att on att.attrelid = tbl.oid and att.attnum = dep.refobjsubid
-    where seq.relkind = 'S'
-      and dep.deptype IN ('a', 'n')
-      and tbl.relkind IN ('r', 'p')
-      and ns.nspname = 'digidiggie_tng'
-  loop
-    execute format( 'SELECT GREATEST(COALESCE(MAX(%1$I), 0) + 1, 1) FROM %2$s', r.column_name, r.tbl_fqname)
-        into next_value;
-    execute format('SELECT setval(%L::regclass, %s, false)', r.seq_fqname, next_value);
-  end loop;
-end $$;
-
-
-tog_to_tng as (
-            select tog.entry_id as tog_id, tng.court_case_entry_id as tng_id
-            from digidiggie_tog.entries tog
-            join digidiggie_tng.court_case_entry tng
-              on tog.season_id = tng.season_id
-             and tog.land_use_id = tng.land_use_id
-             and coalesce(tog.placename_id, -1) = coalesce(tng.placename_id, -1)
-            join digidiggie_tng.court_case cc
-              on tng.court_case_id = cc.court_case_id
-             and lower(trim(cc.reference_number)) = lower(trim(tog.reference_number))
-             and tog."year"::int = tng.entry_year
-        )
+call digidiggie_tng.sync_sequences()
