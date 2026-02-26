@@ -259,15 +259,14 @@ begin
         select cc.court_case_id, cc.case_year, null, null --, e.legal_source_id
         from digidiggie_tng.court_case cc
 
-end $$;
+    /***********************************************************************************************************
+    ** STEP     Add person relationships. Currently, the data lacks relationship information.
+    ************************************************************************************************************/
 
-/***********************************************************************************************************
-** STEP 6: Create rulings from old entries
-************************************************************************************************************/
 
-do $$
-begin
-    raise notice 'step 6: creating rulings...';
+    /***********************************************************************************************************
+    ** STEP     Create rulings from old entries
+    ************************************************************************************************************/
 
     -- create rulings for cases that have winner_id, judgement_id, or legal_source_id
     -- note: ruling_type is a new concept, we'll need to populate it separately
