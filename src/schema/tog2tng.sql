@@ -6,6 +6,13 @@
 -- drop schema if exists digidiggie_tng cascade;
 
 -- create schema digidiggie_tng;
+do $$
+begin
+    if current_database() <> 'digidiggie' then
+         raise exception 'This script must be run in the digidiggie database, current database: %', current_database();
+    end if;
+end;
+$$;
 
 do $$
 begin

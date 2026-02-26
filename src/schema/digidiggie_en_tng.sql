@@ -1,6 +1,15 @@
 -- Enable PostGIS extension for geometry types in public schema
 do $$
 begin
+    if current_database() <> 'digidiggie' then
+         raise exception 'This script must be run in the digidiggie database, current database: %', current_database();
+    end if;
+end;
+$$;
+
+do $$
+begin
+    raise notice 'Ensuring PostGIS extension is installed in public schema...';
     if not exists (select 1 from pg_extension where extname = 'postgis') then
         create extension postgis schema public;
     end if;
