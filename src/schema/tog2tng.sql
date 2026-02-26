@@ -35,6 +35,8 @@ begin
 
     -- legal sources
     insert into digidiggie_tng.legal_source (legal_source_id, legal_source_name)
+        -- select 0, 'Ej angiven'
+        -- union
         select legal_source_id, legal_source_name
         from digidiggie_tog.legal_sources;
 
