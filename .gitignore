@@ -8,3 +8,4 @@ data/ortnamn
 .vscode/settings.json
 archive
 *.bak
+lib
