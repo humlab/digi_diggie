@@ -9,6 +9,7 @@
     "**/.venv",
     "**/.venv/**",
     "**/node_modules",
+    "**/.*",
     ".venv/**",
     "data/**",
     "archive/**",
