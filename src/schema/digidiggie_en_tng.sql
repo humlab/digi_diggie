@@ -23,7 +23,6 @@ begin
 end;
 $$;
 
-
 set search_path to digidiggie_tng;
 set role gudrun;
 
