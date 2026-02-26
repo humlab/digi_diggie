@@ -22,3 +22,10 @@ load-test-db:
 
 load-prod-db: 
 	@./scripts/mdb-to-pg load --database $(POSTGRES_DB) --schema digidiggie_tog --host $(HOST) --user $(POSTGRES_USER) --port $(POSTGRES_PORT) data/digidiggie_dev.accdb
+
+dump-to-excel:
+	@uv run src/pgdb_to_excel.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output xl.xlsx
+
+dump-accdb-to-excel:
+	@uv run src/accdb_to_excel.py --database data/digidiggie_dev.accdb --output data/accdb_dump.xlsx --verbose
+
