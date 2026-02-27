@@ -184,7 +184,7 @@ On Error GoTo ErrHandler
     ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
     ctl.Visible = True ' Default to visible (no ruling initially)
     
-    yPos = yPos + 600
+    yPos = yPos + 800
     
     ' sfrmCourtCaseEntries subform
     Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 2500)
@@ -236,13 +236,13 @@ On Error GoTo ErrHandler
     frm.AllowEdits = True
     
     ' entry_year
-    Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 200, 200, 1200, 300)
+    Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 200, 400, 1200, 300)
     ctl.Name = "txtEntryYear"
     ctl.ControlSource = "entry_year"
     CreateLabel frm.Name, "lblEntryYear", "Year", 200, 50, 1200, 300
     
     ' season_id
-    Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1500, 200, 1500, 300)
+    Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1500, 400, 1500, 300)
     ctl.Name = "cboSeasonId"
     ctl.ControlSource = "season_id"
     ctl.RowSource = "SELECT season_id, season_name FROM season ORDER BY season_name;"
@@ -253,7 +253,7 @@ On Error GoTo ErrHandler
     CreateLabel frm.Name, "lblSeasonId", "Season", 1500, 50, 1500, 300
     
     ' land_use_id
-    Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 3100, 200, 2000, 300)
+    Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 3100, 400, 2000, 300)
     ctl.Name = "cboLandUseId"
     ctl.ControlSource = "land_use_id"
     ctl.RowSource = "SELECT land_use_id, description FROM land_use ORDER BY description;"
@@ -272,13 +272,13 @@ On Error GoTo ErrHandler
     CreateLabel frm.Name, "lblPlacename", "Placename", 5200, 50, 3000, 300
     
     ' original_placename
-    Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 6500, 200, 2500, 300)
+    Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 8300, 400, 2500, 300)
     ctl.Name = "txtOriginalPlacename"
     ctl.ControlSource = "original_placename"
-    CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename", 6500, 50, 2500, 300
+    CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename", 8300, 50, 2500, 300
     
     ' cmdEntryDetail button
-    Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 9100, 200, 1500, 300)
+    Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 10900, 400, 1500, 300)
     ctl.Name = "cmdEntryDetail"
     ctl.Caption = "Detail..."
     ctl.OnClick = "=sfrmCourtCaseEntries_cmdEntryDetail_Click()"
