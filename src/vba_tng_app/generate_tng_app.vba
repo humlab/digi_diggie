@@ -2,9 +2,17 @@ Option Compare Database
 Option Explicit
 
 '================================================================================
-' CONFIG: Change these to match your linked-table names in Access
-' (Check the Navigation Pane for exact names.)
+' DigiDiggie TNG – Access Form Generator (with)
+'  (1) Placename picker/search form (no giant combo)
+'  (2) Meaningful court_case display in combos (qry_CourtCaseDisplay)
+'
+' ASSUMPTION: PostgreSQL tables are linked into Access (ODBC).
+' IMPORTANT: Update the T_* constants to match your linked table names EXACTLY.
 '================================================================================
+
+'========================
+' CONFIG: Linked table names in Access
+'========================
 Private Const T_COMMUNITY As String = "community"
 Private Const T_PARISH As String = "parish"
 Private Const T_SOURCE As String = "source"
@@ -30,7 +38,13 @@ Private Const T_PERSON_RELATIONSHIP As String = "person_relationship"
 ' ENTRY POINT
 '================================================================================
 Public Sub BuildForms_DigiDiggie_TNG()
-    ' --- Lookup / reference tables (simple editors)
+    ' (2) Ensure display query exists for court case combos
+    EnsureCourtCaseDisplayQuery
+
+    ' (1) Create placename picker/search dialog
+    CreatePlacenamePickerForm
+
+    ' --- Lookup / reference table forms (simple editors)
     CreateSimpleTableForm "frm_Parish", T_PARISH, "parish_id"
     CreateSimpleTableForm "frm_Source", T_SOURCE, "source_id"
     CreateSimpleTableForm "frm_Season", T_SEASON, "season_id"
@@ -43,7 +57,7 @@ Public Sub BuildForms_DigiDiggie_TNG()
     CreateSimpleTableForm "frm_OutcomeType", T_OUTCOME_TYPE, "outcome_type_id"
     CreateSimpleTableForm "frm_RelationshipType", T_RELATIONSHIP_TYPE, "relationship_type_id"
 
-    ' Placename can be large; make it datasheet for browsing/editing (or read-only).
+    ' Placename table might be large; keep a datasheet for browsing/editing
     CreateDatasheetForm "frm_Placename", T_PLACENAME
 
     ' --- Core entity forms
@@ -71,6 +85,13 @@ Private Sub DeleteIfExists(ByVal objType As AcObjectType, ByVal objName As Strin
     If ObjectExists(objType, objName) Then
         DoCmd.DeleteObject objType, objName
     End If
+End Sub
+
+Private Sub CreateOrReplaceQuery(ByVal qName As String, ByVal sql As String)
+    On Error Resume Next
+    CurrentDb.QueryDefs.Delete qName
+    On Error GoTo 0
+    CurrentDb.CreateQueryDef qName, sql
 End Sub
 
 Private Sub CreateSimpleTableForm(ByVal formName As String, ByVal tableName As String, ByVal pkField As String)
@@ -130,6 +151,24 @@ Private Sub LayoutFieldsAsTextboxes(ByVal frm As Form, ByVal tableName As String
     Next fld
 End Sub
 
+Private Sub AddText(ByVal formName As String, ByVal fieldName As String, ByVal topPos As Long, _
+                    Optional ByVal widthTwips As Long = 5200, Optional ByVal heightTwips As Long = 360)
+    CreateControl formName, acLabel, acDetail, , fieldName & ":", 300, topPos, 2400, 360
+    Dim tb As Control
+    Set tb = CreateControl(formName, acTextBox, acDetail, , , 2800, topPos, widthTwips, heightTwips)
+    tb.ControlSource = fieldName
+End Sub
+
+Private Sub AddMemo(ByVal formName As String, ByVal fieldName As String, ByVal topPos As Long, _
+                    Optional ByVal heightTwips As Long = 900)
+    CreateControl formName, acLabel, acDetail, , fieldName & ":", 300, topPos, 2400, 360
+    Dim tb As Control
+    Set tb = CreateControl(formName, acTextBox, acDetail, , , 2800, topPos, 5200, heightTwips)
+    tb.ControlSource = fieldName
+    tb.EnterKeyBehavior = True
+    tb.ScrollBars = 2
+End Sub
+
 Private Sub AddCombo(ByVal formName As String, ByVal boundField As String, _
                      ByVal lookupTable As String, ByVal keyField As String, ByVal displayField As String, _
                      ByVal leftPos As Long, ByVal topPos As Long, _
@@ -143,10 +182,29 @@ Private Sub AddCombo(ByVal formName As String, ByVal boundField As String, _
     cbo.ControlSource = boundField
     cbo.BoundColumn = 1
     cbo.ColumnCount = 2
-    cbo.ColumnWidths = "0;6" ' hide key, show display
+    cbo.ColumnWidths = "0;7"
     cbo.LimitToList = True
     cbo.RowSourceType = "Table/Query"
     cbo.RowSource = "SELECT [" & keyField & "], [" & displayField & "] FROM [" & lookupTable & "] ORDER BY [" & displayField & "];"
+End Sub
+
+' (2) Combo sourced from a query (for prettier court case display)
+Private Sub AddComboFromQuery(ByVal formName As String, ByVal boundField As String, _
+                              ByVal queryName As String, ByVal keyField As String, ByVal displayField As String, _
+                              ByVal leftPos As Long, ByVal topPos As Long, Optional ByVal labelCaption As String = "")
+    If labelCaption = "" Then labelCaption = boundField
+
+    CreateControl formName, acLabel, acDetail, , labelCaption & ":", 300, topPos, 2400, 360
+
+    Dim cbo As Control
+    Set cbo = CreateControl(formName, acComboBox, acDetail, , , leftPos, topPos, 5200, 360)
+    cbo.ControlSource = boundField
+    cbo.BoundColumn = 1
+    cbo.ColumnCount = 2
+    cbo.ColumnWidths = "0;7"
+    cbo.LimitToList = True
+    cbo.RowSourceType = "Table/Query"
+    cbo.RowSource = "SELECT [" & keyField & "], [" & displayField & "] FROM [" & queryName & "];"
 End Sub
 
 Private Sub AddSubform(ByVal mainFormName As String, ByVal subformName As String, _
@@ -165,6 +223,160 @@ Private Sub AddSubform(ByVal mainFormName As String, ByVal subformName As String
 End Sub
 
 '================================================================================
+' (2) COURT CASE DISPLAY QUERY
+'================================================================================
+Private Sub EnsureCourtCaseDisplayQuery()
+    Dim sql As String
+    sql = "SELECT cc.court_case_id, " & _
+          "Trim(Nz(s.source_abbreviation,'') & ' ' & " & _
+          "Nz(cc.reference_number,'') & " & _
+          "IIf(IsNull(cc.case_year),'',' (' & cc.case_year & ')')) AS court_case_display " & _
+          "FROM [" & T_COURT_CASE & "] AS cc " & _
+          "INNER JOIN [" & T_SOURCE & "] AS s ON cc.source_id = s.source_id " & _
+          "ORDER BY s.source_abbreviation, cc.case_year, cc.reference_number;"
+    CreateOrReplaceQuery "qry_CourtCaseDisplay", sql
+End Sub
+
+'================================================================================
+' (1) PLACENAME PICKER – public functions used by generated controls
+'================================================================================
+Public Function PickPlacename(ByVal targetControlName As String) As Boolean
+    ' Called from any form/subform button with: =PickPlacename("placename_id")
+    On Error GoTo EH
+
+    Dim callerFormName As String
+    callerFormName = Screen.ActiveForm.Name
+
+    If TempVars.Exists("PlacenameSelectedId") Then TempVars.Remove "PlacenameSelectedId"
+    If TempVars.Exists("PlacenameTargetForm") Then TempVars.Remove "PlacenameTargetForm"
+    If TempVars.Exists("PlacenameTargetControl") Then TempVars.Remove "PlacenameTargetControl"
+
+    TempVars.Add "PlacenameTargetForm", callerFormName
+    TempVars.Add "PlacenameTargetControl", targetControlName
+
+    DoCmd.OpenForm "frm_PlacenamePicker", WindowMode:=acDialog
+
+    If TempVars.Exists("PlacenameSelectedId") Then
+        Forms(callerFormName).Controls(targetControlName).Value = TempVars!PlacenameSelectedId
+        TempVars.Remove "PlacenameSelectedId"
+        PickPlacename = True
+    Else
+        PickPlacename = False
+    End If
+
+    Exit Function
+EH:
+    PickPlacename = False
+End Function
+
+Public Function PlacenamePicker_Search() As Boolean
+    On Error GoTo EH
+    Dim f As Form
+    Set f = Forms("frm_PlacenamePicker")
+
+    Dim q As String
+    q = Nz(f.Controls("txtSearch").Value, "")
+
+    Dim sql As String
+    sql = "SELECT placename_id, placename, parish_name, northing, easting " & _
+          "FROM [" & f.Controls("txtTable").Value & "] "
+
+    If Len(Trim$(q)) > 0 Then
+        q = Replace(q, "'", "''")
+        sql = sql & "WHERE placename LIKE '*" & q & "*' " & _
+                    "OR parish_name LIKE '*" & q & "*' "
+    End If
+
+    sql = sql & "ORDER BY placename;"
+
+    f.Controls("lstResults").RowSource = sql
+    f.Controls("lstResults").Requery
+
+    PlacenamePicker_Search = True
+    Exit Function
+EH:
+    PlacenamePicker_Search = False
+End Function
+
+Public Function PlacenamePicker_UseSelected() As Boolean
+    On Error GoTo EH
+    Dim f As Form
+    Set f = Forms("frm_PlacenamePicker")
+
+    Dim idValue As Variant
+    idValue = f.Controls("lstResults").Value
+
+    If IsNull(idValue) Then
+        PlacenamePicker_UseSelected = False
+        Exit Function
+    End If
+
+    If TempVars.Exists("PlacenameSelectedId") Then TempVars.Remove "PlacenameSelectedId"
+    TempVars.Add "PlacenameSelectedId", CLng(idValue)
+
+    DoCmd.Close acForm, "frm_PlacenamePicker", acSaveNo
+    PlacenamePicker_UseSelected = True
+    Exit Function
+EH:
+    PlacenamePicker_UseSelected = False
+End Function
+
+Public Function PlacenamePicker_Cancel() As Boolean
+    On Error Resume Next
+    If TempVars.Exists("PlacenameSelectedId") Then TempVars.Remove "PlacenameSelectedId"
+    DoCmd.Close acForm, "frm_PlacenamePicker", acSaveNo
+    PlacenamePicker_Cancel = True
+End Function
+
+Private Sub CreatePlacenamePickerForm()
+    DeleteIfExists acForm, "frm_PlacenamePicker"
+
+    DoCmd.CreateForm
+    Dim frm As Form: Set frm = Screen.ActiveForm
+    frm.Caption = "Pick placename"
+    frm.DefaultView = acNormal
+
+    ' hidden textbox storing table name used by picker
+    Dim tbTable As Control
+    Set tbTable = CreateControl(frm.Name, acTextBox, acDetail, , , 100, 100, 0, 0)
+    tbTable.Name = "txtTable"
+    tbTable.Visible = False
+    tbTable.Value = T_PLACENAME
+
+    ' Search label + textbox
+    CreateControl frm.Name, acLabel, acDetail, , "Search (placename or parish):", 300, 300, 3000, 300
+    Dim tbSearch As Control
+    Set tbSearch = CreateControl(frm.Name, acTextBox, acDetail, , , 3300, 300, 4500, 300)
+    tbSearch.Name = "txtSearch"
+    tbSearch.AfterUpdate = "=PlacenamePicker_Search()"
+
+    ' Results listbox
+    Dim lb As Control
+    Set lb = CreateControl(frm.Name, acListBox, acDetail, , , 300, 750, 7500, 3000)
+    lb.Name = "lstResults"
+    lb.ColumnCount = 5
+    lb.BoundColumn = 1
+    lb.ColumnWidths = "0;6;4;2;2"
+    lb.RowSourceType = "Table/Query"
+    lb.RowSource = "SELECT placename_id, placename, parish_name, northing, easting FROM [" & T_PLACENAME & "] ORDER BY placename;"
+
+    ' Use selected
+    Dim btnUse As Control
+    Set btnUse = CreateControl(frm.Name, acCommandButton, acDetail, , "Use selected", 300, 3900, 1600, 400)
+    btnUse.Name = "cmdUse"
+    btnUse.OnClick = "=PlacenamePicker_UseSelected()"
+
+    ' Cancel
+    Dim btnCancel As Control
+    Set btnCancel = CreateControl(frm.Name, acCommandButton, acDetail, , "Cancel", 2000, 3900, 1200, 400)
+    btnCancel.Name = "cmdCancel"
+    btnCancel.OnClick = "=PlacenamePicker_Cancel()"
+
+    DoCmd.Save acForm, "frm_PlacenamePicker"
+    DoCmd.Close acForm, frm.Name, acSaveYes
+End Sub
+
+'================================================================================
 ' SCHEMA-SPECIFIC FORMS
 '================================================================================
 
@@ -177,7 +389,7 @@ Private Sub CreateCommunityForm()
     frm.RecordSource = T_COMMUNITY
     frm.Caption = "Community"
 
-    ' community_name textbox
+    ' community_name
     CreateControl frm.Name, acLabel, acDetail, , "community_name:", 300, 600, 2400, 360
     Dim tb As Control
     Set tb = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, 600, 5200, 360)
@@ -192,7 +404,6 @@ End Sub
 
 ' court_case(source_id -> source) + subform court_case_entry
 Private Sub CreateCourtCaseForms()
-    ' Subform first
     CreateCourtCaseEntrySubform
 
     DeleteIfExists acForm, "frm_CourtCase"
@@ -207,37 +418,18 @@ Private Sub CreateCourtCaseForms()
     AddCombo frm.Name, "source_id", T_SOURCE, "source_id", "source_name", 2800, topPos, "source"
     topPos = topPos + 480
 
-    ' reference_number
-    CreateControl frm.Name, acLabel, acDetail, , "reference_number:", 300, topPos, 2400, 360
-    Dim tbRef As Control
-    Set tbRef = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 2000, 360)
-    tbRef.ControlSource = "reference_number"
+    AddText frm.Name, "reference_number", topPos, 2000, 360
     topPos = topPos + 480
 
-    ' district_court_name
-    CreateControl frm.Name, acLabel, acDetail, , "district_court_name:", 300, topPos, 2400, 360
-    Dim tbDC As Control
-    Set tbDC = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 360)
-    tbDC.ControlSource = "district_court_name"
+    AddText frm.Name, "district_court_name", topPos
     topPos = topPos + 480
 
-    ' case_year
-    CreateControl frm.Name, acLabel, acDetail, , "case_year:", 300, topPos, 2400, 360
-    Dim tbYear As Control
-    Set tbYear = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 1000, 360)
-    tbYear.ControlSource = "case_year"
+    AddText frm.Name, "case_year", topPos, 1000, 360
     topPos = topPos + 700
 
-    ' source_text
-    CreateControl frm.Name, acLabel, acDetail, , "source_text:", 300, topPos, 2400, 360
-    Dim tbST As Control
-    Set tbST = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 1200)
-    tbST.ControlSource = "source_text"
-    tbST.EnterKeyBehavior = True
-    tbST.ScrollBars = 2
+    AddMemo frm.Name, "source_text", topPos, 1200
     topPos = topPos + 1500
 
-    ' Subform for court_case_entry (linked by court_case_id)
     AddSubform frm.Name, "sfrm_CourtCaseEntry", "court_case_id", "court_case_id", 300, topPos, 8000, 2600, "Case entries"
 
     DoCmd.Save acForm, "frm_CourtCase"
@@ -255,7 +447,7 @@ Private Sub CreateCourtCaseEntrySubform()
 
     Dim topPos As Long: topPos = 300
 
-    ' Keep court_case_id hidden (link field)
+    ' Hide court_case_id (link field)
     Dim tbCaseId As Control
     Set tbCaseId = CreateControl(frm.Name, acTextBox, acDetail, , , 100, topPos, 0, 0)
     tbCaseId.ControlSource = "court_case_id"
@@ -267,14 +459,13 @@ Private Sub CreateCourtCaseEntrySubform()
     Set tbY = CreateControl(frm.Name, acTextBox, acDetail, , , 1800, topPos, 900, 300)
     tbY.ControlSource = "entry_year"
 
-    ' season_id lookup
+    ' season
     AddCombo frm.Name, "season_id", T_SEASON, "season_id", "season_name", 3500, topPos, "season"
 
     topPos = topPos + 480
 
-    ' land_use_id lookup
+    ' land use
     AddCombo frm.Name, "land_use_id", T_LAND_USE, "land_use_id", "description", 2800, topPos, "land_use"
-
     topPos = topPos + 480
 
     ' original_placename
@@ -282,16 +473,17 @@ Private Sub CreateCourtCaseEntrySubform()
     Dim tbOP As Control
     Set tbOP = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 300)
     tbOP.ControlSource = "original_placename"
-
     topPos = topPos + 480
 
-    ' placename_id: WARNING: placename can be huge. Keep as textbox by default.
-    ' If your placename table is small enough, switch to combo:
-    ' AddCombo frm.Name, "placename_id", T_PLACENAME, "placename_id", "placename", 2800, topPos, "placename"
+    ' placename_id textbox + picker button (1)
     CreateControl frm.Name, acLabel, acDetail, , "placename_id:", 300, topPos, 2400, 300
     Dim tbPID As Control
     Set tbPID = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 1200, 300)
     tbPID.ControlSource = "placename_id"
+
+    Dim btnPick As Control
+    Set btnPick = CreateControl(frm.Name, acCommandButton, acDetail, , "Pick…", 4100, topPos, 900, 300)
+    btnPick.OnClick = "=PickPlacename(""placename_id"")"
 
     topPos = topPos + 480
 
@@ -307,7 +499,7 @@ Private Sub CreateCourtCaseEntrySubform()
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
 
-' court_case_entry as main form + person_entry subform (useful for editing participants)
+' court_case_entry as main form + person_entry subform
 Private Sub CreateCourtCaseEntry_WithPersonEntry()
     CreatePersonEntrySubform
 
@@ -320,14 +512,11 @@ Private Sub CreateCourtCaseEntry_WithPersonEntry()
 
     Dim topPos As Long: topPos = 600
 
-    AddCombo frm.Name, "court_case_id", T_COURT_CASE, "court_case_id", "court_case_id", 2800, topPos, "court_case_id"
+    ' (2) court_case_id as meaningful display combo
+    AddComboFromQuery frm.Name, "court_case_id", "qry_CourtCaseDisplay", "court_case_id", "court_case_display", 2800, topPos, "court case"
     topPos = topPos + 480
 
-    ' entry_year
-    CreateControl frm.Name, acLabel, acDetail, , "entry_year:", 300, topPos, 2400, 360
-    Dim tbY As Control
-    Set tbY = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 1000, 360)
-    tbY.ControlSource = "entry_year"
+    AddText frm.Name, "entry_year", topPos, 1000, 360
     topPos = topPos + 480
 
     AddCombo frm.Name, "season_id", T_SEASON, "season_id", "season_name", 2800, topPos, "season"
@@ -336,30 +525,24 @@ Private Sub CreateCourtCaseEntry_WithPersonEntry()
     AddCombo frm.Name, "land_use_id", T_LAND_USE, "land_use_id", "description", 2800, topPos, "land_use"
     topPos = topPos + 480
 
-    ' original_placename
-    CreateControl frm.Name, acLabel, acDetail, , "original_placename:", 300, topPos, 2400, 360
-    Dim tbOP As Control
-    Set tbOP = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 360)
-    tbOP.ControlSource = "original_placename"
+    AddText frm.Name, "original_placename", topPos
     topPos = topPos + 480
 
-    ' placename_id as textbox (see note above)
+    ' placename_id textbox + picker button (1)
     CreateControl frm.Name, acLabel, acDetail, , "placename_id:", 300, topPos, 2400, 360
     Dim tbPID As Control
     Set tbPID = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 1200, 360)
     tbPID.ControlSource = "placename_id"
+
+    Dim btnPick As Control
+    Set btnPick = CreateControl(frm.Name, acCommandButton, acDetail, , "Pick…", 4100, topPos, 900, 360)
+    btnPick.OnClick = "=PickPlacename(""placename_id"")"
+
     topPos = topPos + 480
 
-    ' curated_text
-    CreateControl frm.Name, acLabel, acDetail, , "curated_text:", 300, topPos, 2400, 360
-    Dim tbCT As Control
-    Set tbCT = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 1200)
-    tbCT.ControlSource = "curated_text"
-    tbCT.EnterKeyBehavior = True
-    tbCT.ScrollBars = 2
+    AddMemo frm.Name, "curated_text", topPos, 1200
     topPos = topPos + 1500
 
-    ' Subform for participants/person_entry
     AddSubform frm.Name, "sfrm_PersonEntry", "court_case_entry_id", "court_case_entry_id", 300, topPos, 8000, 2600, "Persons in this entry"
 
     DoCmd.Save acForm, "frm_CourtCaseEntry"
@@ -377,41 +560,31 @@ Private Sub CreatePersonEntrySubform()
 
     Dim topPos As Long: topPos = 300
 
-    ' Link field hidden (court_case_entry_id)
+    ' Link field hidden
     Dim tbLink As Control
     Set tbLink = CreateControl(frm.Name, acTextBox, acDetail, , , 100, topPos, 0, 0)
     tbLink.ControlSource = "court_case_entry_id"
     tbLink.Visible = False
 
-    ' person_id -> person.full_name
     AddCombo frm.Name, "person_id", T_PERSON, "person_id", "full_name", 2800, topPos, "person"
     topPos = topPos + 480
 
-    ' community_id -> community.community_name
     AddCombo frm.Name, "community_id", T_COMMUNITY, "community_id", "community_name", 2800, topPos, "community"
     topPos = topPos + 480
 
-    ' land_rights_status_id -> land_rights_status.land_rights_status
     AddCombo frm.Name, "land_rights_status_id", T_LAND_RIGHTS_STATUS, "land_rights_status_id", "land_rights_status", 2800, topPos, "land_rights_status"
     topPos = topPos + 480
 
-    ' role_id -> role.role_name
     AddCombo frm.Name, "role_id", T_ROLE, "role_id", "role_name", 2800, topPos, "role"
     topPos = topPos + 480
 
-    ' curated_text
-    CreateControl frm.Name, acLabel, acDetail, , "curated_text:", 300, topPos, 2400, 300
-    Dim tbCT As Control
-    Set tbCT = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 900)
-    tbCT.ControlSource = "curated_text"
-    tbCT.EnterKeyBehavior = True
-    tbCT.ScrollBars = 2
+    AddMemo frm.Name, "curated_text", topPos, 900
 
     DoCmd.Save acForm, "sfrm_PersonEntry"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
 
-' person main form + subforms: person_entry, person_relationship (as person_1)
+' person main form + subforms
 Private Sub CreatePersonForms()
     CreatePersonEntrySubform_ForPerson
     CreatePersonRelationshipSubform
@@ -425,25 +598,17 @@ Private Sub CreatePersonForms()
 
     Dim topPos As Long: topPos = 600
 
-    ' given_name, patronymic, surname
     AddText frm.Name, "given_name", topPos: topPos = topPos + 480
     AddText frm.Name, "patronymic", topPos: topPos = topPos + 480
     AddText frm.Name, "surname", topPos: topPos = topPos + 480
-
-    AddText frm.Name, "birth_year", topPos: topPos = topPos + 480
-    AddText frm.Name, "death_year", topPos: topPos = topPos + 480
+    AddText frm.Name, "birth_year", topPos, 1000, 360: topPos = topPos + 480
+    AddText frm.Name, "death_year", topPos, 1000, 360: topPos = topPos + 480
     AddText frm.Name, "community_name", topPos: topPos = topPos + 480
 
-    ' note
-    CreateControl frm.Name, acLabel, acDetail, , "note:", 300, topPos, 2400, 360
-    Dim tbN As Control
-    Set tbN = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 900)
-    tbN.ControlSource = "note"
-    tbN.EnterKeyBehavior = True
-    tbN.ScrollBars = 2
+    AddMemo frm.Name, "note", topPos, 900
     topPos = topPos + 1200
 
-    ' full_name (generated) - show as locked textbox
+    ' full_name generated (locked)
     CreateControl frm.Name, acLabel, acDetail, , "full_name:", 300, topPos, 2400, 360
     Dim tbFN As Control
     Set tbFN = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 360)
@@ -461,15 +626,7 @@ Private Sub CreatePersonForms()
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
 
-Private Sub AddText(ByVal formName As String, ByVal fieldName As String, ByVal topPos As Long)
-    CreateControl formName, acLabel, acDetail, , fieldName & ":", 300, topPos, 2400, 360
-    Dim tb As Control
-    Set tb = CreateControl(formName, acTextBox, acDetail, , , 2800, topPos, 5200, 360)
-    tb.ControlSource = fieldName
-End Sub
-
 Private Sub CreatePersonEntrySubform_ForPerson()
-    ' re-use person_entry but linked by person_id (not court_case_entry_id)
     DeleteIfExists acForm, "sfrm_PersonEntry_ByPerson"
 
     DoCmd.CreateForm
@@ -480,13 +637,13 @@ Private Sub CreatePersonEntrySubform_ForPerson()
 
     Dim topPos As Long: topPos = 300
 
-    ' Hide person_id (link field)
+    ' Hide person_id (link)
     Dim tbPID As Control
     Set tbPID = CreateControl(frm.Name, acTextBox, acDetail, , , 100, topPos, 0, 0)
     tbPID.ControlSource = "person_id"
     tbPID.Visible = False
 
-    ' court_case_entry_id (show as number; you could make a combo if you prefer)
+    ' Show court_case_entry_id as number (simple)
     CreateControl frm.Name, acLabel, acDetail, , "court_case_entry_id:", 300, topPos, 2400, 300
     Dim tbCCE As Control
     Set tbCCE = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 1200, 300)
@@ -517,33 +674,25 @@ Private Sub CreatePersonRelationshipSubform()
 
     Dim topPos As Long: topPos = 300
 
-    ' Hide person_1_id (link field)
+    ' Hide person_1_id (link)
     Dim tbP1 As Control
     Set tbP1 = CreateControl(frm.Name, acTextBox, acDetail, , , 100, topPos, 0, 0)
     tbP1.ControlSource = "person_1_id"
     tbP1.Visible = False
 
-    ' person_2_id -> person.full_name
     AddCombo frm.Name, "person_2_id", T_PERSON, "person_id", "full_name", 2800, topPos, "related person"
     topPos = topPos + 480
 
-    ' relationship_type_id -> relationship_type.relationship_type_name
     AddCombo frm.Name, "relationship_type_id", T_RELATIONSHIP_TYPE, "relationship_type_id", "relationship_type_name", 2800, topPos, "relationship_type"
     topPos = topPos + 480
 
-    ' description
-    CreateControl frm.Name, acLabel, acDetail, , "description:", 300, topPos, 2400, 300
-    Dim tbD As Control
-    Set tbD = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 600)
-    tbD.ControlSource = "description"
-    tbD.EnterKeyBehavior = True
-    tbD.ScrollBars = 2
+    AddMemo frm.Name, "description", topPos, 600
 
     DoCmd.Save acForm, "sfrm_PersonRelationship"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
 
-' ruling (1:1 with court_case via unique court_case_id) + person_outcome subform
+' ruling + person_outcome subform
 Private Sub CreateRulingForms()
     CreatePersonOutcomeSubform
 
@@ -556,7 +705,8 @@ Private Sub CreateRulingForms()
 
     Dim topPos As Long: topPos = 600
 
-    AddCombo frm.Name, "court_case_id", T_COURT_CASE, "court_case_id", "court_case_id", 2800, topPos, "court_case_id"
+    ' (2) court_case_id meaningful display combo
+    AddComboFromQuery frm.Name, "court_case_id", "qry_CourtCaseDisplay", "court_case_id", "court_case_display", 2800, topPos, "court case"
     topPos = topPos + 480
 
     AddCombo frm.Name, "ruling_type_id", T_RULING_TYPE, "ruling_type_id", "ruling_type", 2800, topPos, "ruling_type"
@@ -565,16 +715,10 @@ Private Sub CreateRulingForms()
     AddCombo frm.Name, "legal_source_id", T_LEGAL_SOURCE, "legal_source_id", "legal_source_name", 2800, topPos, "legal_source"
     topPos = topPos + 480
 
-    AddText frm.Name, "ruling_year", topPos
+    AddText frm.Name, "ruling_year", topPos, 1000, 360
     topPos = topPos + 480
 
-    ' description
-    CreateControl frm.Name, acLabel, acDetail, , "description:", 300, topPos, 2400, 360
-    Dim tbDesc As Control
-    Set tbDesc = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 900)
-    tbDesc.ControlSource = "description"
-    tbDesc.EnterKeyBehavior = True
-    tbDesc.ScrollBars = 2
+    AddMemo frm.Name, "description", topPos, 900
     topPos = topPos + 1200
 
     AddSubform frm.Name, "sfrm_PersonOutcome", "ruling_id", "ruling_id", 300, topPos, 8000, 2400, "Outcomes for persons"
@@ -594,77 +738,20 @@ Private Sub CreatePersonOutcomeSubform()
 
     Dim topPos As Long: topPos = 300
 
-    ' Hide ruling_id (link field)
+    ' Hide ruling_id (link)
     Dim tbR As Control
     Set tbR = CreateControl(frm.Name, acTextBox, acDetail, , , 100, topPos, 0, 0)
     tbR.ControlSource = "ruling_id"
     tbR.Visible = False
 
-    ' person_id -> person.full_name
     AddCombo frm.Name, "person_id", T_PERSON, "person_id", "full_name", 2800, topPos, "person"
     topPos = topPos + 480
 
-    ' outcome_type_id -> outcome_type_name
     AddCombo frm.Name, "outcome_type_id", T_OUTCOME_TYPE, "outcome_type_id", "outcome_type_name", 2800, topPos, "outcome_type"
     topPos = topPos + 480
 
-    ' description
-    CreateControl frm.Name, acLabel, acDetail, , "description:", 300, topPos, 2400, 300
-    Dim tbD As Control
-    Set tbD = CreateControl(frm.Name, acTextBox, acDetail, , , 2800, topPos, 5200, 600)
-    tbD.ControlSource = "description"
-    tbD.EnterKeyBehavior = True
-    tbD.ScrollBars = 2
+    AddMemo frm.Name, "description", topPos, 600
 
     DoCmd.Save acForm, "sfrm_PersonOutcome"
-    DoCmd.Close acForm, frm.Name, acSaveYes
-End Sub
-
-Private Sub CreatePlacenamePickerForm()
-    DeleteIfExists acForm, "frm_PlacenamePicker"
-
-    DoCmd.CreateForm
-    Dim frm As Form: Set frm = Screen.ActiveForm
-    frm.Caption = "Pick placename"
-    frm.DefaultView = acNormal
-
-    ' Hidden textbox that stores table name used by picker (lets you change it centrally)
-    Dim tbTable As Control
-    Set tbTable = CreateControl(frm.Name, acTextBox, acDetail, , , 100, 100, 0, 0)
-    tbTable.Name = "txtTable"
-    tbTable.Visible = False
-    tbTable.Value = T_PLACENAME
-
-    ' Search label + textbox
-    CreateControl frm.Name, acLabel, acDetail, , "Search (placename or parish):", 300, 300, 3000, 300
-    Dim tbSearch As Control
-    Set tbSearch = CreateControl(frm.Name, acTextBox, acDetail, , , 3300, 300, 4500, 300)
-    tbSearch.Name = "txtSearch"
-    ' AfterUpdate is reliable; OnChange is “live” but can be noisy.
-    tbSearch.AfterUpdate = "=PlacenamePicker_Search()"
-
-    ' Results listbox
-    Dim lb As Control
-    Set lb = CreateControl(frm.Name, acListBox, acDetail, , , 300, 750, 7500, 3000)
-    lb.Name = "lstResults"
-    lb.ColumnCount = 5
-    lb.BoundColumn = 1
-    lb.ColumnWidths = "0;6;4;2;2" ' hide id
-    lb.RowSourceType = "Table/Query"
-    lb.RowSource = "SELECT placename_id, placename, parish_name, northing, easting FROM [" & T_PLACENAME & "] ORDER BY placename;"
-
-    ' Use selected
-    Dim btnUse As Control
-    Set btnUse = CreateControl(frm.Name, acCommandButton, acDetail, , "Use selected", 300, 3900, 1600, 400)
-    btnUse.Name = "cmdUse"
-    btnUse.OnClick = "=PlacenamePicker_UseSelected()"
-
-    ' Cancel
-    Dim btnCancel As Control
-    Set btnCancel = CreateControl(frm.Name, acCommandButton, acDetail, , "Cancel", 2000, 3900, 1200, 400)
-    btnCancel.Name = "cmdCancel"
-    btnCancel.OnClick = "=PlacenamePicker_Cancel()"
-
-    DoCmd.Save acForm, "frm_PlacenamePicker"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
