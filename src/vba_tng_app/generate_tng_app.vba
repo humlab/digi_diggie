@@ -176,6 +176,8 @@ Private Sub CreateSimpleTableForm(ByVal formName As String, ByVal tableName As S
 
     LayoutFieldsAsTextboxes frm, tableName, pkField, True
 
+    AddNavigationButtons formName
+
     DoCmd.Save acForm, formName
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
@@ -282,7 +284,18 @@ Private Sub AddCombo(ByVal formName As String, ByVal boundField As String, _
     cbo.ColumnWidths = "0;7"
     cbo.LimitToList = True
     cbo.RowSourceType = "Table/Query"
-    cbo.RowSource = "SELECT [" & keyField & "], [" & displayField & "] FROM [" & lookupTable & "] ORDER BY [" & displayField & "];"
+    
+    ' Intelligent sorting based on table/field
+    Dim orderBy As String
+    If (lookupTable = T_PERSON And displayField = "full_name") Then
+        ' Sort persons by surname, given_name, patronymic for better UX
+        orderBy = "ORDER BY surname, given_name, patronymic"
+    Else
+        ' Default: sort by display field
+        orderBy = "ORDER BY [" & displayField & "]"
+    End If
+    
+    cbo.RowSource = "SELECT [" & keyField & "], [" & displayField & "] FROM [" & lookupTable & "] " & orderBy & ";"
 End Sub
 
 ' (2) Combo sourced from a query (for prettier court case display)
@@ -317,6 +330,51 @@ Private Sub AddSubform(ByVal mainFormName As String, ByVal subformName As String
     sf.SourceObject = "Form." & subformName
     sf.LinkMasterFields = linkMaster
     sf.LinkChildFields = linkChild
+End Sub
+
+Private Sub AddNavigationButtons(ByVal formName As String)
+    ' Add standard navigation buttons to form footer
+    Const BTN_TOP As Long = 100
+    Const BTN_WIDTH As Long = 1200
+    Const BTN_HEIGHT As Long = 360
+    Const BTN_SPACING As Long = 100
+    
+    Dim btnLeft As Long
+    btnLeft = 300
+    
+    ' First Record button
+    Dim btnFirst As Control
+    Set btnFirst = CreateControl(formName, acCommandButton, acFooter, , , btnLeft, BTN_TOP, BTN_WIDTH, BTN_HEIGHT)
+    btnFirst.Caption = "|< First"
+    btnFirst.OnClick = "=DoCmd.GoToRecord(,,acFirst)"
+    btnLeft = btnLeft + BTN_WIDTH + BTN_SPACING
+    
+    ' Previous Record button
+    Dim btnPrev As Control
+    Set btnPrev = CreateControl(formName, acCommandButton, acFooter, , , btnLeft, BTN_TOP, BTN_WIDTH, BTN_HEIGHT)
+    btnPrev.Caption = "< Previous"
+    btnPrev.OnClick = "=DoCmd.GoToRecord(,,acPrevious)"
+    btnLeft = btnLeft + BTN_WIDTH + BTN_SPACING
+    
+    ' Next Record button
+    Dim btnNext As Control
+    Set btnNext = CreateControl(formName, acCommandButton, acFooter, , , btnLeft, BTN_TOP, BTN_WIDTH, BTN_HEIGHT)
+    btnNext.Caption = "Next >"
+    btnNext.OnClick = "=DoCmd.GoToRecord(,,acNext)"
+    btnLeft = btnLeft + BTN_WIDTH + BTN_SPACING
+    
+    ' Last Record button
+    Dim btnLast As Control
+    Set btnLast = CreateControl(formName, acCommandButton, acFooter, , , btnLeft, BTN_TOP, BTN_WIDTH, BTN_HEIGHT)
+    btnLast.Caption = "Last >|"
+    btnLast.OnClick = "=DoCmd.GoToRecord(,,acLast)"
+    btnLeft = btnLeft + BTN_WIDTH + BTN_SPACING + 300
+    
+    ' New Record button
+    Dim btnNew As Control
+    Set btnNew = CreateControl(formName, acCommandButton, acFooter, , , btnLeft, BTN_TOP, BTN_WIDTH, BTN_HEIGHT)
+    btnNew.Caption = "+ New"
+    btnNew.OnClick = "=DoCmd.GoToRecord(,,acNewRec)"
 End Sub
 
 '================================================================================
@@ -495,6 +553,8 @@ Private Sub CreateCommunityForm()
     ' parish_id combo
     AddCombo frm.Name, "parish_id", T_PARISH, "parish_id", "parish", 2800, 1080, "parish"
 
+    AddNavigationButtons frm.Name
+
     DoCmd.Save acForm, "frm_Community"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
@@ -528,6 +588,8 @@ Private Sub CreateCourtCaseForms()
     topPos = topPos + 1500
 
     AddSubform frm.Name, "sfrm_CourtCaseEntry", "court_case_id", "court_case_id", 300, topPos, 8000, 2600, "Case entries"
+
+    AddNavigationButtons frm.Name
 
     DoCmd.Save acForm, "frm_CourtCase"
     DoCmd.Close acForm, frm.Name, acSaveYes
@@ -722,6 +784,8 @@ Private Sub CreatePersonForms()
 
     AddSubform frm.Name, "sfrm_PersonRelationship", "person_id", "person_1_id", 300, topPos, 8000, 2200, "Relationships (as person_1)"
 
+    AddNavigationButtons frm.Name
+
     DoCmd.Save acForm, "frm_Person"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
@@ -823,6 +887,8 @@ Private Sub CreateRulingForms()
 
     AddSubform frm.Name, "sfrm_PersonOutcome", "ruling_id", "ruling_id", 300, topPos, 8000, 2400, "Outcomes for persons"
 
+    AddNavigationButtons frm.Name
+
     DoCmd.Save acForm, "frm_Ruling"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
@@ -884,6 +950,8 @@ Private Sub CreateRoleForm()
     
     ' description
     AddMemo frm.Name, "description", topPos, 900
+    
+    AddNavigationButtons frm.Name
     
     DoCmd.Save acForm, "frm_Role"
     DoCmd.Close acForm, frm.Name, acSaveYes
