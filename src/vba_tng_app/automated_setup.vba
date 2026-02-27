@@ -44,11 +44,11 @@ Public Function LinkAllTngTables() As Boolean
     strDSN = "ODBC;DSN=DigiDiggie_TNG;DATABASE=digidiggie;"
     
     ' List all tables in digidiggie_tng schema
-    arrTables = Array("community", "court_case", "court_case_entry", _
+    arrTables = Array("community", "court_case", "court_case_entry", "land_use", _
                      "land_rights_status", "legal_source", "outcome_type", "parish", _
                      "person", "person_entry", "person_outcome", "person_relationship", _
                      "placename", "relationship_type", "role", "role_type", _
-                     "ruling", "ruling_type", "source")
+                     "ruling", "ruling_type", "season", "source")
     
     ' Link each table
     For i = LBound(arrTables) To UBound(arrTables)
