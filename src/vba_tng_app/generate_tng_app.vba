@@ -11,6 +11,30 @@ Option Explicit
 '================================================================================
 
 '========================
+' Access Constants (in case references are incomplete)
+'========================
+Private Const acForm As Integer = 2
+Private Const acNormal As Integer = 0
+Private Const acDatasheet As Integer = 2
+Private Const acContinuousForms As Integer = 1
+Private Const acDetail As Integer = 0
+Private Const acFooter As Integer = 5
+Private Const acLabel As Integer = 100
+Private Const acTextBox As Integer = 109
+Private Const acComboBox As Integer = 111
+Private Const acCommandButton As Integer = 104
+Private Const acSubform As Integer = 112
+Private Const acListBox As Integer = 110
+Private Const acSaveYes As Integer = 1
+Private Const acSaveNo As Integer = 2
+Private Const acDialog As Integer = 3
+Private Const acFirst As Integer = 2
+Private Const acPrevious As Integer = 3
+Private Const acNext As Integer = 1
+Private Const acLast As Integer = 4
+Private Const acNewRec As Integer = 5
+
+'========================
 ' CONFIG: Linked table names in Access
 '========================
 Private Const T_COMMUNITY As String = "community"
