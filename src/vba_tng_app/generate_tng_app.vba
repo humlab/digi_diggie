@@ -167,7 +167,7 @@ Private Sub CreateSimpleTableForm(ByVal formName As String, ByVal tableName As S
     DeleteIfExists acForm, formName
 
     Dim frm As Form
-    DoCmd.CreateForm
+    CreateForm
     Set frm = Screen.ActiveForm
 
     frm.RecordSource = tableName
@@ -186,7 +186,7 @@ Private Sub CreateDatasheetForm(ByVal formName As String, ByVal tableName As Str
     DeleteIfExists acForm, formName
 
     Dim frm As Form
-    DoCmd.CreateForm
+    CreateForm
     Set frm = Screen.ActiveForm
 
     frm.RecordSource = tableName
@@ -486,7 +486,7 @@ End Function
 Private Sub CreatePlacenamePickerForm()
     DeleteIfExists acForm, "frm_PlacenamePicker"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.Caption = "Pick placename"
     frm.DefaultView = acNormal
@@ -539,7 +539,7 @@ End Sub
 Private Sub CreateCommunityForm()
     DeleteIfExists acForm, "frm_Community"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_COMMUNITY
     frm.Caption = "Community"
@@ -565,7 +565,7 @@ Private Sub CreateCourtCaseForms()
 
     DeleteIfExists acForm, "frm_CourtCase"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_COURT_CASE
     frm.Caption = "Court Case"
@@ -598,7 +598,7 @@ End Sub
 Private Sub CreateCourtCaseEntrySubform()
     DeleteIfExists acForm, "sfrm_CourtCaseEntry"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_COURT_CASE_ENTRY
     frm.Caption = "Court Case Entries"
@@ -667,7 +667,7 @@ Private Sub CreateCourtCaseEntry_WithPersonEntry()
 
     DeleteIfExists acForm, "frm_CourtCaseEntry"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_COURT_CASE_ENTRY
     frm.Caption = "Court Case Entry"
@@ -714,7 +714,7 @@ End Sub
 Private Sub CreatePersonEntrySubform()
     DeleteIfExists acForm, "sfrm_PersonEntry"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_PERSON_ENTRY
     frm.Caption = "Person Entry"
@@ -753,7 +753,7 @@ Private Sub CreatePersonForms()
 
     DeleteIfExists acForm, "frm_Person"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_PERSON
     frm.Caption = "Person"
@@ -793,7 +793,7 @@ End Sub
 Private Sub CreatePersonEntrySubform_ForPerson()
     DeleteIfExists acForm, "sfrm_PersonEntry_ByPerson"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_PERSON_ENTRY
     frm.Caption = "Person Entries"
@@ -830,7 +830,7 @@ End Sub
 Private Sub CreatePersonRelationshipSubform()
     DeleteIfExists acForm, "sfrm_PersonRelationship"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_PERSON_RELATIONSHIP
     frm.Caption = "Person Relationships"
@@ -862,7 +862,7 @@ Private Sub CreateRulingForms()
 
     DeleteIfExists acForm, "frm_Ruling"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_RULING
     frm.Caption = "Ruling"
@@ -896,7 +896,7 @@ End Sub
 Private Sub CreatePersonOutcomeSubform()
     DeleteIfExists acForm, "sfrm_PersonOutcome"
 
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_PERSON_OUTCOME
     frm.Caption = "Person Outcomes"
@@ -926,7 +926,7 @@ End Sub
 Private Sub CreateRoleForm()
     DeleteIfExists acForm, "frm_Role"
     
-    DoCmd.CreateForm
+    CreateForm
     Dim frm As Form: Set frm = Screen.ActiveForm
     frm.RecordSource = T_ROLE
     frm.Caption = "Roles"
