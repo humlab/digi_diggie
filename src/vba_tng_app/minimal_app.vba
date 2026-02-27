@@ -176,6 +176,12 @@ On Error GoTo ErrHandler
     ctl.Caption = "Open Entry Detail"
     ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
     
+    ' cmdCreateRuling button (visible only when no ruling exists)
+    Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5100, yPos, 2000, 400)
+    ctl.Name = "cmdCreateRuling"
+    ctl.Caption = "Create Ruling"
+    ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
+    
     yPos = yPos + 600
     
     ' sfrmCourtCaseEntries subform
@@ -482,16 +488,17 @@ On Error GoTo ErrHandler
     frm.DefaultView = 0 ' Single Form
     frm.NavigationButtons = False
     frm.RecordSelectors = False
-    frm.AllowAdditions = True
+    frm.AllowAdditions = False ' Prevent adding multiple rulings
     frm.AllowEdits = True
+    frm.OnCurrent = "=sfrmRuling_OnCurrent()" ' Dynamic UI updates
     
     yPos = 200
     
-    ' cmdCreateRuling button
-    Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
-    ctl.Name = "cmdCreateRuling"
-    ctl.Caption = "Create Ruling"
-    ctl.OnClick = "=sfrmRuling_cmdCreateRuling_Click()"
+    ' lblNoRuling - shown when no ruling exists
+    Set ctl = CreateControl(frm.Name, acLabel, acDetail, "", "", 200, yPos, 6000, 400)
+    ctl.Name = "lblNoRuling"
+    ctl.Caption = "No ruling yet. Click 'Create Ruling' button above to add one."
+    ctl.ForeColor = RGB(128, 128, 128) ' Gray text
     
     yPos = yPos + 600
     
@@ -947,9 +954,9 @@ ErrHandler:
 End Function
 
 '------------------------------------------------------------------------------
-' sfrmRuling: Create Ruling button
+' frmCourtCase: Create Ruling button
 '------------------------------------------------------------------------------
-Public Function sfrmRuling_cmdCreateRuling_Click()
+Public Function frmCourtCase_cmdCreateRuling_Click()
 On Error GoTo ErrHandler
     Dim db As DAO.Database
     Dim rs As DAO.Recordset
@@ -992,11 +999,44 @@ On Error GoTo ErrHandler
     ' Requery the ruling form
     Forms!frmCourtCase!sfrmRuling.Form.Requery
     
+    ' Hide the Create Ruling button now that a ruling exists
+    Forms!frmCourtCase!cmdCreateRuling.Visible = False
+    
     MsgBox "Ruling created.", vbInformation
     
     Exit Function
 ErrHandler:
-    MsgBox "Error in sfrmRuling_cmdCreateRuling_Click: " & Err.Description, vbCritical
+    MsgBox "Error in frmCourtCase_cmdCreateRuling_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmRuling: OnCurrent event - Handle dynamic UI
+'------------------------------------------------------------------------------
+Public Function sfrmRuling_OnCurrent()
+On Error Resume Next
+    Dim hasRuling As Boolean
+    
+    ' Check if ruling record exists (recordset has data)
+    hasRuling = Not (Forms!frmCourtCase!sfrmRuling.Form.Recordset.EOF And _
+                     Forms!frmCourtCase!sfrmRuling.Form.Recordset.BOF)
+    
+    ' Show/hide Create Ruling button on parent form
+    Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
+    
+    ' Show/hide "No ruling" label in subform
+    Forms!frmCourtCase!sfrmRuling.Form!lblNoRuling.Visible = Not hasRuling
+    
+    ' Show/hide data entry controls in subform
+    Forms!frmCourtCase!sfrmRuling.Form!txtRulingYear.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!lblRulingYear.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!cboRulingTypeId.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!lblRulingTypeId.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!cboLegalSourceId.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!lblLegalSourceId.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!txtDescription.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!lblDescription.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!lblPersonOutcomes.Visible = hasRuling
 End Function
 
 '------------------------------------------------------------------------------
