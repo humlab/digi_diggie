@@ -116,6 +116,9 @@ End Sub
 Public Sub BuildForms_DigiDiggie_TNG()
     On Error GoTo EH
     
+    ' Clean up any existing generated objects first
+    CleanupGeneratedObjects
+    
     Dim createdForms As Collection
     Set createdForms = New Collection
     Dim currentForm As String
