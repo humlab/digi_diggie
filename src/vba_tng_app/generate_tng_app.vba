@@ -51,7 +51,7 @@ Public Sub BuildForms_DigiDiggie_TNG()
     CreateSimpleTableForm "frm_LandUse", T_LAND_USE, "land_use_id"
     CreateSimpleTableForm "frm_LandRightsStatus", T_LAND_RIGHTS_STATUS, "land_rights_status_id"
     CreateSimpleTableForm "frm_RoleType", T_ROLE_TYPE, "role_type_id"
-    CreateSimpleTableForm "frm_Role", T_ROLE, "role_id"
+    CreateRoleForm
     CreateSimpleTableForm "frm_RulingType", T_RULING_TYPE, "ruling_type_id"
     CreateSimpleTableForm "frm_LegalSource", T_LEGAL_SOURCE, "legal_source_id"
     CreateSimpleTableForm "frm_OutcomeType", T_OUTCOME_TYPE, "outcome_type_id"
@@ -753,5 +753,38 @@ Private Sub CreatePersonOutcomeSubform()
     AddMemo frm.Name, "description", topPos, 600
 
     DoCmd.Save acForm, "sfrm_PersonOutcome"
+    DoCmd.Close acForm, frm.Name, acSaveYes
+End Sub
+
+' role(role_type_id -> role_type)
+Private Sub CreateRoleForm()
+    DeleteIfExists acForm, "frm_Role"
+    
+    DoCmd.CreateForm
+    Dim frm As Form: Set frm = Screen.ActiveForm
+    frm.RecordSource = T_ROLE
+    frm.Caption = "Roles"
+    frm.DefaultView = acNormal
+    
+    Dim topPos As Long: topPos = 600
+    
+    ' role_id (PK, hidden)
+    Dim tbPK As Control
+    Set tbPK = CreateControl(frm.Name, acTextBox, acDetail, , , 300, topPos, 0, 0)
+    tbPK.ControlSource = "role_id"
+    tbPK.Visible = False
+    
+    ' role_name
+    AddText frm.Name, "role_name", topPos
+    topPos = topPos + 450
+    
+    ' role_type_id (FK -> role_type)
+    AddCombo frm.Name, "role_type_id", T_ROLE_TYPE, "role_type_id", "role_type_name", 2800, topPos, "Role Type"
+    topPos = topPos + 450
+    
+    ' description
+    AddMemo frm.Name, "description", topPos, 900
+    
+    DoCmd.Save acForm, "frm_Role"
     DoCmd.Close acForm, frm.Name, acSaveYes
 End Sub
