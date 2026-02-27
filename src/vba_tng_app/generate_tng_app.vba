@@ -70,6 +70,47 @@ Private Const FORM_ROW_SPACING As Long = 450
 Private Const FORM_START_TOP As Long = 600
 
 '================================================================================
+' CLEANUP - Remove all generated objects before recreating
+'================================================================================
+Public Sub CleanupGeneratedObjects()
+    On Error Resume Next  ' Continue even if object doesn't exist
+    
+    ' Delete Query
+    CurrentDb.QueryDefs.Delete "qry_CourtCaseDisplay"
+    
+    ' Delete Lookup/Reference Forms
+    DoCmd.DeleteObject acForm, "frm_Parish"
+    DoCmd.DeleteObject acForm, "frm_Source"
+    DoCmd.DeleteObject acForm, "frm_Season"
+    DoCmd.DeleteObject acForm, "frm_LandUse"
+    DoCmd.DeleteObject acForm, "frm_LandRightsStatus"
+    DoCmd.DeleteObject acForm, "frm_RoleType"
+    DoCmd.DeleteObject acForm, "frm_Role"
+    DoCmd.DeleteObject acForm, "frm_RulingType"
+    DoCmd.DeleteObject acForm, "frm_LegalSource"
+    DoCmd.DeleteObject acForm, "frm_OutcomeType"
+    DoCmd.DeleteObject acForm, "frm_RelationshipType"
+    
+    ' Delete Core Forms and Subforms
+    DoCmd.DeleteObject acForm, "frm_PlacenamePicker"
+    DoCmd.DeleteObject acForm, "frm_Placename"
+    DoCmd.DeleteObject acForm, "frm_Community"
+    DoCmd.DeleteObject acForm, "frm_CourtCase"
+    DoCmd.DeleteObject acForm, "sfrm_CourtCaseEntry"
+    DoCmd.DeleteObject acForm, "frm_CourtCaseEntry"
+    DoCmd.DeleteObject acForm, "sfrm_PersonEntry"
+    DoCmd.DeleteObject acForm, "frm_Person"
+    DoCmd.DeleteObject acForm, "sfrm_PersonEntry_ByPerson"
+    DoCmd.DeleteObject acForm, "sfrm_PersonRelationship"
+    DoCmd.DeleteObject acForm, "frm_Ruling"
+    DoCmd.DeleteObject acForm, "sfrm_PersonOutcome"
+    
+    On Error GoTo 0  ' Reset error handling
+    
+    Debug.Print "Cleanup complete: All generated objects removed"
+End Sub
+
+'================================================================================
 ' ENTRY POINT
 '================================================================================
 Public Sub BuildForms_DigiDiggie_TNG()
