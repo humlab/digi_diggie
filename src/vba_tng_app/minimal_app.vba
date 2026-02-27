@@ -225,7 +225,9 @@ On Error GoTo ErrHandler
     
     Set frm = CreateForm()
     strFormName = frm.Name
-    frm.RecordSource = "court_case_entry"
+    ' Join with placename table to display placename text
+    frm.RecordSource = "SELECT cce.*, p.placename FROM court_case_entry AS cce " & _
+                       "LEFT JOIN placename AS p ON cce.placename_id = p.placename_id"
     frm.Caption = "Court Case Entries"
     frm.DefaultView = 1 ' Continuous Forms (datasheet-like)
     frm.NavigationButtons = False
@@ -261,11 +263,13 @@ On Error GoTo ErrHandler
     ctl.LimitToList = True
     CreateLabel frm.Name, "lblLandUseId", "Land Use", 3100, 50, 2000, 300
     
-    ' placename_id (numeric only)
-    Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 5200, 200, 1200, 300)
-    ctl.Name = "txtPlacenameId"
-    ctl.ControlSource = "placename_id"
-    CreateLabel frm.Name, "lblPlacenameId", "Placename ID", 5200, 50, 1200, 300
+    ' placename (from joined table - display name)
+    Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 5200, 400, 3000, 300)
+    ctl.Name = "txtPlacename"
+    ctl.ControlSource = "placename"
+    ctl.Locked = True
+    ctl.Enabled = False
+    CreateLabel frm.Name, "lblPlacename", "Placename", 5200, 50, 3000, 300
     
     ' original_placename
     Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 6500, 200, 2500, 300)
