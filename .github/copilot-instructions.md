@@ -24,7 +24,6 @@ DigiDiggie is a digital edition platform for historical Swedish court records (d
 ## Project Structure
 
 - `src/schema/` - PostgreSQL DDL schemas (digidiggie_en_tng.sql is primary)
-- `src/vba_tng_app/` - VBA code generator for Access forms
 - `src/pgdb_to_excel.py` - Export PostgreSQL to Excel
 - `src/accdb_to_excel.py` - Export Access database to Excel
 - `docs/` - Comprehensive documentation (ACCESS-APP-SETUP.md, LINKED-DATABASE.md)
