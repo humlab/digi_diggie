@@ -34,40 +34,108 @@ Private Const T_PERSON_OUTCOME As String = "person_outcome"
 Private Const T_RELATIONSHIP_TYPE As String = "relationship_type"
 Private Const T_PERSON_RELATIONSHIP As String = "person_relationship"
 
+'========================
+' CONFIG: Form Layout Constants
+'========================
+Private Const FORM_LABEL_LEFT As Long = 300
+Private Const FORM_CONTROL_LEFT As Long = 2800
+Private Const FORM_LABEL_WIDTH As Long = 2400
+Private Const FORM_CONTROL_WIDTH As Long = 5200
+Private Const FORM_ROW_HEIGHT As Long = 360
+Private Const FORM_ROW_SPACING As Long = 450
+Private Const FORM_START_TOP As Long = 600
+
 '================================================================================
 ' ENTRY POINT
 '================================================================================
 Public Sub BuildForms_DigiDiggie_TNG()
+    On Error GoTo EH
+    
+    Dim createdForms As Collection
+    Set createdForms = New Collection
+    Dim currentForm As String
+    
     ' (2) Ensure display query exists for court case combos
+    On Error Resume Next
+    currentForm = "Query: qry_CourtCaseDisplay"
     EnsureCourtCaseDisplayQuery
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error GoTo EH
 
     ' (1) Create placename picker/search dialog
+    On Error Resume Next
+    currentForm = "frm_PlacenamePicker"
     CreatePlacenamePickerForm
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error GoTo EH
 
     ' --- Lookup / reference table forms (simple editors)
-    CreateSimpleTableForm "frm_Parish", T_PARISH, "parish_id"
-    CreateSimpleTableForm "frm_Source", T_SOURCE, "source_id"
-    CreateSimpleTableForm "frm_Season", T_SEASON, "season_id"
-    CreateSimpleTableForm "frm_LandUse", T_LAND_USE, "land_use_id"
-    CreateSimpleTableForm "frm_LandRightsStatus", T_LAND_RIGHTS_STATUS, "land_rights_status_id"
-    CreateSimpleTableForm "frm_RoleType", T_ROLE_TYPE, "role_type_id"
-    CreateRoleForm
-    CreateSimpleTableForm "frm_RulingType", T_RULING_TYPE, "ruling_type_id"
-    CreateSimpleTableForm "frm_LegalSource", T_LEGAL_SOURCE, "legal_source_id"
-    CreateSimpleTableForm "frm_OutcomeType", T_OUTCOME_TYPE, "outcome_type_id"
-    CreateSimpleTableForm "frm_RelationshipType", T_RELATIONSHIP_TYPE, "relationship_type_id"
+    On Error Resume Next
+    currentForm = "frm_Parish": CreateSimpleTableForm "frm_Parish", T_PARISH, "parish_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_Source": CreateSimpleTableForm "frm_Source", T_SOURCE, "source_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_Season": CreateSimpleTableForm "frm_Season", T_SEASON, "season_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_LandUse": CreateSimpleTableForm "frm_LandUse", T_LAND_USE, "land_use_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_LandRightsStatus": CreateSimpleTableForm "frm_LandRightsStatus", T_LAND_RIGHTS_STATUS, "land_rights_status_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_RoleType": CreateSimpleTableForm "frm_RoleType", T_ROLE_TYPE, "role_type_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_Role": CreateRoleForm
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_RulingType": CreateSimpleTableForm "frm_RulingType", T_RULING_TYPE, "ruling_type_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_LegalSource": CreateSimpleTableForm "frm_LegalSource", T_LEGAL_SOURCE, "legal_source_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_OutcomeType": CreateSimpleTableForm "frm_OutcomeType", T_OUTCOME_TYPE, "outcome_type_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "frm_RelationshipType": CreateSimpleTableForm "frm_RelationshipType", T_RELATIONSHIP_TYPE, "relationship_type_id"
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error GoTo EH
 
     ' Placename table might be large; keep a datasheet for browsing/editing
-    CreateDatasheetForm "frm_Placename", T_PLACENAME
+    On Error Resume Next
+    currentForm = "frm_Placename": CreateDatasheetForm "frm_Placename", T_PLACENAME
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error GoTo EH
 
     ' --- Core entity forms
-    CreateCommunityForm
-    CreateCourtCaseForms
-    CreateCourtCaseEntry_WithPersonEntry
-    CreatePersonForms
-    CreateRulingForms
+    On Error Resume Next
+    currentForm = "Community forms": CreateCommunityForm
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "CourtCase forms": CreateCourtCaseForms
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "CourtCaseEntry forms": CreateCourtCaseEntry_WithPersonEntry
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "Person forms": CreatePersonForms
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error Resume Next
+    currentForm = "Ruling forms": CreateRulingForms
+    If Err.Number = 0 Then createdForms.Add currentForm
+    On Error GoTo EH
 
-    MsgBox "Finished generating TNG forms.", vbInformation
+    MsgBox "Successfully created " & createdForms.Count & " form(s)/object(s).", vbInformation, "DigiDiggie TNG"
+    Exit Sub
+    
+EH:
+    MsgBox "Error creating forms: " & Err.Description & vbCrLf & vbCrLf & _
+           "Last attempted: " & currentForm & vbCrLf & _
+           "Successfully created: " & createdForms.Count & " form(s)/object(s)", vbCritical, "Error"
 End Sub
 
 '================================================================================
@@ -78,6 +146,7 @@ Private Function ObjectExists(ByVal objType As AcObjectType, ByVal objName As St
     ObjectExists = (SysCmd(acSysCmdGetObjectState, objType, objName) <> 0)
     Exit Function
 EH:
+    Debug.Print "Error checking object '" & objName & "': " & Err.Description
     ObjectExists = False
 End Function
 
@@ -152,21 +221,49 @@ Private Sub LayoutFieldsAsTextboxes(ByVal frm As Form, ByVal tableName As String
 End Sub
 
 Private Sub AddText(ByVal formName As String, ByVal fieldName As String, ByVal topPos As Long, _
-                    Optional ByVal widthTwips As Long = 5200, Optional ByVal heightTwips As Long = 360)
-    CreateControl formName, acLabel, acDetail, , fieldName & ":", 300, topPos, 2400, 360
+                    Optional ByVal widthTwips As Long = 5200, Optional ByVal heightTwips As Long = 360, _
+                    Optional ByVal isRequired As Boolean = False)
+    Dim lblCaption As String
+    lblCaption = fieldName & ":"
+    If isRequired Then lblCaption = lblCaption & " *"
+    
+    Dim lbl As Control
+    Set lbl = CreateControl(formName, acLabel, acDetail, , lblCaption, FORM_LABEL_LEFT, topPos, FORM_LABEL_WIDTH, FORM_ROW_HEIGHT)
+    If isRequired Then lbl.ForeColor = RGB(255, 0, 0)
+    
     Dim tb As Control
-    Set tb = CreateControl(formName, acTextBox, acDetail, , , 2800, topPos, widthTwips, heightTwips)
+    Set tb = CreateControl(formName, acTextBox, acDetail, , , FORM_CONTROL_LEFT, topPos, widthTwips, heightTwips)
     tb.ControlSource = fieldName
+    tb.ControlTipText = "Enter " & fieldName
 End Sub
 
 Private Sub AddMemo(ByVal formName As String, ByVal fieldName As String, ByVal topPos As Long, _
                     Optional ByVal heightTwips As Long = 900)
-    CreateControl formName, acLabel, acDetail, , fieldName & ":", 300, topPos, 2400, 360
+    CreateControl formName, acLabel, acDetail, , fieldName & ":", FORM_LABEL_LEFT, topPos, FORM_LABEL_WIDTH, FORM_ROW_HEIGHT
     Dim tb As Control
-    Set tb = CreateControl(formName, acTextBox, acDetail, , , 2800, topPos, 5200, heightTwips)
+    Set tb = CreateControl(formName, acTextBox, acDetail, , , FORM_CONTROL_LEFT, topPos, FORM_CONTROL_WIDTH, heightTwips)
     tb.ControlSource = fieldName
     tb.EnterKeyBehavior = True
     tb.ScrollBars = 2
+    tb.ControlTipText = "Enter " & fieldName
+End Sub
+
+Private Sub AddYearField(ByVal formName As String, ByVal fieldName As String, ByVal topPos As Long, _
+                         Optional ByVal widthTwips As Long = 1000, Optional ByVal isRequired As Boolean = False)
+    Dim lblCaption As String
+    lblCaption = fieldName & ":"
+    If isRequired Then lblCaption = lblCaption & " *"
+    
+    Dim lbl As Control
+    Set lbl = CreateControl(formName, acLabel, acDetail, , lblCaption, FORM_LABEL_LEFT, topPos, FORM_LABEL_WIDTH, FORM_ROW_HEIGHT)
+    If isRequired Then lbl.ForeColor = RGB(255, 0, 0)
+    
+    Dim tb As Control
+    Set tb = CreateControl(formName, acTextBox, acDetail, , , FORM_CONTROL_LEFT, topPos, widthTwips, FORM_ROW_HEIGHT)
+    tb.ControlSource = fieldName
+    tb.ValidationRule = ">=1600 And <=2100"
+    tb.ValidationText = "Year must be between 1600 and 2100"
+    tb.ControlTipText = "Enter year (1600-2100)"
 End Sub
 
 Private Sub AddCombo(ByVal formName As String, ByVal boundField As String, _
@@ -424,7 +521,7 @@ Private Sub CreateCourtCaseForms()
     AddText frm.Name, "district_court_name", topPos
     topPos = topPos + 480
 
-    AddText frm.Name, "case_year", topPos, 1000, 360
+    AddYearField frm.Name, "case_year", topPos
     topPos = topPos + 700
 
     AddMemo frm.Name, "source_text", topPos, 1200
@@ -453,11 +550,14 @@ Private Sub CreateCourtCaseEntrySubform()
     tbCaseId.ControlSource = "court_case_id"
     tbCaseId.Visible = False
 
-    ' entry_year
+    ' entry_year (with validation)
     CreateControl frm.Name, acLabel, acDetail, , "entry_year:", 300, topPos, 1400, 300
     Dim tbY As Control
     Set tbY = CreateControl(frm.Name, acTextBox, acDetail, , , 1800, topPos, 900, 300)
     tbY.ControlSource = "entry_year"
+    tbY.ValidationRule = ">=1600 And <=2100"
+    tbY.ValidationText = "Year must be between 1600 and 2100"
+    tbY.ControlTipText = "Enter year (1600-2100)"
 
     ' season
     AddCombo frm.Name, "season_id", T_SEASON, "season_id", "season_name", 3500, topPos, "season"
@@ -601,8 +701,8 @@ Private Sub CreatePersonForms()
     AddText frm.Name, "given_name", topPos: topPos = topPos + 480
     AddText frm.Name, "patronymic", topPos: topPos = topPos + 480
     AddText frm.Name, "surname", topPos: topPos = topPos + 480
-    AddText frm.Name, "birth_year", topPos, 1000, 360: topPos = topPos + 480
-    AddText frm.Name, "death_year", topPos, 1000, 360: topPos = topPos + 480
+    AddYearField frm.Name, "birth_year", topPos: topPos = topPos + 480
+    AddYearField frm.Name, "death_year", topPos: topPos = topPos + 480
     AddText frm.Name, "community_name", topPos: topPos = topPos + 480
 
     AddMemo frm.Name, "note", topPos, 900
@@ -715,7 +815,7 @@ Private Sub CreateRulingForms()
     AddCombo frm.Name, "legal_source_id", T_LEGAL_SOURCE, "legal_source_id", "legal_source_name", 2800, topPos, "legal_source"
     topPos = topPos + 480
 
-    AddText frm.Name, "ruling_year", topPos, 1000, 360
+    AddYearField frm.Name, "ruling_year", topPos
     topPos = topPos + 480
 
     AddMemo frm.Name, "description", topPos, 900
