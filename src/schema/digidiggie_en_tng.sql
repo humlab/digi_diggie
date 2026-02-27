@@ -201,11 +201,13 @@ alter table "court_case" add constraint "court_case_source_id_fkey" foreign key 
 alter table "court_case_entry" add constraint "entry_court_case_id_fkey" foreign key ("court_case_id") references "court_case" ("court_case_id");
 alter table "court_case_entry" add constraint "entry_land_use_id_fkey" foreign key ("land_use_id") references "land_use" ("land_use_id");
 alter table "court_case_entry" add constraint "entry_season_id_fkey" foreign key ("season_id") references "season" ("season_id");
+alter table "court_case_entry" add constraint "entry_placename_id_fkey" foreign key ("placename_id") references "placename" ("placename_id");
 alter table "person_entry" add constraint "person_entry_person_id_fkey" foreign key ("person_id") references "person" ("person_id");
 alter table "person_entry" add constraint "person_entry_community_id_fkey" foreign key ("community_id") references "community" ("community_id");
 alter table "person_entry" add constraint "person_entry_entry_id_fkey" foreign key ("court_case_entry_id") references "court_case_entry" ("court_case_entry_id");
 alter table "person_entry" add constraint "person_entry_role_id_fkey" foreign key ("role_id") references "role" ("role_id");
 alter table "person_entry" add constraint "fk_person_entry_land_rights_status_1" foreign key ("land_rights_status_id") references "land_rights_status" ("land_rights_status_id");
+alter table "role" add constraint "role_role_type_id_fkey" foreign key ("role_type_id") references "role_type" ("role_type_id");
 alter table "person_outcome" add constraint "person_outcomes_outcome_type_id_fkey" foreign key ("outcome_type_id") references "outcome_type" ("outcome_type_id") on delete no action on update no action;
 alter table "person_outcome" add constraint "person_outcomes_person_id_fkey" foreign key ("person_id") references "person" ("person_id") on delete no action on update no action;
 alter table "person_outcome" add constraint "person_outcomes_ruling_id_fkey" foreign key ("ruling_id") references "ruling" ("ruling_id") on delete cascade on update no action;
