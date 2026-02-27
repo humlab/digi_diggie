@@ -123,6 +123,7 @@ On Error GoTo ErrHandler
     frm.AllowAdditions = True
     frm.AllowEdits = True
     frm.AllowDeletions = True
+    frm.OnCurrent = "=frmCourtCase_OnCurrent()" ' Update button visibility
     
     yPos = 200
     
@@ -181,6 +182,7 @@ On Error GoTo ErrHandler
     ctl.Name = "cmdCreateRuling"
     ctl.Caption = "Create Ruling"
     ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
+    ctl.Visible = True ' Default to visible (no ruling initially)
     
     yPos = yPos + 600
     
@@ -864,6 +866,39 @@ End Function
 '==============================================================================
 ' EVENT HANDLERS - These are called by form button OnClick events
 '==============================================================================
+
+'------------------------------------------------------------------------------
+' frmCourtCase: OnCurrent event - Update button visibility
+'------------------------------------------------------------------------------
+Public Function frmCourtCase_OnCurrent()
+On Error Resume Next
+    Dim db As DAO.Database
+    Dim rs As DAO.Recordset
+    Dim courtCaseId As Variant
+    Dim hasRuling As Boolean
+    
+    Set db = CurrentDb
+    
+    ' Get current court case ID
+    courtCaseId = Forms!frmCourtCase!court_case_id
+    
+    If IsNull(courtCaseId) Then
+        ' New/unsaved record - hide button until saved
+        Forms!frmCourtCase!cmdCreateRuling.Visible = False
+        Exit Function
+    End If
+    
+    ' Check if ruling exists for this case
+    Set rs = db.OpenRecordset("SELECT ruling_id FROM ruling WHERE court_case_id = " & courtCaseId, dbOpenSnapshot)
+    hasRuling = Not rs.EOF
+    rs.Close
+    
+    ' Show button only when no ruling exists
+    Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
+    
+    ' Requery the ruling subform to ensure it's in sync
+    Forms!frmCourtCase!sfrmRuling.Form.Requery
+End Function
 
 '------------------------------------------------------------------------------
 ' frmCourtCase: New Case button
