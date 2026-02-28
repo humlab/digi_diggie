@@ -66,6 +66,55 @@ Private Sub DeleteFormsIfExist()
 End Sub
 
 '------------------------------------------------------------------------------
+' Public Method: Delete ALL forms in the database
+'------------------------------------------------------------------------------
+Public Sub DeleteAllForms()
+    On Error Resume Next
+    Dim db As DAO.Database
+    Dim obj As AccessObject
+    Dim formName As String
+    Dim deletedCount As Integer
+    Dim errorCount As Integer
+    
+    Set db = CurrentDb
+    deletedCount = 0
+    errorCount = 0
+    
+    Debug.Print "Starting DeleteAllForms..."
+    
+    ' Loop through all forms in reverse order (to avoid index shifting issues)
+    Dim i As Integer
+    For i = CurrentProject.AllForms.Count - 1 To 0 Step -1
+        formName = CurrentProject.AllForms(i).Name
+
+        If Not (formName Like "X*") Then
+            ' Try to delete the form
+            On Error Resume Next
+            DoCmd.Close acForm, formName, acSaveNo
+            DoCmd.DeleteObject acForm, formName
+            
+            If Err.Number = 0 Then
+                deletedCount = deletedCount + 1
+                Debug.Print "Deleted form: " & formName
+            Else
+                errorCount = errorCount + 1
+                Debug.Print "Error deleting form: " & formName & " (" & Err.Description & ")"
+                Err.Clear
+            End If
+            On Error Goto 0
+        Else
+            Debug.Print "Skipping form: " & formName
+        End If
+    Next i
+    
+    Debug.Print "DeleteAllForms completed. Deleted: " & deletedCount & ", Errors: " & errorCount
+    
+    MsgBox "Deleted " & deletedCount & " form(s)." & vbCrLf & _
+           IIf(errorCount > 0, "Errors: " & errorCount & " form(s) could not be deleted.", ""), _
+           vbInformation, "Delete All Forms"
+End Sub
+
+'------------------------------------------------------------------------------
 ' Create Saved Queries
 '------------------------------------------------------------------------------
 Private Sub CreateQueries()
@@ -196,7 +245,7 @@ Private Sub Create_frmCourtCase()
         ctl.LinkChildFields = "court_case_id"
         CreateLabel frm.Name, "lblEntries", "Court Case Entries:", 200, yPos - 300, 3000, 300
 
-        yPos = yPos + 2700
+        yPos = yPos + 2800
 
         ' sfrmRuling subform
         Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 2000)
@@ -866,10 +915,10 @@ End Sub
 ' Helper: Create a Label control
 '------------------------------------------------------------------------------
 Private Function CreateLabel(formName As String, labelName As String, _
-    caption As String, left As Integer, top As Integer, _
-    width As Integer, height As Integer) As Control
+    caption As String, leftPos As Integer, topPos As Integer, _
+    widthSize As Integer, heightSize As Integer) As Control
     Dim ctl As Control
-    Set ctl = CreateControl(formName, acLabel, acDetail, "", "", left, top, width, height)
+    Set ctl = CreateControl(formName, acLabel, acDetail, "", "", leftPos, topPos, widthSize, heightSize)
     ctl.Name = labelName
     ctl.Caption = caption
     Set CreateLabel = ctl
