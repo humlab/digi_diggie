@@ -174,6 +174,8 @@ Private Sub Create_frmCourtCase()
         frm.AllowAdditions = True
         frm.AllowEdits = True
         frm.AllowDeletions = True
+        frm.AutoResize = False ' Allow manual resizing
+        frm.AutoCenter = True
         frm.OnCurrent = "=frmCourtCase_OnCurrent()" ' Update button visibility
 
         yPos = 200
@@ -188,6 +190,7 @@ Private Sub Create_frmCourtCase()
         ctl.ColumnWidths = "0cm;3cm;5cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblSource", "Source:", 200, yPos, 1600, 300
 
         yPos = yPos + 500
@@ -196,6 +199,7 @@ Private Sub Create_frmCourtCase()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 4000, 300)
         ctl.Name = "txtReferenceNumber"
         ctl.ControlSource = "reference_number"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblReferenceNumber", "Reference #:", 200, yPos, 1600, 300
 
         yPos = yPos + 500
@@ -212,6 +216,7 @@ Private Sub Create_frmCourtCase()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 300)
         ctl.Name = "txtDistrictCourtName"
         ctl.ControlSource = "district_court_name"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblDistrictCourtName", "District Court:", 200, yPos, 1600, 300
 
         yPos = yPos + 700
@@ -243,6 +248,8 @@ Private Sub Create_frmCourtCase()
         ctl.SourceObject = "Form.sfrmCourtCaseEntries"
         ctl.LinkMasterFields = "court_case_id"
         ctl.LinkChildFields = "court_case_id"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel frm.Name, "lblEntries", "Court Case Entries:", 200, yPos - 300, 3000, 300
 
         yPos = yPos + 2800
@@ -253,6 +260,8 @@ Private Sub Create_frmCourtCase()
         ctl.SourceObject = "Form.sfrmRuling"
         ctl.LinkMasterFields = "court_case_id"
         ctl.LinkChildFields = "court_case_id"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+        ctl.VerticalAnchor = acVerticalAnchorBottom ' Anchor to bottom
         CreateLabel strFormName, "lblRuling", "Ruling:", 200, yPos - 300, 3000, 300
 
         DoCmd.Close acForm, strFormName, acSaveYes
@@ -363,6 +372,8 @@ Private Sub Create_frmCourtCaseEntryDetail()
         frm.Modal = True
         frm.NavigationButtons = True
         frm.RecordSelectors = True
+        frm.AutoResize = False ' Allow manual resizing
+        frm.AutoCenter = True
         frm.OnLoad = "=frmCourtCaseEntryDetail_OnLoad()" ' Auto-populate placename display
 
         yPos = 200
@@ -425,6 +436,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 300)
         ctl.Name = "txtOriginalPlacename"
         ctl.ControlSource = "original_placename"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename:", 200, yPos, 1600, 300
 
         yPos = yPos + 500
@@ -433,6 +445,8 @@ Private Sub Create_frmCourtCaseEntryDetail()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 800)
         ctl.Name = "txtCuratedText"
         ctl.ControlSource = "curated_text"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel frm.Name, "lblCuratedText", "Curated Text:", 200, yPos, 1600, 300
 
         yPos = yPos + 1000
@@ -443,6 +457,8 @@ Private Sub Create_frmCourtCaseEntryDetail()
         ctl.SourceObject = "Form.sfrmPersonEntryByEntry"
         ctl.LinkMasterFields = "court_case_entry_id"
         ctl.LinkChildFields = "court_case_entry_id"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel strFormName, "lblPersonEntries", "People in Entry:", 200, yPos - 300, 3000, 300
 
         DoCmd.Close acForm, strFormName, acSaveYes
@@ -598,6 +614,7 @@ Private Sub Create_sfrmRuling()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 1500, yPos, 6000, 600)
         ctl.Name = "txtDescription"
         ctl.ControlSource = "description"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblDescription", "Description:", 200, yPos, 1200, 300
 
         yPos = yPos + 800
@@ -608,6 +625,8 @@ Private Sub Create_sfrmRuling()
         ctl.SourceObject = "Form.sfrmPersonOutcomes"
         ctl.LinkMasterFields = "ruling_id"
         ctl.LinkChildFields = "ruling_id"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 300, 3000, 300
 
         DoCmd.Close acForm, strFormName, acSaveYes
