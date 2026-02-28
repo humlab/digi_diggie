@@ -1,11 +1,23 @@
 # Goal
 Generate **VBA code** (MS Access) that **creates a minimal, robust, court-case–oriented set of forms** for linked PostgreSQL tables (ODBC). This is a **pilot data registration tool**: simple UX, stable forms, and **NO combo boxes that load all placenames** (50k+).
 
-You (Copilot) will output VBA modules that:
-1) Create required saved queries (where needed)
-2) Create forms + subforms + controls
-3) Wire up buttons/events for popup pickers (Placename + Person) and “Create ruling”
-4) Keep everything runnable from one entry Sub `BuildAllForms()`.
+## Architecture
+
+The VBA code is split into two modules for clarity:
+
+1. **`minimal_app_generator.vba`** - Form generation code
+   - Run `BuildAllForms()` to create all forms, queries, and controls
+   - Contains all `Create_*` functions
+   - Only needed during initial setup or form regeneration
+
+2. **`minimal_app_runtime.vba`** - Runtime event handlers
+   - Contains all event handlers called by form controls
+   - Helper functions for search, navigation, etc.
+   - Must remain in the database for forms to function
+
+Both modules must be imported into your Access database:
+- Import `minimal_app_generator.vba` → Run `BuildAllForms()` → Forms created
+- Import `minimal_app_runtime.vba` → Event handlers available to forms
 
 ---
 
@@ -267,12 +279,78 @@ In sfrmCourtCaseEntries:
 
 ---
 
-# Output Format Requested
-Generate VBA code in **one or more standard modules**, e.g.:
-- modBuildPilotForms (main builder + helpers)
-- modOpenArgsHelpers (parsing helpers)
+# Usage Instructions
 
-The code should be runnable by opening VBA editor and running:
-`BuildAllForms`
+## Setup (First Time)
 
-Do NOT output explanations—only the code and any required comments within the code.
+1. **Link PostgreSQL Tables to Access**
+   - Follow [LINKED-DATABASE.md](../../docs/LINKED-DATABASE.md) guide
+   - Create ODBC DSN to your PostgreSQL database
+   - Link all tables from `digidiggie_tng` schema
+
+2. **Import VBA Modules**
+   - Open VBA Editor (`Alt + F11`)
+   - Import both modules:
+     - File → Import File... → `minimal_app_generator.vba`
+     - File → Import File... → `minimal_app_runtime.vba`
+
+3. **Generate Forms**
+   - In VBA Editor, open Immediate Window (`Ctrl + G`)
+   - Type: `BuildAllForms` and press Enter
+   - Wait 30-60 seconds for form generation
+   - Message box will confirm completion
+
+4. **Start Using**
+   - Close VBA Editor
+   - Open form `frmCourtCase` to begin data entry
+
+## Regenerating Forms
+
+If you need to recreate forms (e.g., after database changes):
+
+1. **Delete Existing Forms** (optional but recommended)
+   - In Access Navigation Pane, delete old forms
+
+2. **Re-run Generator**
+   - VBA Editor → Immediate Window
+   - Type: `BuildAllForms` and press Enter
+
+**Note**: Custom changes to forms will be lost. Modify the generator VBA instead for persistent changes.
+
+## Module Responsibilities
+
+### minimal_app_generator.vba
+- **Purpose**: Creates all forms and queries
+- **Main Function**: `BuildAllForms()` - Entry point
+- **When Needed**: Only during initial setup or regeneration
+- **Can Remove**: After forms are created (but keep for future regeneration)
+
+### minimal_app_runtime.vba
+- **Purpose**: Provides event handlers for form controls
+- **Functions**: All `frm*` and `sfrm*` event handlers
+- **When Needed**: Always - must remain in database
+- **Cannot Remove**: Forms depend on these functions
+
+## Troubleshooting
+
+**Forms don't work after generation:**
+- Ensure `minimal_app_runtime.vba` is imported
+- Check button OnClick properties reference correct function names
+
+**"Can't find table" error:**
+- Verify all tables are linked in Access
+- Check table names match exactly (case-sensitive in some cases)
+
+**"Compile error" when opening forms:**
+- Tools → References in VBA Editor
+- Ensure Microsoft DAO 3.6 Object Library is checked
+- Remove any missing references
+
+---
+
+# Files
+
+- **`minimal_app_generator.vba`** - Form generation code (~870 lines)
+- **`minimal_app_runtime.vba`** - Runtime event handlers (~390 lines)
+- **`minimal_app.vba`** - DEPRECATED - Combined version (kept for reference)
+- **`MINIMAL_APP.md`** - This documentation
