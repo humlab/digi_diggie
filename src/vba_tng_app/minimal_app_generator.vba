@@ -89,10 +89,10 @@ Private Sub CreateQueries()
             "WHERE (placename LIKE [pSearch]) Or (parish_name LIKE [pSearch]) " & _
             "ORDER BY placename;"
 
-            ' qPersonSearch
-            Set qdf = db.CreateQueryDef("qPersonSearch")
-            qdf.SQL = "PARAMETERS [pSearch] Text ( 255 ); " & _
-            "Select TOP 200 person_id, full_name, birth_year, death_year " & _
+        ' qPersonSearch (enhanced with community context)
+        Set qdf = db.CreateQueryDef("qPersonSearch")
+        qdf.SQL = "PARAMETERS [pSearch] Text ( 255 ); " & _
+            "Select TOP 200 person_id, full_name, birth_year, community_name " & _
             "FROM person " & _
             "WHERE full_name LIKE [pSearch] " & _
             "ORDER BY full_name;"
@@ -314,6 +314,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         frm.Modal = True
         frm.NavigationButtons = True
         frm.RecordSelectors = True
+        frm.OnLoad = "=frmCourtCaseEntryDetail_OnLoad()" ' Auto-populate placename display
 
         yPos = 200
 
@@ -647,6 +648,7 @@ Private Sub Create_frmPlacenameSearch()
         frm.Modal = True
         frm.NavigationButtons = False
         frm.RecordSelectors = False
+        frm.OnLoad = "=frmPlacenameSearch_OnLoad()" ' Show initial results
 
         yPos = 200
 
@@ -715,6 +717,7 @@ Private Sub Create_frmPersonSearch()
         frm.Modal = True
         frm.NavigationButtons = False
         frm.RecordSelectors = False
+        frm.OnLoad = "=frmPersonSearch_OnLoad()" ' Show initial results
 
         yPos = 200
 
@@ -737,7 +740,7 @@ Private Sub Create_frmPersonSearch()
         ctl.RowSourceType = "Table/Query"
         ctl.RowSource = ""
         ctl.ColumnCount = 4
-        ctl.ColumnWidths = "1.5cm;5cm;2cm;2cm"
+        ctl.ColumnWidths = "1.5cm;4cm;1.5cm;3cm" ' Adjusted for community context
         ctl.ColumnHeads = True
 
         yPos = yPos + 4200
@@ -789,6 +792,9 @@ Private Sub Create_frmPerson()
         frm.RecordSelectors = True
         frm.AllowAdditions = True
         frm.AllowEdits = True
+        frm.PopUp = True
+        frm.Modal = True
+        frm.OnClose = "=frmPerson_OnClose()" ' Return new person_id to caller
 
         yPos = 200
 
