@@ -94,6 +94,15 @@ Public Function sfrmCourtCaseEntries_cmdEntryDetail_Click()
 End Function
 
 '------------------------------------------------------------------------------
+' frmCourtCaseEntryDetail: OnLoad event - Auto-populate placename display
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseEntryDetail_OnLoad()
+    On Error Resume Next
+    ' Auto-populate placename display field on form load
+    UpdatePlacenameDisplay "frmCourtCaseEntryDetail"
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCaseEntryDetail: Pick Placename button
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_cmdPickPlacename_Click()
@@ -220,6 +229,17 @@ Public Function sfrmRuling_OnCurrent()
 End Function
 
 '------------------------------------------------------------------------------
+' frmPlacenameSearch: OnLoad event - Show initial results
+'------------------------------------------------------------------------------
+Public Function frmPlacenameSearch_OnLoad()
+    On Error Resume Next
+    ' Show top 50 placenames by default
+    Forms!frmPlacenameSearch!lstResults.RowSource = _
+        "SELECT TOP 50 placename_id, placename, parish_name, serial_number " & _
+        "FROM placename ORDER BY placename"
+End Function
+
+'------------------------------------------------------------------------------
 ' frmPlacenameSearch: Search button
 '------------------------------------------------------------------------------
 Public Function frmPlacenameSearch_cmdSearch_Click()
@@ -282,6 +302,17 @@ Public Function frmPlacenameSearch_cmdCancel_Click()
 End Function
 
 '------------------------------------------------------------------------------
+' frmPersonSearch: OnLoad event - Show initial results
+'------------------------------------------------------------------------------
+Public Function frmPersonSearch_OnLoad()
+    On Error Resume Next
+    ' Show top 50 persons by default
+    Forms!frmPersonSearch!lstResults.RowSource = _
+        "SELECT TOP 50 person_id, full_name, birth_year, community_name " & _
+        "FROM person ORDER BY full_name"
+End Function
+
+'------------------------------------------------------------------------------
 ' frmPersonSearch: Search button
 '------------------------------------------------------------------------------
 Public Function frmPersonSearch_cmdSearch_Click()
@@ -341,8 +372,8 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmPersonSearch_cmdNewPerson_Click()
     On Error Goto ErrHandler
-        ' Open person form in data entry mode
-        DoCmd.OpenForm "frmPerson", , , , acFormAdd, acDialog
+        ' Open person form in data entry mode, pass through caller info
+        DoCmd.OpenForm "frmPerson", , , , acFormAdd, acDialog, Forms!frmPersonSearch.OpenArgs
 
         ' Requery results after closing
         Forms!frmPersonSearch!lstResults.Requery
@@ -350,6 +381,40 @@ Public Function frmPersonSearch_cmdNewPerson_Click()
      Exit Function
  ErrHandler:
         MsgBox "Error in frmPersonSearch_cmdNewPerson_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' frmPerson: OnClose event - Return new person_id to caller
+'------------------------------------------------------------------------------
+Public Function frmPerson_OnClose()
+    On Error Goto ErrHandler
+        Dim callerForm As String
+        Dim targetControl As String
+        Dim newPersonId As Variant
+        
+        ' Get the newly created person_id (if any)
+        If Not IsNull(Forms!frmPerson!person_id) Then
+            newPersonId = Forms!frmPerson!person_id
+            
+            ' Parse OpenArgs to see if we should write back directly
+            ParseOpenArgs Forms!frmPerson.OpenArgs, callerForm, targetControl
+            
+            ' If caller info exists, write person_id directly and close search form
+            If callerForm <> "" And targetControl <> "" Then
+                ' Write back to original caller
+                Forms(callerForm).Controls(targetControl).Value = newPersonId
+                
+                ' Close the person search form too (we're done)
+                On Error Resume Next
+                DoCmd.Close acForm, "frmPersonSearch"
+                On Error Goto ErrHandler
+            End If
+        End If
+        
+     Exit Function
+ ErrHandler:
+        ' Silently ignore errors (form might already be closed)
+        On Error Resume Next
 End Function
 
 '------------------------------------------------------------------------------
