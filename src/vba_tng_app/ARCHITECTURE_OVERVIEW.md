@@ -161,6 +161,61 @@ Forms(callerForm).Controls(targetControl).Value = selectedId
 - Single picker form can serve multiple contexts
 - Clean data return mechanism without global variables
 
+### Auto-populate Display Fields
+
+Display fields are automatically populated when forms load or after picker selection:
+
+**Implementation**:
+- `frmCourtCaseEntryDetail` has `OnLoad` event that calls `UpdatePlacenameDisplay()`
+- After picker closes, display field is refreshed
+- Ensures display field is always in sync with ID field
+
+**Benefit**: Users see placename text immediately without manual lookup
+
+### Initial Results in Picker Dialogs
+
+Picker forms show top 50 results on load instead of empty list:
+
+**Implementation**:
+- `frmPlacenameSearch_OnLoad()` - Shows 50 placenames ordered alphabetically
+- `frmPersonSearch_OnLoad()` - Shows 50 persons ordered by name
+
+**Benefits**:
+- Users can browse common entries without typing
+- Faster selection for recently added items
+- Better UX than empty search form
+
+### Create & Link Workflow
+
+Direct creation and linking of new persons without returning to search:
+
+**Flow**:
+1. User clicks "Pick Person" → opens `frmPersonSearch` with OpenArgs
+2. User clicks "New Person" → opens `frmPerson` with same OpenArgs
+3. User creates person → on close, new `person_id` written directly to calling form
+4. Both picker forms close automatically
+
+**Implementation**:
+- `cmdNewPerson` passes OpenArgs through to `frmPerson`
+- `frmPerson_OnClose()` parses OpenArgs and writes back directly
+- Eliminates search → select → close → requery steps
+
+**Benefit**: Reduces 5-step workflow to 2 steps
+
+### Contextual Person Search
+
+Person search includes community information for disambiguation:
+
+**Query Enhancement**:
+```sql
+SELECT person_id, full_name, birth_year, community_name
+FROM person
+WHERE full_name LIKE [pSearch]
+ORDER BY full_name
+```
+
+**Benefit**: Distinguishes between people with same names by showing their community
+
 ### Dynamic Ruling Creation
 
 Ruling records are created on-demand rather than automatically:
@@ -287,14 +342,18 @@ sfrmPersonEntryByEntry.cmdPickPerson
 ### Runtime Module: `minimal_app_runtime.vba`
 
 **Purpose**: Contains all event handlers for form controls  
-**Functions**: 31 event handlers including:
+**Functions**: 35+ event handlers including:
 - `frmCourtCase_OnCurrent()` - Updates button visibility
 - `frmCourtCase_cmdNewCase_Click()` - New case record
 - `frmCourtCase_cmdOpenEntryDetail_Click()` - Opens detail dialog
 - `frmCourtCase_cmdCreateRuling_Click()` - Creates ruling record
+- `frmCourtCaseEntryDetail_OnLoad()` - **NEW**: Auto-populates placename display
 - `sfrmRuling_OnCurrent()` - Dynamic ruling UI visibility
+- `frmPlacenameSearch_OnLoad()` - **NEW**: Shows initial results (top 50)
 - `frmPlacenameSearch_cmd*_Click()` - Placename picker handlers
+- `frmPersonSearch_OnLoad()` - **NEW**: Shows initial results (top 50)
 - `frmPersonSearch_cmd*_Click()` - Person picker handlers
+- `frmPerson_OnClose()` - **NEW**: Returns new person_id to caller (create & link)
 - `ParseOpenArgs()` - Helper to parse OpenArgs string
 - `UpdatePlacenameDisplay()` - Refresh display field
 
