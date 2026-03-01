@@ -240,6 +240,18 @@ Private Sub Create_frmCourtCase()
         ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
         ctl.Visible = True ' Default To visible (no ruling initially)
 
+        ' cmdPrevious button
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7300, yPos, 1200, 400)
+        ctl.Name = "cmdPrevious"
+        ctl.Caption = "< Previous"
+        ctl.OnClick = "=frmCourtCase_cmdPrevious_Click()"
+
+        ' cmdNext button
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 8600, yPos, 1200, 400)
+        ctl.Name = "cmdNext"
+        ctl.Caption = "Next >"
+        ctl.OnClick = "=frmCourtCase_cmdNext_Click()"
+
         yPos = yPos + 800
 
         ' sfrmCourtCaseEntries subform

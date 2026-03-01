@@ -57,6 +57,30 @@ Public Function frmCourtCase_cmdNewCase_Click()
 End Function
 
 '------------------------------------------------------------------------------
+' frmCourtCase: Previous button
+'------------------------------------------------------------------------------
+Public Function frmCourtCase_cmdPrevious_Click()
+    On Error Goto ErrHandler
+        DoCmd.GoToRecord , , acPrevious
+     Exit Function
+ ErrHandler:
+        ' Silently ignore errors (e.g., already at first record)
+        On Error Resume Next
+End Function
+
+'------------------------------------------------------------------------------
+' frmCourtCase: Next button
+'------------------------------------------------------------------------------
+Public Function frmCourtCase_cmdNext_Click()
+    On Error Goto ErrHandler
+        DoCmd.GoToRecord , , acNext
+     Exit Function
+ ErrHandler:
+        ' Silently ignore errors (e.g., already at last record)
+        On Error Resume Next
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCase: Open Entry Detail button
 '------------------------------------------------------------------------------
 Public Function frmCourtCase_cmdOpenEntryDetail_Click()
