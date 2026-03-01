@@ -323,7 +323,10 @@ Private Sub Create_sfrmCourtCaseEntries()
         Set frm = CreateForm()
         strFormName = frm.Name
         ' Join With placename table To display placename text
-        frm.RecordSource = "Select cce.*, p.placename FROM court_case_entry As cce " & _
+        frm.RecordSource = "Select cce.court_case_entry_id, cce.court_case_id, cce.entry_year, " & _
+            "cce.curated_text, cce.original_placename, cce.season_id, cce.land_use_id, " & _
+            "cce.placename_id, p.placename " & _
+            "FROM court_case_entry As cce " & _
             "LEFT JOIN placename As p ON cce.placename_id = p.placename_id"
         frm.caption = "Court Case Entries"
         frm.DefaultView = 2 ' Datasheet (grid view)
