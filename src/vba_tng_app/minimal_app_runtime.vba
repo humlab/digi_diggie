@@ -160,7 +160,7 @@ End Function
 Public Function sfrmPersonOutcomes_cmdPickPerson_Click()
     On Error Goto ErrHandler
         DoCmd.OpenForm "frmPersonSearch", , , , , acDialog, _
-        "caller=sfrmPersonOutcomes;target=txtPersonId"
+        "caller=sfrmPersonOutcomes;target=cboPersonId"
      Exit Function
  ErrHandler:
         MsgBox "Error in sfrmPersonOutcomes_cmdPickPerson_Click: " & Err.Description, vbCritical
@@ -250,6 +250,62 @@ Public Function sfrmRuling_OnCurrent()
     Forms!frmCourtCase!sfrmRuling.Form!lblDescription.Visible = hasRuling
     Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Visible = hasRuling
     Forms!frmCourtCase!sfrmRuling.Form!lblPersonOutcomes.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!cmdAddOutcome.Visible = hasRuling
+    Forms!frmCourtCase!sfrmRuling.Form!cmdDeleteOutcome.Visible = hasRuling
+
+    If hasRuling Then
+        Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cboPersonId.Requery
+    End If
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmRuling: Add outcome button
+'------------------------------------------------------------------------------
+Public Function sfrmRuling_cmdAddOutcome_Click()
+    On Error Goto ErrHandler
+        If IsNull(Forms!frmCourtCase!sfrmRuling.Form!ruling_id) Then
+            MsgBox "Please create/save a ruling first.", vbInformation
+            Exit Function
+        End If
+
+        Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.SetFocus
+        DoCmd.GoToRecord , , acNewRec
+
+     Exit Function
+ErrHandler:
+        MsgBox "Error in sfrmRuling_cmdAddOutcome_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmRuling: Delete selected outcome button
+'------------------------------------------------------------------------------
+Public Function sfrmRuling_cmdDeleteOutcome_Click()
+    On Error Goto ErrHandler
+        Dim rs As DAO.Recordset
+
+        With Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form
+            Set rs = .RecordsetClone
+            If rs.BOF And rs.EOF Then
+                MsgBox "No person outcome record is selected.", vbInformation
+                rs.Close
+                Exit Function
+            End If
+            rs.Close
+
+            If .NewRecord Then
+                MsgBox "No person outcome record is selected.", vbInformation
+                Exit Function
+            End If
+
+            If MsgBox("Delete selected person outcome?", vbQuestion + vbYesNo, "Confirm Delete") = vbYes Then
+                .SetFocus
+                DoCmd.RunCommand acCmdDeleteRecord
+            End If
+        End With
+
+     Exit Function
+ErrHandler:
+        MsgBox "Error in sfrmRuling_cmdDeleteOutcome_Click: " & Err.Description, vbCritical
 End Function
 
 '------------------------------------------------------------------------------
@@ -481,10 +537,18 @@ End Function
 Public Function sfrmPersonOutcomes_OnLoad()
     On Error Resume Next
     ' Set column widths to -2 (auto-fit to content)
-    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!txtPersonId.ColumnWidth = -2
-    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cmdPickPersonOutcomePerson.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cboPersonId.Requery
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cboPersonId.ColumnWidth = -2
     Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cboOutcomeTypeId.ColumnWidth = -2
     Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!txtDescription.ColumnWidth = -2
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmPersonOutcomes: Requery person list when entering picker control
+'------------------------------------------------------------------------------
+Public Function sfrmPersonOutcomes_cboPersonId_OnEnter()
+    On Error Resume Next
+    Screen.ActiveControl.Requery
 End Function
 
 '==============================================================================

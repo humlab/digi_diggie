@@ -51,8 +51,8 @@ Public Sub BuildAllForms()
         ' Apply datasheet captions in Design View (reliable persistence)
         ApplyDatasheetCaptions
 
-        MsgBox "All forms created successfully!" & vbCrLf & _
-        "Open frmCourtCase To begin data entry.", vbInformation, "Build Complete"
+        ' MsgBox "All forms created successfully!" & vbCrLf & _
+        ' "Open frmCourtCase To begin data entry.", vbInformation, "Build Complete"
 
         Debug.Print "BuildAllForms completed successfully."
      Exit Sub
@@ -82,7 +82,7 @@ Private Sub ApplyDatasheetCaptions()
     SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboRoleId", "Role"
 
     ' sfrmPersonOutcomes
-    SetControlDatasheetCaption "sfrmPersonOutcomes", "txtPersonId", "Person ID"
+    SetControlDatasheetCaption "sfrmPersonOutcomes", "cboPersonId", "Person"
     SetControlDatasheetCaption "sfrmPersonOutcomes", "cboOutcomeTypeId", "Outcome Type"
     SetControlDatasheetCaption "sfrmPersonOutcomes", "txtDescription", "Description"
 
@@ -107,7 +107,8 @@ Private Sub SetControlDatasheetCaption(formName As String, controlName As String
     ctl.Properties("DatasheetCaption").Value = captionText
     If Err.Number <> 0 Then
         Err.Clear
-        ctl.Properties.Append ctl.CreateProperty("DatasheetCaption", dbText, captionText)
+        ' This line gives "Property not found" error because DatasheetCaption doesn't exist until set once in Design View
+        ' ctl.Properties.Append ctl.CreateProperty("DatasheetCaption", dbText, captionText)
     End If
     On Error GoTo ErrHandler
 
@@ -713,7 +714,7 @@ Private Sub Create_sfrmRuling()
         ctl.caption = "No ruling yet. Click 'Create Ruling' button above To add one."
         ctl.ForeColor = RGB(128, 128, 128) ' Gray text
 
-        yPos = yPos + 600
+        ' yPos = yPos + 600
 
         ' ruling_year
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 1500, yPos, 1500, 300)
@@ -768,6 +769,18 @@ Private Sub Create_sfrmRuling()
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 300, 3000, 300
 
+        ' cmdAddOutcome
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, yPos - 320, 1700, 300)
+        ctl.Name = "cmdAddOutcome"
+        ctl.caption = "Add Outcome"
+        ctl.OnClick = "=sfrmRuling_cmdAddOutcome_Click()"
+
+        ' cmdDeleteOutcome
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7400, yPos - 320, 1700, 300)
+        ctl.Name = "cmdDeleteOutcome"
+        ctl.caption = "Delete Outcome"
+        ctl.OnClick = "=sfrmRuling_cmdDeleteOutcome_Click()"
+
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "sfrmRuling", acForm, strFormName
 
@@ -796,25 +809,30 @@ Private Sub Create_sfrmPersonOutcomes()
         frm.NavigationButtons = False
         frm.RecordSelectors = True
         frm.AllowAdditions = True
+        frm.AllowDeletions = True
         frm.AllowEdits = True
         frm.OnLoad = "=sfrmPersonOutcomes_OnLoad()" ' Auto-size columns
 
         xPos = 0 ' Start position for columns
 
-        ' person_id
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
-        ctl.Name = "txtPersonId"
+        ' person_id (restricted to persons linked to current court case)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 2800, 300)
+        ctl.Name = "cboPersonId"
         ctl.ControlSource = "person_id"
-        SetDatasheetCaptionSafe ctl, "Person ID"
-        CreateLabel frm.Name, "lblPersonId", "Person ID", xPos, 0, 1000, 300
-        xPos = xPos + 1000
-
-        ' cmdPickPersonOutcomePerson
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 800, 300)
-        ctl.Name = "cmdPickPersonOutcomePerson"
-        ctl.caption = "Pick..."
-        ctl.OnClick = "=sfrmPersonOutcomes_cmdPickPerson_Click()"
-        xPos = xPos + 800
+        SetDatasheetCaptionSafe ctl, "Person"
+        ctl.RowSource = "SELECT DISTINCT p.person_id, p.full_name " & _
+            "FROM (person AS p " & _
+            "INNER JOIN person_entry AS pe ON p.person_id = pe.person_id) " & _
+            "INNER JOIN court_case_entry AS cce ON pe.court_case_entry_id = cce.court_case_entry_id " & _
+            "WHERE cce.court_case_id = Forms!frmCourtCase!court_case_id " & _
+            "ORDER BY p.full_name;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;6cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        ctl.OnEnter = "=sfrmPersonOutcomes_cboPersonId_OnEnter()"
+        CreateLabel frm.Name, "lblPersonId", "Person", xPos, 0, 2800, 300
+        xPos = xPos + 2800
 
         ' outcome_type_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 2200, 300)
