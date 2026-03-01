@@ -258,46 +258,49 @@ Private Sub Create_frmCourtCase()
 
         yPos = 200
 
-        ' cboSource
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2000, yPos, 4000, 300)
+        ' cboSource (labels above, same row as other core fields)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 200, yPos + 250, 2200, 300)
         ctl.Name = "cboSource"
         ctl.ControlSource = "source_id"
         ctl.RowSourceType = "Table/Query"
         ctl.RowSource = "Select source_id, source_abbreviation, source_name FROM source ORDER BY source_abbreviation;"
         ctl.ColumnCount = 3
-        ctl.ColumnWidths = "0cm;3cm;5cm"
+        ctl.ColumnWidths = "0cm;2.5cm;4.5cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
-        CreateLabel frm.Name, "lblSource", "Source:", 200, yPos, 1600, 300
-
-        yPos = yPos + 500
+        CreateLabel frm.Name, "lblSource", "Source", 200, yPos, 2200, 250
 
         ' txtReferenceNumber
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 4000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2600, yPos + 250, 2000, 300)
         ctl.Name = "txtReferenceNumber"
         ctl.ControlSource = "reference_number"
-        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
-        CreateLabel frm.Name, "lblReferenceNumber", "Reference #:", 200, yPos, 1600, 300
-
-        yPos = yPos + 500
+        CreateLabel frm.Name, "lblReferenceNumber", "Reference #", 2600, yPos, 2000, 250
 
         ' txtCaseYear
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 2000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 4700, yPos + 250, 1000, 300)
         ctl.Name = "txtCaseYear"
         ctl.ControlSource = "case_year"
-        CreateLabel frm.Name, "lblCaseYear", "Case Year:", 200, yPos, 1600, 300
-
-        yPos = yPos + 500
+        CreateLabel frm.Name, "lblCaseYear", "Case Year", 4700, yPos, 1000, 250
 
         ' txtDistrictCourtName
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 5800, yPos + 250, 4200, 300)
         ctl.Name = "txtDistrictCourtName"
         ctl.ControlSource = "district_court_name"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
-        CreateLabel frm.Name, "lblDistrictCourtName", "District Court:", 200, yPos, 1600, 300
+        CreateLabel frm.Name, "lblDistrictCourtName", "District Court", 5800, yPos, 4200, 250
 
         yPos = yPos + 700
+
+        ' txtSourceText (Court Case Text, multiline)
+        CreateLabel frm.Name, "lblSourceText", "Court Case Text", 200, yPos, 3000, 250
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 200, yPos + 250, 9800, 1000)
+        ctl.Name = "txtSourceText"
+        ctl.ControlSource = "source_text"
+        ctl.EnterKeyBehavior = True
+        ctl.ScrollBars = 2
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+
+        yPos = yPos + 1450
 
         ' cmdNewCase button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
