@@ -47,25 +47,6 @@ ErrHandler:
 End Sub
 
 '------------------------------------------------------------------------------
-' Helper: Delete existing forms To avoid conflicts
-'------------------------------------------------------------------------------
-Private Sub DeleteFormsIfExist()
-    On Error Resume Next
-    Dim formNames As Variant
-    Dim i As Integer
-
-    formNames = Array("frmCourtCase", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
-    "sfrmPersonEntryByEntry", "sfrmRuling", "sfrmPersonOutcomes", _
-    "frmPlacenameSearch", "frmPersonSearch", "frmPerson", "frmLookups")
-
-    For i = LBound(formNames) To UBound(formNames)
-        DoCmd.DeleteObject acForm, formNames(i)
-    Next i
-
-    On Error GoTo 0
-End Sub
-
-'------------------------------------------------------------------------------
 ' Public Method: Delete ALL forms in the database
 '------------------------------------------------------------------------------
 Public Sub DeleteAllForms()
@@ -109,9 +90,31 @@ Public Sub DeleteAllForms()
     
     Debug.Print "DeleteAllForms completed. Deleted: " & deletedCount & ", Errors: " & errorCount
     
-    MsgBox "Deleted " & deletedCount & " form(s)." & vbCrLf & _
-           IIf(errorCount > 0, "Errors: " & errorCount & " form(s) could not be deleted.", ""), _
-           vbInformation, "Delete All Forms"
+    If errorCount > 0 Then
+        Debug.Print "Some forms could not be deleted. Please check the error log above."
+        MsgBox "Deleted " & deletedCount & " form(s)." & vbCrLf & _
+            IIf(errorCount > 0, "Errors: " & errorCount & " form(s) could not be deleted.", ""), _
+            vbInformation, "Delete All Forms"
+    End If
+End Sub
+
+'------------------------------------------------------------------------------
+' Helper: Delete existing forms To avoid conflicts
+'------------------------------------------------------------------------------
+Private Sub DeleteFormsIfExist()
+    On Error Resume Next
+    Dim formNames As Variant
+    Dim i As Integer
+
+    formNames = Array("frmCourtCase", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
+    "sfrmPersonEntryByEntry", "sfrmRuling", "sfrmPersonOutcomes", _
+    "frmPlacenameSearch", "frmPersonSearch", "frmPerson", "frmLookups")
+
+    For i = LBound(formNames) To UBound(formNames)
+        DoCmd.DeleteObject acForm, formNames(i)
+    Next i
+
+    On Error GoTo 0
 End Sub
 
 '------------------------------------------------------------------------------
@@ -319,13 +322,9 @@ Private Sub Create_sfrmCourtCaseEntries()
 
         Set frm = CreateForm()
         strFormName = frm.Name
-        ' Join With placename table To display placename text and friendly datasheet headers
-        frm.RecordSource = "SELECT cce.court_case_entry_id, cce.court_case_id, " & _
-            "cce.entry_year AS [Year], cce.season_id AS [Season], " & _
-            "cce.land_use_id AS [Land Use], p.placename AS [Placename], " & _
-            "cce.original_placename AS [Original Placename], cce.placename_id " & _
-            "FROM court_case_entry AS cce " & _
-            "LEFT JOIN placename AS p ON cce.placename_id = p.placename_id"
+        ' Join With placename table To display placename text
+        frm.RecordSource = "Select cce.*, p.placename FROM court_case_entry As cce " & _
+            "LEFT JOIN placename As p ON cce.placename_id = p.placename_id"
         frm.caption = "Court Case Entries"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
@@ -339,14 +338,16 @@ Private Sub Create_sfrmCourtCaseEntries()
         ' entry_year
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "txtEntryYear"
-        ctl.ControlSource = "[Year]"
+        ctl.ControlSource = "entry_year"
+        SetDatasheetCaptionSafe ctl, "Year"
         CreateLabel frm.Name, "lblEntryYear", "Year", xPos, 0, 800, 300
         xPos = xPos + 800
 
         ' season_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1200, 300)
         ctl.Name = "cboSeasonId"
-        ctl.ControlSource = "[Season]"
+        ctl.ControlSource = "season_id"
+        SetDatasheetCaptionSafe ctl, "Season"
         ctl.RowSource = "Select season_id, season_name FROM season ORDER BY season_name;"
         ctl.ColumnCount = 2
         ctl.ColumnWidths = "0cm;3cm"
@@ -358,7 +359,8 @@ Private Sub Create_sfrmCourtCaseEntries()
         ' land_use_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1800, 300)
         ctl.Name = "cboLandUseId"
-        ctl.ControlSource = "[Land Use]"
+        ctl.ControlSource = "land_use_id"
+        SetDatasheetCaptionSafe ctl, "Land Use"
         ctl.RowSource = "Select land_use_id, description FROM land_use ORDER BY description;"
         ctl.ColumnCount = 2
         ctl.ColumnWidths = "0cm;4cm"
@@ -370,7 +372,8 @@ Private Sub Create_sfrmCourtCaseEntries()
         ' placename (from joined table - display name)
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 2500, 300)
         ctl.Name = "txtPlacename"
-        ctl.ControlSource = "[Placename]"
+        ctl.ControlSource = "placename"
+        SetDatasheetCaptionSafe ctl, "Placename"
         ctl.Locked = True
         ctl.Enabled = False
         CreateLabel frm.Name, "lblPlacename", "Placename", xPos, 0, 2500, 300
@@ -379,7 +382,8 @@ Private Sub Create_sfrmCourtCaseEntries()
         ' original_placename
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 2000, 300)
         ctl.Name = "txtOriginalPlacename"
-        ctl.ControlSource = "[Original Placename]"
+        ctl.ControlSource = "original_placename"
+        SetDatasheetCaptionSafe ctl, "Original Placename"
         CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename", xPos, 0, 2000, 300
         xPos = xPos + 2000
 
@@ -529,10 +533,7 @@ Private Sub Create_sfrmPersonEntryByEntry()
 
         Set frm = CreateForm()
         strFormName = frm.Name
-        frm.RecordSource = "SELECT person_entry_id, court_case_entry_id, " & _
-            "person_id AS [Person ID], community_id AS [Community], " & _
-            "land_rights_status_id AS [Land Rights], role_id AS [Role] " & _
-            "FROM person_entry"
+        frm.RecordSource = "person_entry"
         frm.caption = "Person Entries"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
@@ -546,7 +547,8 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ' person_id (numeric only, use picker)
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "txtPersonId"
-        ctl.ControlSource = "[Person ID]"
+        ctl.ControlSource = "person_id"
+        SetDatasheetCaptionSafe ctl, "Person ID"
         CreateLabel frm.Name, "lblPersonId", "Person ID", xPos, 0, 1000, 300
         xPos = xPos + 1000
 
@@ -560,7 +562,8 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ' community_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1800, 300)
         ctl.Name = "cboCommunityId"
-        ctl.ControlSource = "[Community]"
+        ctl.ControlSource = "community_id"
+        SetDatasheetCaptionSafe ctl, "Community"
         ctl.RowSource = "Select community_id, community_name FROM community ORDER BY community_name;"
         ctl.ColumnCount = 2
         ctl.ColumnWidths = "0cm;4cm"
@@ -572,7 +575,8 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ' land_rights_status_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1800, 300)
         ctl.Name = "cboLandRightsStatusId"
-        ctl.ControlSource = "[Land Rights]"
+        ctl.ControlSource = "land_rights_status_id"
+        SetDatasheetCaptionSafe ctl, "Land Rights"
         ctl.RowSource = "Select land_rights_status_id, land_rights_status FROM land_rights_status ORDER BY land_rights_status;"
         ctl.ColumnCount = 2
         ctl.ColumnWidths = "0cm;4cm"
@@ -584,7 +588,8 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ' role_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1500, 300)
         ctl.Name = "cboRoleId"
-        ctl.ControlSource = "[Role]"
+        ctl.ControlSource = "role_id"
+        SetDatasheetCaptionSafe ctl, "Role"
         ctl.RowSource = "Select role_id, role_name FROM role ORDER BY role_name;"
         ctl.ColumnCount = 2
         ctl.ColumnWidths = "0cm;4cm"
@@ -708,9 +713,7 @@ Private Sub Create_sfrmPersonOutcomes()
 
         Set frm = CreateForm()
         strFormName = frm.Name
-        frm.RecordSource = "SELECT person_outcome_id, ruling_id, " & _
-            "person_id AS [Person ID], outcome_type_id AS [Outcome Type], " & _
-            "description AS [Outcome Description] FROM person_outcome"
+        frm.RecordSource = "person_outcome"
         frm.caption = "Person Outcomes"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
@@ -724,7 +727,8 @@ Private Sub Create_sfrmPersonOutcomes()
         ' person_id
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "txtPersonId"
-        ctl.ControlSource = "[Person ID]"
+        ctl.ControlSource = "person_id"
+        SetDatasheetCaptionSafe ctl, "Person ID"
         CreateLabel frm.Name, "lblPersonId", "Person ID", xPos, 0, 1000, 300
         xPos = xPos + 1000
 
@@ -738,7 +742,8 @@ Private Sub Create_sfrmPersonOutcomes()
         ' outcome_type_id
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 2200, 300)
         ctl.Name = "cboOutcomeTypeId"
-        ctl.ControlSource = "[Outcome Type]"
+        ctl.ControlSource = "outcome_type_id"
+        SetDatasheetCaptionSafe ctl, "Outcome Type"
         ctl.RowSource = "Select outcome_type_id, outcome_type_name FROM outcome_type ORDER BY outcome_type_name;"
         ctl.ColumnCount = 2
         ctl.ColumnWidths = "0cm;5cm"
@@ -750,7 +755,8 @@ Private Sub Create_sfrmPersonOutcomes()
         ' description
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 3500, 300)
         ctl.Name = "txtDescription"
-        ctl.ControlSource = "[Outcome Description]"
+        ctl.ControlSource = "description"
+        SetDatasheetCaptionSafe ctl, "Description"
         CreateLabel frm.Name, "lblDescription", "Description", xPos, 0, 3500, 300
 
         DoCmd.Close acForm, strFormName, acSaveYes
@@ -1008,3 +1014,57 @@ Private Function CreateLabel(formName As String, labelName As String, _
     ctl.caption = caption
     Set CreateLabel = ctl
 End Function
+
+'------------------------------------------------------------------------------
+' Helper: Create a Label in Form Header section (for continuous form column headers)
+'------------------------------------------------------------------------------
+Private Function CreateHeaderLabel(formName As String, labelName As String, _
+    caption As String, leftPos As Integer, topPos As Integer, _
+    widthSize As Integer, heightSize As Integer) As Control
+    Dim ctl As Control
+    On Error GoTo CreateFailed
+    Set ctl = CreateControl(formName, acLabel, acHeader, "", "", leftPos, topPos, widthSize, heightSize)
+    ctl.Name = labelName
+    ctl.caption = caption
+    Set CreateHeaderLabel = ctl
+    Exit Function
+
+CreateFailed:
+    Err.Clear
+    Set CreateHeaderLabel = Nothing
+End Function
+
+'------------------------------------------------------------------------------
+' Helper: Enable Form Header section safely
+'------------------------------------------------------------------------------
+Private Sub EnableFormHeaderSafe(frm As Form, headerHeight As Integer)
+    On Error Resume Next
+    DoCmd.SelectObject acForm, frm.Name, True
+
+    Err.Clear
+    Dim currentHeaderHeight As Long
+    currentHeaderHeight = frm.Section(acHeader).Height
+
+    If Err.Number <> 0 Then
+        Err.Clear
+        DoCmd.RunCommand acCmdFormHdrFtr
+    End If
+
+    Err.Clear
+    frm.Section(acHeader).Height = headerHeight
+    On Error GoTo 0
+End Sub
+
+'------------------------------------------------------------------------------
+' Helper: Set datasheet caption safely (create property if needed)
+'------------------------------------------------------------------------------
+Private Sub SetDatasheetCaptionSafe(ByVal ctl As Control, ByVal captionText As String)
+    On Error Resume Next
+    ctl.DatasheetCaption = captionText   ' use direct property when available
+    Err.Clear
+    If Err.Number <> 0 Then
+        ' Some controls/contexts don't support it. Don't attempt Append.
+        Err.Clear
+    End If
+    On Error GoTo 0
+End Sub
