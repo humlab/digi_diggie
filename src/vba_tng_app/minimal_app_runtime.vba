@@ -424,6 +424,45 @@ Public Function frmPersonSearch_cmdCancel_Click()
     DoCmd.Close acForm, "frmPersonSearch"
 End Function
 
+'------------------------------------------------------------------------------
+' sfrmCourtCaseEntries: OnLoad event - Auto-size columns to fit content
+'------------------------------------------------------------------------------
+Public Function sfrmCourtCaseEntries_OnLoad()
+    On Error Resume Next
+    ' Set column widths to -2 (auto-fit to content)
+    Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtEntryYear.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmCourtCaseEntries.Form!cboSeasonId.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmCourtCaseEntries.Form!cboLandUseId.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtPlacename.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtOriginalPlacename.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmCourtCaseEntries.Form!cmdEntryDetail.ColumnWidth = -2
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmPersonEntryByEntry: OnLoad event - Auto-size columns to fit content
+'------------------------------------------------------------------------------
+Public Function sfrmPersonEntryByEntry_OnLoad()
+    On Error Resume Next
+    ' Set column widths to -2 (auto-fit to content)
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonId.ColumnWidth = -2
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cmdPickPerson.ColumnWidth = -2
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboCommunityId.ColumnWidth = -2
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboLandRightsStatusId.ColumnWidth = -2
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboRoleId.ColumnWidth = -2
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmPersonOutcomes: OnLoad event - Auto-size columns to fit content
+'------------------------------------------------------------------------------
+Public Function sfrmPersonOutcomes_OnLoad()
+    On Error Resume Next
+    ' Set column widths to -2 (auto-fit to content)
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!txtPersonId.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cmdPickPersonOutcomePerson.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!cboOutcomeTypeId.ColumnWidth = -2
+    Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form!txtDescription.ColumnWidth = -2
+End Function
+
 '==============================================================================
 ' HELPER FUNCTIONS
 '==============================================================================

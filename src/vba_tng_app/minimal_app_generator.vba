@@ -243,7 +243,7 @@ Private Sub Create_frmCourtCase()
         yPos = yPos + 800
 
         ' sfrmCourtCaseEntries subform
-        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 2500)
+        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 1250)
         ctl.Name = "sfrmCourtCaseEntries"
         ctl.SourceObject = "Form.sfrmCourtCaseEntries"
         ctl.LinkMasterFields = "court_case_id"
@@ -252,7 +252,7 @@ Private Sub Create_frmCourtCase()
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel frm.Name, "lblEntries", "Court Case Entries:", 200, yPos - 300, 3000, 300
 
-        yPos = yPos + 2800
+        yPos = yPos + 1550
 
         ' sfrmRuling subform
         Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 2000)
@@ -282,6 +282,7 @@ Private Sub Create_sfrmCourtCaseEntries()
         Dim frm As Form
         Dim ctl As Control
         Dim strFormName As String
+        Dim xPos As Integer
 
         Set frm = CreateForm()
         strFormName = frm.Name
@@ -289,20 +290,24 @@ Private Sub Create_sfrmCourtCaseEntries()
         frm.RecordSource = "Select cce.*, p.placename FROM court_case_entry As cce " & _
         "LEFT JOIN placename As p ON cce.placename_id = p.placename_id"
         frm.Caption = "Court Case Entries"
-        frm.DefaultView = 1 ' Continuous Forms (datasheet-like)
+        frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
         frm.RecordSelectors = True
         frm.AllowAdditions = True
         frm.AllowEdits = True
+        frm.OnLoad = "=sfrmCourtCaseEntries_OnLoad()" ' Auto-size columns
+
+        xPos = 0 ' Start position for columns
 
         ' entry_year
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 200, 400, 1200, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "txtEntryYear"
         ctl.ControlSource = "entry_year"
-        CreateLabel frm.Name, "lblEntryYear", "Year", 200, 50, 1200, 300
+        ctl.Caption = "Year"
+        xPos = xPos + 800
 
         ' season_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1500, 400, 1500, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1200, 300)
         ctl.Name = "cboSeasonId"
         ctl.ControlSource = "season_id"
         ctl.RowSource = "Select season_id, season_name FROM season ORDER BY season_name;"
@@ -310,10 +315,11 @@ Private Sub Create_sfrmCourtCaseEntries()
         ctl.ColumnWidths = "0cm;3cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        CreateLabel frm.Name, "lblSeasonId", "Season", 1500, 50, 1500, 300
+        ctl.Caption = "Season"
+        xPos = xPos + 1200
 
         ' land_use_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 3100, 400, 2000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1800, 300)
         ctl.Name = "cboLandUseId"
         ctl.ControlSource = "land_use_id"
         ctl.RowSource = "Select land_use_id, description FROM land_use ORDER BY description;"
@@ -321,24 +327,27 @@ Private Sub Create_sfrmCourtCaseEntries()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        CreateLabel frm.Name, "lblLandUseId", "Land Use", 3100, 50, 2000, 300
+        ctl.Caption = "Land Use"
+        xPos = xPos + 1800
 
         ' placename (from joined table - display name)
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 5200, 400, 3000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 2500, 300)
         ctl.Name = "txtPlacename"
         ctl.ControlSource = "placename"
         ctl.Locked = True
         ctl.Enabled = False
-        CreateLabel frm.Name, "lblPlacename", "Placename", 5200, 50, 3000, 300
+        ctl.Caption = "Placename"
+        xPos = xPos + 2500
 
         ' original_placename
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 8300, 400, 2500, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 2000, 300)
         ctl.Name = "txtOriginalPlacename"
         ctl.ControlSource = "original_placename"
-        CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename", 8300, 50, 2500, 300
+        ctl.Caption = "Original Placename"
+        xPos = xPos + 2000
 
         ' cmdEntryDetail button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 10900, 400, 1500, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "cmdEntryDetail"
         ctl.Caption = "Detail..."
         ctl.OnClick = "=sfrmCourtCaseEntries_cmdEntryDetail_Click()"
@@ -479,31 +488,37 @@ Private Sub Create_sfrmPersonEntryByEntry()
         Dim frm As Form
         Dim ctl As Control
         Dim strFormName As String
+        Dim xPos As Integer
 
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "person_entry"
         frm.Caption = "Person Entries"
-        frm.DefaultView = 1 ' Continuous Forms
+        frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
         frm.RecordSelectors = True
         frm.AllowAdditions = True
         frm.AllowEdits = True
+        frm.OnLoad = "=sfrmPersonEntryByEntry_OnLoad()" ' Auto-size columns
+
+        xPos = 0 ' Start position for columns
 
         ' person_id (numeric only, use picker)
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 200, 200, 1200, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "txtPersonId"
         ctl.ControlSource = "person_id"
-        CreateLabel frm.Name, "lblPersonId", "Person ID", 200, 50, 1200, 300
+        ctl.Caption = "Person ID"
+        xPos = xPos + 1000
 
         ' cmdPickPerson
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 1500, 200, 1200, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "cmdPickPerson"
         ctl.Caption = "Pick..."
         ctl.OnClick = "=sfrmPersonEntryByEntry_cmdPickPerson_Click()"
+        xPos = xPos + 800
 
         ' community_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2800, 200, 2000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1800, 300)
         ctl.Name = "cboCommunityId"
         ctl.ControlSource = "community_id"
         ctl.RowSource = "Select community_id, community_name FROM community ORDER BY community_name;"
@@ -511,10 +526,11 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        CreateLabel frm.Name, "lblCommunityId", "Community", 2800, 50, 2000, 300
+        ctl.Caption = "Community"
+        xPos = xPos + 1800
 
         ' land_rights_status_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 4900, 200, 2000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1800, 300)
         ctl.Name = "cboLandRightsStatusId"
         ctl.ControlSource = "land_rights_status_id"
         ctl.RowSource = "Select land_rights_status_id, land_rights_status FROM land_rights_status ORDER BY land_rights_status;"
@@ -522,10 +538,11 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        CreateLabel frm.Name, "lblLandRightsStatusId", "Land Rights", 4900, 50, 2000, 300
+        ctl.Caption = "Land Rights"
+        xPos = xPos + 1800
 
         ' role_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 7000, 200, 2000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 1500, 300)
         ctl.Name = "cboRoleId"
         ctl.ControlSource = "role_id"
         ctl.RowSource = "Select role_id, role_name FROM role ORDER BY role_name;"
@@ -533,7 +550,7 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        CreateLabel strFormName, "lblRoleId", "Role", 7000, 50, 2000, 300
+        ctl.Caption = "Role"
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "sfrmPersonEntryByEntry", acForm, strFormName
@@ -647,31 +664,37 @@ Private Sub Create_sfrmPersonOutcomes()
         Dim frm As Form
         Dim ctl As Control
         Dim strFormName As String
+        Dim xPos As Integer
 
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "person_outcome"
         frm.Caption = "Person Outcomes"
-        frm.DefaultView = 1 ' Continuous Forms
+        frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
         frm.RecordSelectors = True
         frm.AllowAdditions = True
         frm.AllowEdits = True
+        frm.OnLoad = "=sfrmPersonOutcomes_OnLoad()" ' Auto-size columns
+
+        xPos = 0 ' Start position for columns
 
         ' person_id
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 200, 200, 1200, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "txtPersonId"
         ctl.ControlSource = "person_id"
-        CreateLabel frm.Name, "lblPersonId", "Person ID", 200, 50, 1200, 300
+        ctl.Caption = "Person ID"
+        xPos = xPos + 1000
 
         ' cmdPickPersonOutcomePerson
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 1500, 200, 1200, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "cmdPickPersonOutcomePerson"
         ctl.Caption = "Pick..."
         ctl.OnClick = "=sfrmPersonOutcomes_cmdPickPerson_Click()"
+        xPos = xPos + 800
 
         ' outcome_type_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2800, 200, 2500, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", xPos, 0, 2200, 300)
         ctl.Name = "cboOutcomeTypeId"
         ctl.ControlSource = "outcome_type_id"
         ctl.RowSource = "Select outcome_type_id, outcome_type_name FROM outcome_type ORDER BY outcome_type_name;"
@@ -679,13 +702,14 @@ Private Sub Create_sfrmPersonOutcomes()
         ctl.ColumnWidths = "0cm;5cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        CreateLabel frm.Name, "lblOutcomeTypeId", "Outcome Type", 2800, 50, 2500, 300
+        ctl.Caption = "Outcome Type"
+        xPos = xPos + 2200
 
         ' description
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 5400, 200, 4000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 3500, 300)
         ctl.Name = "txtDescription"
         ctl.ControlSource = "description"
-        CreateLabel strFormName, "lblDescription", "Description", 5400, 50, 4000, 300
+        ctl.Caption = "Description"
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "sfrmPersonOutcomes", acForm, strFormName
