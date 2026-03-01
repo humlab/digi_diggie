@@ -693,6 +693,7 @@ Private Sub Create_sfrmRuling()
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
+        Dim outcomeButtonsTop As Integer
         Dim strFormName As String
 
         Set frm = CreateForm()
@@ -721,6 +722,7 @@ Private Sub Create_sfrmRuling()
         ctl.Name = "txtRulingYear"
         ctl.ControlSource = "ruling_year"
         CreateLabel frm.Name, "lblRulingYear", "Year:", 200, yPos, 1200, 300
+        outcomeButtonsTop = yPos
 
         yPos = yPos + 500
 
@@ -770,13 +772,13 @@ Private Sub Create_sfrmRuling()
         CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 300, 3000, 300
 
         ' cmdAddOutcome
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, yPos - 320, 1700, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, outcomeButtonsTop, 1700, 300)
         ctl.Name = "cmdAddOutcome"
         ctl.caption = "Add Outcome"
         ctl.OnClick = "=sfrmRuling_cmdAddOutcome_Click()"
 
         ' cmdDeleteOutcome
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7400, yPos - 320, 1700, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7400, outcomeButtonsTop, 1700, 300)
         ctl.Name = "cmdDeleteOutcome"
         ctl.caption = "Delete Outcome"
         ctl.OnClick = "=sfrmRuling_cmdDeleteOutcome_Click()"
