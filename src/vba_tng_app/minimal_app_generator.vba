@@ -288,16 +288,23 @@ Private Sub Create_frmCourtCase()
 
         ' Set Detail section height to accommodate all controls
         frm.Section(acDetail).Height = yPos + 3700  ' Tab control height + margin
-        Debug.Print "Detail section height set to: " & frm.Section(acDetail).Height
+        
+        ' CRITICAL: Reset tab control position after creating subforms
+        ' (Access may reposition it when subforms are added to pages)
+        frm.Controls("tabMain").Top = yPos
+        frm.Controls("tabMain").Left = 200
+        
+        Debug.Print "Tab control position corrected to: " & frm.Controls("tabMain").Top
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "frmCourtCase", acForm, strFormName
 
-        Debug.Print "frmCourtCase created."
+        Debug.Print "frmCourtCase created and saved."
      Exit Sub
 
 ErrHandler:
         MsgBox "Error in Create_frmCourtCase: " & Err.Description, vbCritical
+        Debug.Print "ERROR in Create_frmCourtCase: " & Err.Description
 End Sub
 
 '------------------------------------------------------------------------------
