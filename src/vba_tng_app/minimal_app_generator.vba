@@ -9,6 +9,19 @@ Option Explicit
 '       Runtime event handlers are in modMinimalAppRuntime module.
 '==============================================================================
 
+Public Sub CreateMinimalApp()
+    On Error GoTo ErrHandler
+
+    DeleteAllForms
+    BuildAllForms
+    ApplyDatasheetCaptions
+    
+    Exit Sub
+ErrHandler:
+    MsgBox "Error in CreateMinimalApp: " & Err.Description, vbCritical
+    Debug.Print "Error in CreateMinimalApp: " & Err.Description
+End Sub
+
 '------------------------------------------------------------------------------
 ' Main Entry Point
 '------------------------------------------------------------------------------
@@ -35,6 +48,9 @@ Public Sub BuildAllForms()
         Create_frmPerson
         ' Create_frmLookups ' Optional
 
+        ' Apply datasheet captions in Design View (reliable persistence)
+        ApplyDatasheetCaptions
+
         MsgBox "All forms created successfully!" & vbCrLf & _
         "Open frmCourtCase To begin data entry.", vbInformation, "Build Complete"
 
@@ -44,6 +60,64 @@ Public Sub BuildAllForms()
 ErrHandler:
         MsgBox "Error in BuildAllForms: " & Err.Description, vbCritical
         Debug.Print "Error in BuildAllForms: " & Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Apply Datasheet Captions (must be done in Design View for reliability)
+'------------------------------------------------------------------------------
+Private Sub ApplyDatasheetCaptions()
+    On Error GoTo ErrHandler
+
+    ' sfrmCourtCaseEntries
+    SetControlDatasheetCaption "sfrmCourtCaseEntries", "txtEntryYear", "Year"
+    SetControlDatasheetCaption "sfrmCourtCaseEntries", "cboSeasonId", "Season"
+    SetControlDatasheetCaption "sfrmCourtCaseEntries", "cboLandUseId", "Land Use"
+    SetControlDatasheetCaption "sfrmCourtCaseEntries", "txtPlacename", "Placename"
+    SetControlDatasheetCaption "sfrmCourtCaseEntries", "txtOriginalPlacename", "Original Placename"
+
+    ' sfrmPersonEntryByEntry
+    SetControlDatasheetCaption "sfrmPersonEntryByEntry", "txtPersonId", "Person ID"
+    SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboCommunityId", "Community"
+    SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboLandRightsStatusId", "Land Rights"
+    SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboRoleId", "Role"
+
+    ' sfrmPersonOutcomes
+    SetControlDatasheetCaption "sfrmPersonOutcomes", "txtPersonId", "Person ID"
+    SetControlDatasheetCaption "sfrmPersonOutcomes", "cboOutcomeTypeId", "Outcome Type"
+    SetControlDatasheetCaption "sfrmPersonOutcomes", "txtDescription", "Description"
+
+    Debug.Print "Datasheet captions applied."
+    Exit Sub
+
+ErrHandler:
+    Debug.Print "Error in ApplyDatasheetCaptions: " & Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Set one control DatasheetCaption in Design View and save form
+'------------------------------------------------------------------------------
+Private Sub SetControlDatasheetCaption(formName As String, controlName As String, captionText As String)
+    On Error GoTo ErrHandler
+    Dim ctl As Control
+
+    DoCmd.OpenForm formName, acDesign
+    Set ctl = Forms(formName).Controls(controlName)
+
+    On Error Resume Next
+    ctl.Properties("DatasheetCaption").Value = captionText
+    If Err.Number <> 0 Then
+        Err.Clear
+        ctl.Properties.Append ctl.CreateProperty("DatasheetCaption", dbText, captionText)
+    End If
+    On Error GoTo ErrHandler
+
+    DoCmd.Close acForm, formName, acSaveYes
+    Exit Sub
+
+ErrHandler:
+    On Error Resume Next
+    DoCmd.Close acForm, formName, acSaveNo
+    Debug.Print "Failed to set DatasheetCaption: " & formName & "." & controlName & " -> " & Err.Description
 End Sub
 
 '------------------------------------------------------------------------------
