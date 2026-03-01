@@ -13,7 +13,7 @@ Option Explicit
 ' Main Entry Point
 '------------------------------------------------------------------------------
 Public Sub BuildAllForms()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
 
         Debug.Print "Starting BuildAllForms..."
 
@@ -41,7 +41,7 @@ Public Sub BuildAllForms()
         Debug.Print "BuildAllForms completed successfully."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in BuildAllForms: " & Err.Description, vbCritical
         Debug.Print "Error in BuildAllForms: " & Err.Description
 End Sub
@@ -62,7 +62,7 @@ Private Sub DeleteFormsIfExist()
         DoCmd.DeleteObject acForm, formNames(i)
     Next i
 
-    On Error Goto 0
+    On Error GoTo 0
 End Sub
 
 '------------------------------------------------------------------------------
@@ -101,7 +101,7 @@ Public Sub DeleteAllForms()
                 Debug.Print "Error deleting form: " & formName & " (" & Err.Description & ")"
                 Err.Clear
             End If
-            On Error Goto 0
+            On Error GoTo 0
         Else
             Debug.Print "Skipping form: " & formName
         End If
@@ -118,7 +118,7 @@ End Sub
 ' Create Saved Queries
 '------------------------------------------------------------------------------
 Private Sub CreateQueries()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim db As DAO.Database
         Dim qdf As DAO.QueryDef
 
@@ -128,11 +128,11 @@ Private Sub CreateQueries()
         On Error Resume Next
         db.QueryDefs.Delete "qPlacenameSearch"
         db.QueryDefs.Delete "qPersonSearch"
-        On Error Goto ErrHandler
+        On Error GoTo ErrHandler
 
             ' qPlacenameSearch
             Set qdf = db.CreateQueryDef("qPlacenameSearch")
-            qdf.SQL = "PARAMETERS [pSearch] Text ( 255 ); " & _
+            qdf.sql = "PARAMETERS [pSearch] Text ( 255 ); " & _
             "Select TOP 200 placename_id, placename, parish_name, serial_number " & _
             "FROM placename " & _
             "WHERE (placename LIKE [pSearch]) Or (parish_name LIKE [pSearch]) " & _
@@ -140,7 +140,7 @@ Private Sub CreateQueries()
 
         ' qPersonSearch (enhanced with community context)
         Set qdf = db.CreateQueryDef("qPersonSearch")
-        qdf.SQL = "PARAMETERS [pSearch] Text ( 255 ); " & _
+        qdf.sql = "PARAMETERS [pSearch] Text ( 255 ); " & _
             "Select TOP 200 person_id, full_name, birth_year, community_name " & _
             "FROM person " & _
             "WHERE full_name LIKE [pSearch] " & _
@@ -149,7 +149,7 @@ Private Sub CreateQueries()
             Debug.Print "Queries created successfully."
          Exit Sub
 
- ErrHandler:
+ErrHandler:
             MsgBox "Error in CreateQueries: " & Err.Description, vbCritical
             Debug.Print "Error in CreateQueries: " & Err.Description
 End Sub
@@ -158,7 +158,7 @@ End Sub
 ' Create Form: frmCourtCase (Main workspace)
 '------------------------------------------------------------------------------
 Private Sub Create_frmCourtCase()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
@@ -167,7 +167,7 @@ Private Sub Create_frmCourtCase()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "court_case"
-        frm.Caption = "Court Case"
+        frm.caption = "Court Case"
         frm.DefaultView = 0 ' Single Form
         frm.NavigationButtons = True
         frm.RecordSelectors = True
@@ -224,57 +224,71 @@ Private Sub Create_frmCourtCase()
         ' cmdNewCase button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
         ctl.Name = "cmdNewCase"
-        ctl.Caption = "New Case"
+        ctl.caption = "New Case"
         ctl.OnClick = "=frmCourtCase_cmdNewCase_Click()"
 
         ' cmdOpenEntryDetail button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2400, yPos, 2500, 400)
         ctl.Name = "cmdOpenEntryDetail"
-        ctl.Caption = "Open Entry Detail"
+        ctl.caption = "Open Entry Detail"
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
 
         ' cmdCreateRuling button (visible only when no ruling exists)
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5100, yPos, 2000, 400)
         ctl.Name = "cmdCreateRuling"
-        ctl.Caption = "Create Ruling"
+        ctl.caption = "Create Ruling"
         ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
         ctl.Visible = True ' Default To visible (no ruling initially)
 
         ' cmdPrevious button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7300, yPos, 1200, 400)
         ctl.Name = "cmdPrevious"
-        ctl.Caption = "< Previous"
+        ctl.caption = "< Previous"
         ctl.OnClick = "=frmCourtCase_cmdPrevious_Click()"
 
         ' cmdNext button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 8600, yPos, 1200, 400)
         ctl.Name = "cmdNext"
-        ctl.Caption = "Next >"
+        ctl.caption = "Next >"
         ctl.OnClick = "=frmCourtCase_cmdNext_Click()"
 
         yPos = yPos + 800
+        Debug.Print "Creating tab control at yPos: " & yPos
 
-        ' sfrmCourtCaseEntries subform
-        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 1250)
+        ' Tab Control
+        Set ctl = CreateControl(frm.Name, acTabCtl, acDetail, "", "", 200, yPos, 10000, 3500)
+        ctl.Name = "tabMain"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
+        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
+        Debug.Print "Tab control created. Top position: " & ctl.Top
+        
+        ' Set tab page names and captions
+        ctl.Pages(0).Name = "pageEntries"
+        ctl.Pages(0).Caption = "Court Case Entries"
+        ctl.Pages(1).Name = "pageRuling"
+        ctl.Pages(1).Caption = "Ruling"
+
+        ' sfrmCourtCaseEntries subform (on first tab page)
+        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "pageEntries", "", 300, 500, 9600, 2800)
         ctl.Name = "sfrmCourtCaseEntries"
         ctl.SourceObject = "Form.sfrmCourtCaseEntries"
         ctl.LinkMasterFields = "court_case_id"
         ctl.LinkChildFields = "court_case_id"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
-        CreateLabel frm.Name, "lblEntries", "Court Case Entries:", 200, yPos - 300, 3000, 300
 
-        yPos = yPos + 1550
-
-        ' sfrmRuling subform
-        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 10000, 2000)
+        ' sfrmRuling subform (on second tab page)
+        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "pageRuling", "", 300, 500, 9600, 2800)
         ctl.Name = "sfrmRuling"
         ctl.SourceObject = "Form.sfrmRuling"
         ctl.LinkMasterFields = "court_case_id"
         ctl.LinkChildFields = "court_case_id"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
-        ctl.VerticalAnchor = acVerticalAnchorBottom ' Anchor to bottom
-        CreateLabel strFormName, "lblRuling", "Ruling:", 200, yPos - 300, 3000, 300
+        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
+
+        ' Set Detail section height to accommodate all controls
+        frm.Section(acDetail).Height = yPos + 3700  ' Tab control height + margin
+        Debug.Print "Detail section height set to: " & frm.Section(acDetail).Height
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "frmCourtCase", acForm, strFormName
@@ -282,7 +296,7 @@ Private Sub Create_frmCourtCase()
         Debug.Print "frmCourtCase created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_frmCourtCase: " & Err.Description, vbCritical
 End Sub
 
@@ -290,7 +304,7 @@ End Sub
 ' Create Form: sfrmCourtCaseEntries (Subform grid)
 '------------------------------------------------------------------------------
 Private Sub Create_sfrmCourtCaseEntries()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim strFormName As String
@@ -301,7 +315,7 @@ Private Sub Create_sfrmCourtCaseEntries()
         ' Join With placename table To display placename text
         frm.RecordSource = "Select cce.*, p.placename FROM court_case_entry As cce " & _
         "LEFT JOIN placename As p ON cce.placename_id = p.placename_id"
-        frm.Caption = "Court Case Entries"
+        frm.caption = "Court Case Entries"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
         frm.RecordSelectors = True
@@ -315,7 +329,6 @@ Private Sub Create_sfrmCourtCaseEntries()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "txtEntryYear"
         ctl.ControlSource = "entry_year"
-        ctl.Caption = "Year"
         xPos = xPos + 800
 
         ' season_id
@@ -327,7 +340,6 @@ Private Sub Create_sfrmCourtCaseEntries()
         ctl.ColumnWidths = "0cm;3cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.Caption = "Season"
         xPos = xPos + 1200
 
         ' land_use_id
@@ -339,7 +351,6 @@ Private Sub Create_sfrmCourtCaseEntries()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.Caption = "Land Use"
         xPos = xPos + 1800
 
         ' placename (from joined table - display name)
@@ -348,20 +359,18 @@ Private Sub Create_sfrmCourtCaseEntries()
         ctl.ControlSource = "placename"
         ctl.Locked = True
         ctl.Enabled = False
-        ctl.Caption = "Placename"
         xPos = xPos + 2500
 
         ' original_placename
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 2000, 300)
         ctl.Name = "txtOriginalPlacename"
         ctl.ControlSource = "original_placename"
-        ctl.Caption = "Original Placename"
         xPos = xPos + 2000
 
         ' cmdEntryDetail button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "cmdEntryDetail"
-        ctl.Caption = "Detail..."
+        ctl.caption = "Detail..."
         ctl.OnClick = "=sfrmCourtCaseEntries_cmdEntryDetail_Click()"
 
         DoCmd.Close acForm, strFormName, acSaveYes
@@ -370,7 +379,7 @@ Private Sub Create_sfrmCourtCaseEntries()
         Debug.Print "sfrmCourtCaseEntries created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_sfrmCourtCaseEntries: " & Err.Description, vbCritical
 End Sub
 
@@ -378,7 +387,7 @@ End Sub
 ' Create Form: frmCourtCaseEntryDetail (Popup detail)
 '------------------------------------------------------------------------------
 Private Sub Create_frmCourtCaseEntryDetail()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
@@ -387,7 +396,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "court_case_entry"
-        frm.Caption = "Court Case Entry Detail"
+        frm.caption = "Court Case Entry Detail"
         frm.DefaultView = 0 ' Single Form
         frm.PopUp = True
         frm.Modal = True
@@ -448,7 +457,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         ' cmdPickPlacename
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7700, yPos, 1500, 300)
         ctl.Name = "cmdPickPlacename"
-        ctl.Caption = "Pick..."
+        ctl.caption = "Pick..."
         ctl.OnClick = "=frmCourtCaseEntryDetail_cmdPickPlacename_Click()"
 
         yPos = yPos + 500
@@ -488,7 +497,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         Debug.Print "frmCourtCaseEntryDetail created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_frmCourtCaseEntryDetail: " & Err.Description, vbCritical
 End Sub
 
@@ -496,7 +505,7 @@ End Sub
 ' Create Form: sfrmPersonEntryByEntry (Grid: people in entry)
 '------------------------------------------------------------------------------
 Private Sub Create_sfrmPersonEntryByEntry()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim strFormName As String
@@ -505,7 +514,7 @@ Private Sub Create_sfrmPersonEntryByEntry()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "person_entry"
-        frm.Caption = "Person Entries"
+        frm.caption = "Person Entries"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
         frm.RecordSelectors = True
@@ -519,13 +528,12 @@ Private Sub Create_sfrmPersonEntryByEntry()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "txtPersonId"
         ctl.ControlSource = "person_id"
-        ctl.Caption = "Person ID"
         xPos = xPos + 1000
 
         ' cmdPickPerson
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "cmdPickPerson"
-        ctl.Caption = "Pick..."
+        ctl.caption = "Pick..."
         ctl.OnClick = "=sfrmPersonEntryByEntry_cmdPickPerson_Click()"
         xPos = xPos + 800
 
@@ -538,7 +546,6 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.Caption = "Community"
         xPos = xPos + 1800
 
         ' land_rights_status_id
@@ -550,7 +557,6 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.Caption = "Land Rights"
         xPos = xPos + 1800
 
         ' role_id
@@ -562,7 +568,6 @@ Private Sub Create_sfrmPersonEntryByEntry()
         ctl.ColumnWidths = "0cm;4cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.Caption = "Role"
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "sfrmPersonEntryByEntry", acForm, strFormName
@@ -570,7 +575,7 @@ Private Sub Create_sfrmPersonEntryByEntry()
         Debug.Print "sfrmPersonEntryByEntry created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_sfrmPersonEntryByEntry: " & Err.Description, vbCritical
 End Sub
 
@@ -578,7 +583,7 @@ End Sub
 ' Create Form: sfrmRuling (Single: 0/1 ruling per Case)
 '------------------------------------------------------------------------------
 Private Sub Create_sfrmRuling()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
@@ -587,7 +592,7 @@ Private Sub Create_sfrmRuling()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "ruling"
-        frm.Caption = "Ruling"
+        frm.caption = "Ruling"
         frm.DefaultView = 0 ' Single Form
         frm.NavigationButtons = False
         frm.RecordSelectors = False
@@ -600,7 +605,7 @@ Private Sub Create_sfrmRuling()
         ' lblNoRuling - shown when no ruling exists
         Set ctl = CreateControl(frm.Name, acLabel, acDetail, "", "", 200, yPos, 6000, 400)
         ctl.Name = "lblNoRuling"
-        ctl.Caption = "No ruling yet. Click 'Create Ruling' button above To add one."
+        ctl.caption = "No ruling yet. Click 'Create Ruling' button above To add one."
         ctl.ForeColor = RGB(128, 128, 128) ' Gray text
 
         yPos = yPos + 600
@@ -664,7 +669,7 @@ Private Sub Create_sfrmRuling()
         Debug.Print "sfrmRuling created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_sfrmRuling: " & Err.Description, vbCritical
 End Sub
 
@@ -672,7 +677,7 @@ End Sub
 ' Create Form: sfrmPersonOutcomes (Grid outcomes For ruling)
 '------------------------------------------------------------------------------
 Private Sub Create_sfrmPersonOutcomes()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim strFormName As String
@@ -681,7 +686,7 @@ Private Sub Create_sfrmPersonOutcomes()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "person_outcome"
-        frm.Caption = "Person Outcomes"
+        frm.caption = "Person Outcomes"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
         frm.RecordSelectors = True
@@ -695,13 +700,12 @@ Private Sub Create_sfrmPersonOutcomes()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 1000, 300)
         ctl.Name = "txtPersonId"
         ctl.ControlSource = "person_id"
-        ctl.Caption = "Person ID"
         xPos = xPos + 1000
 
         ' cmdPickPersonOutcomePerson
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 800, 300)
         ctl.Name = "cmdPickPersonOutcomePerson"
-        ctl.Caption = "Pick..."
+        ctl.caption = "Pick..."
         ctl.OnClick = "=sfrmPersonOutcomes_cmdPickPerson_Click()"
         xPos = xPos + 800
 
@@ -714,14 +718,12 @@ Private Sub Create_sfrmPersonOutcomes()
         ctl.ColumnWidths = "0cm;5cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        ctl.Caption = "Outcome Type"
         xPos = xPos + 2200
 
         ' description
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 3500, 300)
         ctl.Name = "txtDescription"
         ctl.ControlSource = "description"
-        ctl.Caption = "Description"
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "sfrmPersonOutcomes", acForm, strFormName
@@ -729,7 +731,7 @@ Private Sub Create_sfrmPersonOutcomes()
         Debug.Print "sfrmPersonOutcomes created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_sfrmPersonOutcomes: " & Err.Description, vbCritical
 End Sub
 
@@ -737,7 +739,7 @@ End Sub
 ' Create Form: frmPlacenameSearch (Popup picker)
 '------------------------------------------------------------------------------
 Private Sub Create_frmPlacenameSearch()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
@@ -746,7 +748,7 @@ Private Sub Create_frmPlacenameSearch()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = ""
-        frm.Caption = "Search Placename"
+        frm.caption = "Search Placename"
         frm.DefaultView = 0 ' Single Form
         frm.PopUp = True
         frm.Modal = True
@@ -764,7 +766,7 @@ Private Sub Create_frmPlacenameSearch()
         ' cmdSearch
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, yPos, 1500, 300)
         ctl.Name = "cmdSearch"
-        ctl.Caption = "Search"
+        ctl.caption = "Search"
         ctl.OnClick = "=frmPlacenameSearch_cmdSearch_Click()"
 
         yPos = yPos + 500
@@ -783,13 +785,13 @@ Private Sub Create_frmPlacenameSearch()
         ' cmdSelect
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
         ctl.Name = "cmdSelect"
-        ctl.Caption = "Select"
+        ctl.caption = "Select"
         ctl.OnClick = "=frmPlacenameSearch_cmdSelect_Click()"
 
         ' cmdCancel
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2400, yPos, 2000, 400)
         ctl.Name = "cmdCancel"
-        ctl.Caption = "Cancel"
+        ctl.caption = "Cancel"
         ctl.OnClick = "=frmPlacenameSearch_cmdCancel_Click()"
 
         DoCmd.Close acForm, strFormName, acSaveYes
@@ -798,7 +800,7 @@ Private Sub Create_frmPlacenameSearch()
         Debug.Print "frmPlacenameSearch created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_frmPlacenameSearch: " & Err.Description, vbCritical
 End Sub
 
@@ -806,7 +808,7 @@ End Sub
 ' Create Form: frmPersonSearch (Popup picker)
 '------------------------------------------------------------------------------
 Private Sub Create_frmPersonSearch()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
@@ -815,7 +817,7 @@ Private Sub Create_frmPersonSearch()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = ""
-        frm.Caption = "Search Person"
+        frm.caption = "Search Person"
         frm.DefaultView = 0 ' Single Form
         frm.PopUp = True
         frm.Modal = True
@@ -833,7 +835,7 @@ Private Sub Create_frmPersonSearch()
         ' cmdSearch
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, yPos, 1500, 300)
         ctl.Name = "cmdSearch"
-        ctl.Caption = "Search"
+        ctl.caption = "Search"
         ctl.OnClick = "=frmPersonSearch_cmdSearch_Click()"
 
         yPos = yPos + 500
@@ -852,19 +854,19 @@ Private Sub Create_frmPersonSearch()
         ' cmdSelect
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
         ctl.Name = "cmdSelect"
-        ctl.Caption = "Select"
+        ctl.caption = "Select"
         ctl.OnClick = "=frmPersonSearch_cmdSelect_Click()"
 
         ' cmdNewPerson
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2400, yPos, 2000, 400)
         ctl.Name = "cmdNewPerson"
-        ctl.Caption = "New Person"
+        ctl.caption = "New Person"
         ctl.OnClick = "=frmPersonSearch_cmdNewPerson_Click()"
 
         ' cmdCancel
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 4600, yPos, 2000, 400)
         ctl.Name = "cmdCancel"
-        ctl.Caption = "Cancel"
+        ctl.caption = "Cancel"
         ctl.OnClick = "=frmPersonSearch_cmdCancel_Click()"
 
         DoCmd.Close acForm, strFormName, acSaveYes
@@ -873,7 +875,7 @@ Private Sub Create_frmPersonSearch()
         Debug.Print "frmPersonSearch created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_frmPersonSearch: " & Err.Description, vbCritical
 End Sub
 
@@ -881,7 +883,7 @@ End Sub
 ' Create Form: frmPerson (Basic person editor)
 '------------------------------------------------------------------------------
 Private Sub Create_frmPerson()
-    On Error Goto ErrHandler
+    On Error GoTo ErrHandler
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
@@ -890,7 +892,7 @@ Private Sub Create_frmPerson()
         Set frm = CreateForm()
         strFormName = frm.Name
         frm.RecordSource = "person"
-        frm.Caption = "Person"
+        frm.caption = "Person"
         frm.DefaultView = 0 ' Single Form
         frm.NavigationButtons = True
         frm.RecordSelectors = True
@@ -962,7 +964,7 @@ Private Sub Create_frmPerson()
         Debug.Print "frmPerson created."
      Exit Sub
 
- ErrHandler:
+ErrHandler:
         MsgBox "Error in Create_frmPerson: " & Err.Description, vbCritical
 End Sub
 
@@ -975,6 +977,6 @@ Private Function CreateLabel(formName As String, labelName As String, _
     Dim ctl As Control
     Set ctl = CreateControl(formName, acLabel, acDetail, "", "", leftPos, topPos, widthSize, heightSize)
     ctl.Name = labelName
-    ctl.Caption = caption
+    ctl.caption = caption
     Set CreateLabel = ctl
 End Function
