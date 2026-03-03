@@ -77,6 +77,7 @@ Private Sub ApplyDatasheetCaptions()
 
     ' sfrmPersonEntryByEntry
     SetControlDatasheetCaption "sfrmPersonEntryByEntry", "txtPersonId", "Person ID"
+    SetControlDatasheetCaption "sfrmPersonEntryByEntry", "txtPersonName", "Person"
     SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboCommunityId", "Community"
     SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboLandRightsStatusId", "Land Rights"
     SetControlDatasheetCaption "sfrmPersonEntryByEntry", "cboRoleId", "Role"
@@ -580,7 +581,19 @@ Private Sub Create_frmCourtCaseEntryDetail()
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel frm.Name, "lblCuratedText", "Curated Text:", 200, yPos, 1600, 300
 
-        yPos = yPos + 1000
+        yPos = yPos + 1500
+
+        ' cmdAddPersonEntry
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6200, yPos - 380, 1700, 300)
+        ctl.Name = "cmdAddPersonEntry"
+        ctl.caption = "Add Person"
+        ctl.OnClick = "=frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()"
+
+        ' cmdDeletePersonEntry
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 8000, yPos - 380, 1700, 300)
+        ctl.Name = "cmdDeletePersonEntry"
+        ctl.caption = "Delete Person"
+        ctl.OnClick = "=frmCourtCaseEntryDetail_cmdDeletePersonEntry_Click()"
 
         ' sfrmPersonEntryByEntry subform
         Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 9000, 2500)
@@ -614,7 +627,10 @@ Private Sub Create_sfrmPersonEntryByEntry()
 
         Set frm = CreateForm()
         strFormName = frm.Name
-        frm.RecordSource = "person_entry"
+        frm.RecordSource = "SELECT pe.person_entry_id, pe.court_case_entry_id, pe.person_id, " & _
+            "p.full_name AS person_name, pe.community_id, pe.land_rights_status_id, pe.role_id " & _
+            "FROM person_entry AS pe " & _
+            "LEFT JOIN person AS p ON pe.person_id = p.person_id"
         frm.caption = "Person Entries"
         frm.DefaultView = 2 ' Datasheet (grid view)
         frm.NavigationButtons = False
@@ -632,6 +648,16 @@ Private Sub Create_sfrmPersonEntryByEntry()
         SetDatasheetCaptionSafe ctl, "Person ID"
         CreateLabel frm.Name, "lblPersonId", "Person ID", xPos, 0, 1000, 300
         xPos = xPos + 1000
+
+        ' person_name (read-only plain text display)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", xPos, 0, 2300, 300)
+        ctl.Name = "txtPersonName"
+        ctl.ControlSource = "person_name"
+        ctl.Locked = True
+        ctl.Enabled = False
+        SetDatasheetCaptionSafe ctl, "Person"
+        CreateLabel frm.Name, "lblPersonName", "Person", xPos, 0, 2300, 300
+        xPos = xPos + 2300
 
         ' cmdPickPerson
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", xPos, 0, 800, 300)

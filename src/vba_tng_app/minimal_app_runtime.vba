@@ -143,6 +143,50 @@ Public Function frmCourtCaseEntryDetail_cmdPickPlacename_Click()
 End Function
 
 '------------------------------------------------------------------------------
+' frmCourtCaseEntryDetail: Add person entry button
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()
+    On Error Goto ErrHandler
+        Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.SetFocus
+        DoCmd.GoToRecord , , acNewRec
+     Exit Function
+ErrHandler:
+        MsgBox "Error in frmCourtCaseEntryDetail_cmdAddPersonEntry_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' frmCourtCaseEntryDetail: Delete selected person entry button
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseEntryDetail_cmdDeletePersonEntry_Click()
+    On Error Goto ErrHandler
+        Dim rs As DAO.Recordset
+
+        With Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form
+            Set rs = .RecordsetClone
+            If rs.BOF And rs.EOF Then
+                MsgBox "No person entry record is selected.", vbInformation
+                rs.Close
+                Exit Function
+            End If
+            rs.Close
+
+            If .NewRecord Then
+                MsgBox "No person entry record is selected.", vbInformation
+                Exit Function
+            End If
+
+            If MsgBox("Delete selected person entry?", vbQuestion + vbYesNo, "Confirm Delete") = vbYes Then
+                .SetFocus
+                DoCmd.RunCommand acCmdDeleteRecord
+            End If
+        End With
+
+     Exit Function
+ErrHandler:
+        MsgBox "Error in frmCourtCaseEntryDetail_cmdDeletePersonEntry_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
 ' sfrmPersonEntryByEntry: Pick Person button
 '------------------------------------------------------------------------------
 Public Function sfrmPersonEntryByEntry_cmdPickPerson_Click()
@@ -315,8 +359,12 @@ Public Function frmPlacenameSearch_OnLoad()
     On Error Resume Next
     ' Show top 50 placenames by default
     Forms!frmPlacenameSearch!lstResults.RowSource = _
-        "SELECT TOP 50 placename_id, placename, parish_name, serial_number " & _
-        "FROM placename ORDER BY placename"
+    "SELECT TOP 50 p1.placename_id, p1.placename, " & _
+    "IIf(Nz(pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _
+    "p1.serial_number " & _
+    "FROM placename AS p1 " & _
+    "LEFT JOIN parish AS pr ON p1.parish_code = CStr(pr.parish_id) " & _
+    "ORDER BY p1.placename"
 End Function
 
 '------------------------------------------------------------------------------
@@ -524,7 +572,8 @@ End Function
 Public Function sfrmPersonEntryByEntry_OnLoad()
     On Error Resume Next
     ' Set column widths to -2 (auto-fit to content)
-    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonId.ColumnWidth = -2
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonId.ColumnWidth = 0
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonName.ColumnWidth = -2
     Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cmdPickPerson.ColumnWidth = -2
     Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboCommunityId.ColumnWidth = -2
     Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboLandRightsStatusId.ColumnWidth = -2
