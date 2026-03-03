@@ -212,10 +212,15 @@ Private Sub CreateQueries()
             ' qPlacenameSearch
             Set qdf = db.CreateQueryDef("qPlacenameSearch")
             qdf.sql = "PARAMETERS [pSearch] Text ( 255 ); " & _
-            "Select TOP 200 placename_id, placename, parish_name, serial_number " & _
-            "FROM placename " & _
-            "WHERE (placename LIKE [pSearch]) Or (parish_name LIKE [pSearch]) " & _
-            "ORDER BY placename;"
+                "SELECT TOP 200 p1.placename_id, p1.placename, " & _
+                "IIf(Nz(pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _
+                "p1.serial_number " & _
+                "FROM placename AS p1 " & _
+                "LEFT JOIN parish AS pr ON p1.parish_code = CStr(pr.parish_id) " & _
+                "WHERE (p1.placename LIKE [pSearch]) " & _
+                "   OR (p1.parish_name LIKE [pSearch]) " & _
+                "   OR (pr.parish LIKE [pSearch]) " & _
+                "ORDER BY p1.placename;"
 
         ' qPersonSearch (enhanced with community context)
         Set qdf = db.CreateQueryDef("qPersonSearch")
@@ -514,7 +519,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 2000, 300)
         ctl.Name = "txtEntryYear"
         ctl.ControlSource = "entry_year"
-        CreateLabel frm.Name, "lblEntryYear", "Entry Year:", 200, yPos, 1600, 300
+        CreateLabel frm.Name, "lblEntryYear", "Entry Year:", 200, yPos, 800, 300
 
         yPos = yPos + 500
 
@@ -574,14 +579,14 @@ Private Sub Create_frmCourtCaseEntryDetail()
         yPos = yPos + 500
 
         ' curated_text
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 800)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 1200)
         ctl.Name = "txtCuratedText"
         ctl.ControlSource = "curated_text"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
-        ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
+        ctl.VerticalAnchor = acVerticalAnchorTop ' Keep fixed height
         CreateLabel frm.Name, "lblCuratedText", "Curated Text:", 200, yPos, 1600, 300
 
-        yPos = yPos + 1500
+        yPos = yPos + 3000
 
         ' cmdAddPersonEntry
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6200, yPos - 380, 1700, 300)
@@ -596,7 +601,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         ctl.OnClick = "=frmCourtCaseEntryDetail_cmdDeletePersonEntry_Click()"
 
         ' sfrmPersonEntryByEntry subform
-        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 9000, 2500)
+        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 9000, 2000)
         ctl.Name = "sfrmPersonEntryByEntry"
         ctl.SourceObject = "Form.sfrmPersonEntryByEntry"
         ctl.LinkMasterFields = "court_case_entry_id"
