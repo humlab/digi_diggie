@@ -762,7 +762,7 @@ Private Sub Create_sfrmRuling()
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblDescription", "Description:", 200, yPos, 1200, 300
 
-        yPos = yPos + 800
+        yPos = yPos + 900
 
         ' sfrmPersonOutcomes subform (embedded in ruling)
         Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 9000, 2000)
@@ -772,7 +772,7 @@ Private Sub Create_sfrmRuling()
         ctl.LinkChildFields = "ruling_id"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
-        CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 300, 3000, 300
+        CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 250, 3000, 300
 
         ' cmdAddOutcome
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, outcomeButtonsTop, 1700, 300)
