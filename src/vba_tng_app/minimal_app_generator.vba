@@ -721,7 +721,7 @@ Private Sub Create_sfrmRuling()
         ' yPos = yPos + 600
 
         ' ruling_year
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 1500, yPos, 1500, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 1700, yPos, 1500, 300)
         ctl.Name = "txtRulingYear"
         ctl.ControlSource = "ruling_year"
         CreateLabel frm.Name, "lblRulingYear", "Year:", 200, yPos, 1200, 300
@@ -730,7 +730,7 @@ Private Sub Create_sfrmRuling()
         yPos = yPos + 500
 
         ' ruling_type_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1500, yPos, 3000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1700, yPos, 3000, 300)
         ctl.Name = "cboRulingTypeId"
         ctl.ControlSource = "ruling_type_id"
         ctl.RowSource = "Select ruling_type_id, ruling_type FROM ruling_type ORDER BY ruling_type;"
@@ -743,7 +743,7 @@ Private Sub Create_sfrmRuling()
         yPos = yPos + 500
 
         ' legal_source_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1500, yPos, 3000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 1700, yPos, 3000, 300)
         ctl.Name = "cboLegalSourceId"
         ctl.ControlSource = "legal_source_id"
         ctl.RowSource = "Select legal_source_id, legal_source_name FROM legal_source ORDER BY legal_source_name;"
@@ -756,7 +756,7 @@ Private Sub Create_sfrmRuling()
         yPos = yPos + 500
 
         ' description
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 1500, yPos, 6000, 600)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 1700, yPos, 6000, 600)
         ctl.Name = "txtDescription"
         ctl.ControlSource = "description"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
