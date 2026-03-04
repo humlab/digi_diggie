@@ -512,6 +512,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         frm.AutoResize = False ' Allow manual resizing
         frm.AutoCenter = True
         frm.OnLoad = "=frmCourtCaseEntryDetail_OnLoad()" ' Auto-populate placename display
+        frm.Width = 10200
 
         yPos = 200
 
@@ -609,6 +610,8 @@ Private Sub Create_frmCourtCaseEntryDetail()
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
         CreateLabel strFormName, "lblPersonEntries", "People in Entry:", 200, yPos - 300, 3000, 300
+
+        frm.Section(acDetail).Height = yPos + 2300
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "frmCourtCaseEntryDetail", acForm, strFormName

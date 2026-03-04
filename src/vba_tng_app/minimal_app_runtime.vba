@@ -85,15 +85,23 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCase_cmdOpenEntryDetail_Click()
     On Error Goto ErrHandler
+        Dim frmEntries As Form
         Dim entryId As Variant
 
-        ' Get selected entry from subform
-        If Not IsNull(Forms!frmCourtCase!sfrmCourtCaseEntries.Form!court_case_entry_id) Then
-            entryId = Forms!frmCourtCase!sfrmCourtCaseEntries.Form!court_case_entry_id
-            DoCmd.OpenForm "frmCourtCaseEntryDetail", , , "court_case_entry_id=" & entryId, , acDialog
-        Else
-            MsgBox "Please Select an entry first.", vbInformation
+        Set frmEntries = Forms!frmCourtCase!sfrmCourtCaseEntries.Form
+
+        If frmEntries.NewRecord Or IsNull(frmEntries!court_case_entry_id) Then
+            MsgBox "Please select a saved entry first.", vbInformation
+            Exit Function
         End If
+
+        ' Commit pending edits before opening modal detail form.
+        ' This avoids intermittent UI stalls with linked ODBC tables.
+        If frmEntries.Dirty Then frmEntries.Dirty = False
+        If Forms!frmCourtCase.Dirty Then Forms!frmCourtCase.Dirty = False
+
+        entryId = frmEntries!court_case_entry_id
+        OpenCourtCaseEntryDetail CLng(entryId)
 
      Exit Function
  ErrHandler:
@@ -105,12 +113,20 @@ End Function
 '------------------------------------------------------------------------------
 Public Function sfrmCourtCaseEntries_cmdEntryDetail_Click()
     On Error Goto ErrHandler
+        Dim frmEntries As Form
         Dim entryId As Variant
 
-        entryId = Screen.ActiveControl.Parent!court_case_entry_id
-        If Not IsNull(entryId) Then
-            DoCmd.OpenForm "frmCourtCaseEntryDetail", , , "court_case_entry_id=" & entryId, , acDialog
+        Set frmEntries = Screen.ActiveControl.Parent
+        If frmEntries.NewRecord Or IsNull(frmEntries!court_case_entry_id) Then
+            MsgBox "Please select a saved entry first.", vbInformation
+            Exit Function
         End If
+
+        If frmEntries.Dirty Then frmEntries.Dirty = False
+        If Forms!frmCourtCase.Dirty Then Forms!frmCourtCase.Dirty = False
+
+        entryId = frmEntries!court_case_entry_id
+        OpenCourtCaseEntryDetail CLng(entryId)
 
      Exit Function
  ErrHandler:
@@ -122,8 +138,13 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_OnLoad()
     On Error Resume Next
+    EnsureCourtCaseEntryDetailWindow
+
     ' Auto-populate placename display field on form load
     UpdatePlacenameDisplay "frmCourtCaseEntryDetail"
+
+    ' Limit person subform query to current entry to avoid loading large joined sets.
+    ConfigurePersonEntrySubform "frmCourtCaseEntryDetail"
 End Function
 
 '------------------------------------------------------------------------------
@@ -360,10 +381,11 @@ Public Function frmPlacenameSearch_OnLoad()
     ' Show top 50 placenames by default
     Forms!frmPlacenameSearch!lstResults.RowSource = _
     "SELECT TOP 50 p1.placename_id, p1.placename, " & _
-    "IIf(Nz(pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _
+    "IIf(Nz(DLookup('parish', 'parish', 'parish_id=' & Val(Nz([p1].[parish_code], '0'))), '') <> '', " & _
+    "Nz(DLookup('parish', 'parish', 'parish_id=' & Val(Nz([p1].[parish_code], '0'))), ''), " & _
+    "Nz(p1.parish_name, '')) AS parish_display, " & _
     "p1.serial_number " & _
     "FROM placename AS p1 " & _
-    "LEFT JOIN parish AS pr ON p1.parish_code = CStr(pr.parish_id) " & _
     "ORDER BY p1.placename"
 End Function
 
@@ -571,13 +593,13 @@ End Function
 '------------------------------------------------------------------------------
 Public Function sfrmPersonEntryByEntry_OnLoad()
     On Error Resume Next
-    ' Set column widths to -2 (auto-fit to content)
+    ' Use fixed widths to avoid expensive auto-fit scans on linked ODBC tables.
     Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonId.ColumnWidth = 0
-    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonName.ColumnWidth = -2
-    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cmdPickPerson.ColumnWidth = -2
-    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboCommunityId.ColumnWidth = -2
-    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboLandRightsStatusId.ColumnWidth = -2
-    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboRoleId.ColumnWidth = -2
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!txtPersonName.ColumnWidth = 2300
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cmdPickPerson.ColumnWidth = 900
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboCommunityId.ColumnWidth = 1800
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboLandRightsStatusId.ColumnWidth = 1800
+    Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form!cboRoleId.ColumnWidth = 1500
 End Function
 
 '------------------------------------------------------------------------------
@@ -603,6 +625,70 @@ End Function
 '==============================================================================
 ' HELPER FUNCTIONS
 '==============================================================================
+
+'------------------------------------------------------------------------------
+' Open entry detail safely for a known entry ID
+'------------------------------------------------------------------------------
+Private Sub OpenCourtCaseEntryDetail(entryId As Long)
+    On Error GoTo ErrHandler
+    DoCmd.Hourglass True
+    ' Form itself is already Popup+Modal; avoid acDialog to reduce UI deadlock risk.
+    DoCmd.OpenForm "frmCourtCaseEntryDetail", , , "court_case_entry_id=" & entryId, , acWindowNormal
+    EnsureCourtCaseEntryDetailWindow
+
+Cleanup:
+    DoCmd.Hourglass False
+    Exit Sub
+
+ErrHandler:
+    DoCmd.Hourglass False
+    Err.Raise Err.Number, "OpenCourtCaseEntryDetail", Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Configure person-entry subform to load only rows for the current entry
+'------------------------------------------------------------------------------
+Private Sub ConfigurePersonEntrySubform(parentFormName As String)
+    On Error GoTo ErrHandler
+    Dim entryId As Variant
+    Dim sqlText As String
+
+    entryId = Forms(parentFormName)!court_case_entry_id
+    If IsNull(entryId) Then Exit Sub
+
+    sqlText = "SELECT pe.person_entry_id, pe.court_case_entry_id, pe.person_id, " & _
+        "p.full_name AS person_name, pe.community_id, pe.land_rights_status_id, pe.role_id " & _
+        "FROM person_entry AS pe " & _
+        "LEFT JOIN person AS p ON pe.person_id = p.person_id " & _
+        "WHERE pe.court_case_entry_id = " & CLng(entryId)
+
+    Forms(parentFormName)!sfrmPersonEntryByEntry.Form.RecordSource = sqlText
+    Forms(parentFormName)!sfrmPersonEntryByEntry.Form.Requery
+    Exit Sub
+
+ErrHandler:
+    Debug.Print "Error in ConfigurePersonEntrySubform: " & Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Ensure detail popup opens with a usable size/position
+'------------------------------------------------------------------------------
+Private Sub EnsureCourtCaseEntryDetailWindow()
+    On Error GoTo ErrHandler
+    Dim frm As Form
+
+    Set frm = Forms!frmCourtCaseEntryDetail
+
+    ' Twips (1 cm ≈ 567 twips): width ~17.6 cm, height ~13.8 cm
+    If frm.WindowWidth < 9000 Or frm.InsideWidth < 8500 Then
+        DoCmd.MoveSize 800, 500, 10000, 7800
+    End If
+
+    Exit Sub
+
+ErrHandler:
+    Debug.Print "Error in EnsureCourtCaseEntryDetailWindow: " & Err.Description
+End Sub
 
 '------------------------------------------------------------------------------
 ' Parse OpenArgs: "caller=formName;target=controlName"
