@@ -22,4 +22,4 @@ create table if not exists "placenames"
     "nr" text    
 );
 
-\copy placenames(id, ortnamn, n, e, lopnr, namntyp_nr, språk_nr, sockenstad_nr, lan_nr, kommun_nr, kombo, sockenstad, nr) FROM 'resources/placenames.csv' WITH (FORMAT csv, HEADER true, ENCODING 'WIN1252');
+\copy placenames(id, ortnamn, n, e, lopnr, namntyp_nr, språk_nr, sockenstad_nr, lan_nr, kommun_nr, kombo, sockenstad, nr) FROM 'resources/placenames.csv' WITH (FORMAT csv, HEADER true);
