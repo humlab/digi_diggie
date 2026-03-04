@@ -586,7 +586,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         ctl.VerticalAnchor = acVerticalAnchorTop ' Keep fixed height
         CreateLabel frm.Name, "lblCuratedText", "Curated Text:", 200, yPos, 1600, 300
 
-        yPos = yPos + 3000
+        yPos = yPos + 2000
 
         ' cmdAddPersonEntry
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6200, yPos - 380, 1700, 300)
