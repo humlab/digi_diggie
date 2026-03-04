@@ -138,7 +138,8 @@ begin
         "county_code",
         "municipality_code",
         "combined_placename",
-        "parish_name"
+        "parish_name",
+		"geom"
     )
     select 
         "id" as "placename_id",
@@ -146,11 +147,12 @@ begin
         "n" as "northing",
         "e" as "easting",
         "lopnr"::numeric(10,1)::int as "serial_number",
+        "namntyp_nr" as "name_type_code",
         "språk_nr" as "language_code",
         "sockenstad_nr" as "parish_code",
         "lan_nr" as "county_code",
         "kommun_nr" as "municipality_code",
-        "kombo" as "kombo",
+        "kombo" as "combined_placename",
         "sockenstad" as "parish_name",
         st_transform(st_setsrid(st_makepoint(622159, 7286643), 3006), 4326) as geom
     from digidiggie_tog.placenames
@@ -274,7 +276,7 @@ begin
     ************************************************************************************************************/
 
     raise notice 'step: migrating rulings...';
-with tog_to_tng as (
+	with tog_to_tng as (
 		select cc.court_case_id, tng.court_case_entry_id as tng_id, tog.entry_id as tog_id
 		from digidiggie_tog.entries tog
 		join digidiggie_tng.court_case_entry tng
@@ -603,53 +605,9 @@ with tog_to_tng as (
         left join digidiggie_tng.ruling_type rt using (ruling_type)
         order by cc.court_case_id;
 
-
     -- create rulings for cases that have winner_id, judgement_id, or legal_source_id
     -- note: ruling_type is a new concept, we'll need to populate it separately
-/*
 
-
-    -- Winners svarar på frågan vem som vann????
-    select *
-    from digidiggie_tog.entries
-    where winner_id in (5,6,7)
-
-    select *
-    from digidiggie_tng.ruling r
-    insert into digidiggie_tng.ruling (
-        "court_case_id",
-        "ruling_year",
-        "description",
-        "ruling_type_id",
-        "legal_source_id"
-    ) 
-        select cc.court_case_id, cc.case_year, null, null --, e.legal_source_id
-        from digidiggie_tng.court_case cc
-
-    insert into digidiggie_tng.rulings (
-        "court_case_id",
-        "ruling_year",
-        "description",
-        "ruling_type_id",
-        "legal_source_id"
-    )
-    select distinct
-        cc.court_case_id,
-        e.year, -- NOTE: Check,
-        null as description, -- no direct mapping, needs manual population
-        null as ruling_type_id, -- no direct mapping, needs manual population
-        e.judgement_id,
-        e.legal_source_id
-    from digidiggie_tog.entries e
-    inner join digidiggie_tng.court_cases cc on 
-        cc.source_id = coalesce(e.source_id, 1)
-        and (cc.reference_number = e.reference_number 
-            or (cc.reference_number is null and e.reference_number is null))
-        and (extract(year from cc.case_date) = cast(e.year as integer)
-            or (cc.case_date is null and e.year is null))
-    where (e.judgement_id is not null or e.legal_source_id is not null)
-    and cc.court_case_id is not null;
-*/
 
     raise notice 'step: migrating persons'' outcomes...';
 
