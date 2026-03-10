@@ -242,6 +242,154 @@ create index seasons_season_name_idx on "season" ("season_name");
 
 
 /***********************************************************************************************************
+** Database comments
+************************************************************************************************************/
+
+comment on schema digidiggie_tng is 'DigiDiggie The Next Generation schema - normalized structure for Swedish court records';
+
+-- Community table
+comment on table community is 'Social or administrative grouping (e.g., parish or community) to which a person belongs at the time of the court case';
+comment on column community.community_id is 'Primary key for the community table';
+comment on column community.community_name is 'The name of the community (village)';
+comment on column community.parish_id is 'Foreign key linking to the parish this community belongs to';
+
+-- Court case table
+comment on table court_case is 'Single court proceeding recorded in a historical source, identified by date, court, and source text. A court case results in exactly one ruling in this model';
+comment on column court_case.court_case_id is 'Primary key for the court case table';
+comment on column court_case.source_id is 'Foreign key to the source document (e.g., court record collection)';
+comment on column court_case.reference_number is 'Reference number within a specific source collection, e.g., K.B. Wiklund''s transcripts';
+comment on column court_case.district_court_name is 'Name of the district court (tingslag) where the case was heard';
+comment on column court_case.case_year is 'The year the case was heard at court';
+comment on column court_case.source_text is 'Aggregated description/text from the source document for this case';
+
+-- Court case entry table
+comment on table court_case_entry is 'Discrete unit of information extracted from a court case, typically describing a specific land-use situation, event, or claim';
+comment on column court_case_entry.court_case_entry_id is 'Primary key for the court case entry table';
+comment on column court_case_entry.court_case_id is 'Foreign key linking to the parent court case';
+comment on column court_case_entry.entry_year is 'The year the event occurred, or if unknown, the year the matter was heard at court';
+comment on column court_case_entry.curated_text is 'Curated description of the event in free text';
+comment on column court_case_entry.original_placename is 'The place''s name as written in the original source document';
+comment on column court_case_entry.season_id is 'Foreign key to the season when the disputed resource was used';
+comment on column court_case_entry.land_use_id is 'Foreign key to the resource or land use type involved in the dispute';
+comment on column court_case_entry.placename_id is 'Foreign key to a standardized placename from the Swedish National Survey (enables GIS connection)';
+
+-- Person table
+comment on table person is 'Historical individual identified in the sources, with personal attributes where known (name, patronymic, birth/death year, notes)';
+comment on column person.person_id is 'Primary key for the person table';
+comment on column person.given_name is 'The person''s given name(s) (first name)';
+comment on column person.patronymic is 'The person''s patronymic name (e.g., ''Andersson'', ''Jonsdotter'')';
+comment on column person.surname is 'The person''s surname, byname, or family name';
+comment on column person.birth_year is 'The year of birth';
+comment on column person.death_year is 'The year of death';
+comment on column person.community_name is 'The name of the village where the person primarily resided';
+comment on column person.note is 'Additional notes about the person';
+comment on column person.full_name is 'The person''s full name, computed from given name, patronymic, and surname';
+
+-- Person entry table
+comment on table person_entry is 'Contextualized appearance of a person within a specific court case entry. Captures the person''s role, land rights status, and how they are described in the source';
+comment on column person_entry.person_entry_id is 'Primary key for the person entry table';
+comment on column person_entry.court_case_entry_id is 'Foreign key linking to the court case entry';
+comment on column person_entry.person_id is 'Foreign key linking to the person involved';
+comment on column person_entry.community_id is 'Foreign key to the community where the person resided at the time';
+comment on column person_entry.land_rights_status_id is 'Foreign key indicating if the person had land rights';
+comment on column person_entry.role_id is 'Foreign key to the person''s role in the case (e.g., plaintiff, defendant, witness)';
+comment on column person_entry.curated_text is 'Additional curated text describing the person''s involvement';
+
+-- Ruling table
+comment on table ruling is 'Judicial decision resulting from a court case. Records the year, description, ruling type (resolved or referred), and may cite a legal source';
+comment on column ruling.ruling_id is 'Primary key for the ruling table';
+comment on column ruling.court_case_id is 'Foreign key linking to the court case (one-to-one relationship)';
+comment on column ruling.ruling_year is 'The year the ruling was issued';
+comment on column ruling.description is 'Description of the ruling in free text';
+comment on column ruling.ruling_type_id is 'Foreign key to the type of ruling (e.g., judgement, settlement, referral)';
+comment on column ruling.legal_source_id is 'Foreign key to the legal source or precedent cited in the ruling';
+
+-- Person outcome table
+comment on table person_outcome is 'Outcome of a ruling as it affects a specific person (e.g., being sanctioned, declared winner). Connects rulings to individuals';
+comment on column person_outcome.person_outcome_id is 'Primary key for the person outcome table';
+comment on column person_outcome.ruling_id is 'Foreign key linking to the ruling';
+comment on column person_outcome.person_id is 'Foreign key linking to the person';
+comment on column person_outcome.outcome_type_id is 'Foreign key to the outcome type (e.g., damages, fined, acquitted, winner)';
+comment on column person_outcome.description is 'Description of the specific outcome for this person';
+
+-- Person relationship table
+comment on table person_relationship is 'Relationships between persons (family, social connections)';
+comment on column person_relationship.person_relationship_id is 'Primary key for the person relationship table';
+comment on column person_relationship.person_1_id is 'Foreign key to the first person in the relationship';
+comment on column person_relationship.person_2_id is 'Foreign key to the second person in the relationship';
+comment on column person_relationship.relationship_type_id is 'Foreign key to the type of relationship (e.g., father, mother, sibling, spouse)';
+comment on column person_relationship.description is 'Additional description of the relationship';
+
+-- Placename table
+comment on table placename is 'Standardized geographical place associated with an entry, linked to the Swedish National Survey (external authority/placename registry) with coordinates';
+comment on column placename.placename_id is 'Primary key for the placename table';
+comment on column placename.placename is 'The standardized placename (ortnamn)';
+comment on column placename.northing is 'Northing coordinate in SWEREF 99 TM (EPSG:3006)';
+comment on column placename.easting is 'Easting coordinate in SWEREF 99 TM (EPSG:3006)';
+comment on column placename.serial_number is 'Serial number (löpnummer) from the National Survey';
+comment on column placename.name_type_code is 'Name type code (namntyp) from the National Survey';
+comment on column placename.language_code is 'Language code (språk) from the National Survey';
+comment on column placename.parish_code is 'Parish/town code (sockenstad) from the National Survey';
+comment on column placename.county_code is 'County code (län) from the National Survey';
+comment on column placename.municipality_code is 'Municipality code (kommun) from the National Survey';
+comment on column placename.combined_placename is 'Combined placename (combination of multiple name components)';
+comment on column placename.parish_name is 'Parish name from the National Survey';
+comment on column placename.geom is 'PostGIS geometry point in WGS84 (EPSG:4326) for mapping';
+
+-- Lookup tables
+comment on table land_rights_status is 'Description of a person''s legal or customary status to the land as interpreted from the entry (e.g., owned land, no land rights, uncertain)';
+comment on column land_rights_status.land_rights_status_id is 'Primary key for the land rights status table';
+comment on column land_rights_status.land_rights_status is 'Land rights status name (e.g., ''Ja'', ''Nej'', ''Nja'')';
+comment on column land_rights_status.description is 'Description of the land rights status';
+
+comment on table legal_source is 'Normative legal text (law code, regulation, precedent) that a ruling cites or applies';
+comment on column legal_source.legal_source_id is 'Primary key for the legal source table';
+comment on column legal_source.legal_source_name is 'The name of the legal source or legal precedent cited';
+
+comment on table land_use is 'Categorized description of how land is used or claimed in an entry (e.g., fishing, hunting, herding, reindeer grazing), based on interpretation of the source';
+comment on column land_use.land_use_id is 'Primary key for the land use table';
+comment on column land_use.description is 'The type of land use or resource (e.g., ''Fishing rights'', ''Reindeer grazing'')';
+
+comment on table parish is 'Lookup table for parishes';
+comment on column parish.parish_id is 'Primary key for the parish table';
+comment on column parish.parish is 'Parish name - heading comes from the National Survey database of place names';
+
+comment on table outcome_type is 'Categorization describing the kind of decision outcome (e.g., winner, sanction, injunction with fine, partition of land)';
+comment on column outcome_type.outcome_type_id is 'Primary key for the outcome type table';
+comment on column outcome_type.outcome_type_name is 'Outcome type name (e.g., ''Vinnare'', ''Böter'', ''Friad'')';
+comment on column outcome_type.description is 'Description of the outcome type';
+
+comment on table role_type is 'Lookup table for role type categories (social or judicial)';
+comment on column role_type.role_type_id is 'Primary key for the role type table';
+comment on column role_type.role_type_name is 'Role type category name (''Social'' or ''Juridisk'')';
+comment on column role_type.description is 'Description of the role type category';
+
+comment on table role is 'Social or legal role attributed to a person in a specific entry (e.g., Nybyggare, Sámi, plaintiff, defendant). Roles are contextual, not permanent identities';
+comment on column role.role_id is 'Primary key for the role table';
+comment on column role.role_name is 'Role name (e.g., ''Klagande'', ''Svarande'', ''Vittne'', ''Same'', ''Nybyggare'')';
+comment on column role.role_type_id is 'Foreign key to role type (social or judicial)';
+comment on column role.description is 'Description of the role';
+
+comment on table season is 'Optional temporal qualifier indicating when the event described in an entry took place (e.g., summer, winter)';
+comment on column season.season_id is 'Primary key for the season table';
+comment on column season.season_name is 'The name of the season when the disputed resource was primarily used (e.g., ''Winter'', ''Summer'')';
+
+comment on table ruling_type is 'Lookup table for ruling/judgement types';
+comment on column ruling_type.ruling_type_id is 'Primary key for the ruling type table';
+comment on column ruling_type.ruling_type is 'Ruling type name (e.g., ''Dom'', ''Förlikning'', ''Hänvisning'')';
+comment on column ruling_type.description is 'Description of the ruling type';
+
+comment on table source is 'Historical source from which court cases are excerpted (e.g., court records, archival volumes), with identifiers and metadata';
+comment on column source.source_id is 'Primary key for the source table';
+comment on column source.source_name is 'The full name of the historical source document';
+comment on column source.source_abbreviation is 'The abbreviation for the source, used for quick reference (e.g., ''DB'' for court record)';
+
+comment on table relationship_type is 'Lookup table for person relationship types';
+comment on column relationship_type.relationship_type_id is 'Primary key for the relationship type table';
+comment on column relationship_type.relationship_type_name is 'Relationship type name (e.g., ''Far'', ''Mor'', ''Syskon'', ''Make/Maka'')';
+comment on column relationship_type.description is 'Description of the relationship type';
+
+/***********************************************************************************************************
 ** Procedures Create a single JSON snapshot of the entire schema.
 ** This is useful for exporting the data for use in a static website or similar.
 ** select export_schema_as_json('digidiggie_tog')
