@@ -265,6 +265,12 @@ begin
         left join winner_to_role r
           on r.winner_id = tog.winner_id;
 
+    /***********************************************************************************************************
+    ** STEP     Add person outcomes.
+    ************************************************************************************************************/
+
+	select *
+	from digidiggie_tng.person_outcome
 
     /***********************************************************************************************************
     ** STEP     Add person relationships. Currently, the data lacks relationship information.
