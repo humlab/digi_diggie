@@ -26,6 +26,12 @@ load-prod-db:
 dump-to-excel:
 	@uv run src/pgdb_to_excel.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output xl.xlsx
 
+dump-to-json:
+	@uv run src/pgdb_to_json.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output data.json --pretty
+
+dump-to-docs:
+	@uv run src/pgdb_to_docs.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output docs/SCHEMA.md --title "DigiDiggie Schema Documentation"
+
 dump-accdb-to-excel:
 	@uv run src/accdb_to_excel.py --database data/digidiggie_dev.accdb --output data/accdb_dump.xlsx --verbose
 
