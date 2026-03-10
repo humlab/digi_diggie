@@ -19,6 +19,18 @@
     left join digidiggie_tng.land_right_status lrs on 
         lrs.land_rights_status = coalesce(e.land_rights_status, 'unknown')
     where e.entry_id in (select entry_id from digidiggie_tng.entries)
-    and e.actor_id is not null;
+    and e.actor_id is not null
 
+
+SELECT TOP 200 p1.placename_id, p1.placename, IIf(Nz(pr.parish, ''<> '', pr.parish, p1.parish_name) AS parish_display, p1.serial_number 
+FROM placename AS p1 
+LEFT JOIN parish AS pr ON p1.parish_code = CStr(pr.parish_id) 
+ORDER BY p1.placename;"
+
+SELECT *
+FROM digidiggie_tng.placename AS p1 
+WHERE parish_code= '1'
+
+select *
+from digidiggie_tog.entries
 
