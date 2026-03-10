@@ -18,5 +18,20 @@ dev:
 
 
 load-test-db: 
-	@./scripts/mdb-to-pg load --database $(TEST_POSTGRES_DB) --schema public --host $(HOST) --user $(TEST_POSTGRES_USER) --port $(TEST_POSTGRES_PORT) data/digidiggie_original.accdb
+	@./scripts/mdb-to-pg load --database $(TEST_POSTGRES_DB) --schema public --host $(HOST) --user $(TEST_POSTGRES_USER) --port $(TEST_POSTGRES_PORT) data/digidiggie_dev.accdb
+
+load-prod-db: 
+	@./scripts/mdb-to-pg load --database $(POSTGRES_DB) --schema digidiggie_tog --host $(HOST) --user $(POSTGRES_USER) --port $(POSTGRES_PORT) data/digidiggie_dev.accdb
+
+dump-to-excel:
+	@uv run src/pgdb_to_excel.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output xl.xlsx
+
+dump-to-json:
+	@uv run src/pgdb_to_json.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output data.json --pretty
+
+dump-to-docs:
+	@uv run src/pgdb_to_docs.py --host localhost --port $(POSTGRES_PORT) --database $(POSTGRES_DB) --schema digidiggie_tng --user $(POSTGRES_USER) --output docs/SCHEMA.md --title "DigiDiggie Schema Documentation"
+
+dump-accdb-to-excel:
+	@uv run src/accdb_to_excel.py --database data/digidiggie_dev.accdb --output data/accdb_dump.xlsx --verbose
 

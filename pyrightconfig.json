@@ -1,0 +1,38 @@
+{
+  "include": [
+    "src/**/*.py",
+    "scripts/**/*.py",
+    "*.py"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.venv",
+    "**/.venv/**",
+    "**/node_modules",
+    ".venv/**",
+    "data/**",
+    "archive/**",
+    "ortnamn_data/**",
+    "tmp/**",
+    "docker/**",
+    "resources/**",
+    ".git/**"
+  ],
+  "ignore": [
+    "**/.venv",
+    "data",
+    "archive",
+    "ortnamn_data",
+    "tmp",
+    "docker",
+    "resources"
+  ],
+  "venvPath": ".",
+  "venv": ".venv",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "stubPath": ""
+}

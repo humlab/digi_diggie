@@ -1,5 +1,7 @@
+set search_path to "digidiggie_tog";
+
 BEGIN;
-INSERT INTO "public"."parishes" ("parish", "parish_id")
+INSERT INTO "parishes" ("parish", "parish_id")
 VALUES
     ('Arjeplog', 3),
     ('Arvidsjaur', 4),
@@ -21,7 +23,7 @@ VALUES
     ('Malå', 20),
     ('Piteå', 21),
     ('Ingen', 22);
-INSERT INTO "public"."communities" ("community_id", "community_name", "parish_id")
+INSERT INTO "communities" ("community_id", "community_name", "parish_id")
 VALUES
     (1, 'Arjeplogsbyn', 3),
     (2, 'Norrvästerbyn', 3),
@@ -89,7 +91,7 @@ VALUES
     (65, 'Gråträsk', 21),
     (66, 'Gräns', 22),
     (67, 'Arjeplogs sn', 3);
-INSERT INTO "public"."sources" ("source_id", "source_name", "source_abbreviation")
+INSERT INTO "sources" ("source_id", "source_name", "source_abbreviation")
 VALUES
     (1, 'Wiklunds avskriftsamling', 'KBW'),
     (2, 'Dombok', 'DB'),
@@ -101,7 +103,7 @@ VALUES
     (8, 'Bouppteckning', 'BU'),
     (9, 'Oklar', 'EJ'),
     (10, 'Schnitler', 'PS');
-INSERT INTO "public"."land_use" ("land_use_id", "type")
+INSERT INTO "land_use" ("land_use_id", "type")
 VALUES
     (1, 'Jakt'),
     (2, 'Fiske'),
@@ -118,7 +120,7 @@ VALUES
     (13, 'Kvarn'),
     (14, 'Skohötäkt'),
     (15, 'Osagt');
-INSERT INTO "public"."legal_sources" ("legal_source_id", "legal_source_name")
+INSERT INTO "legal_sources" ("legal_source_id", "legal_source_name")
 VALUES
     (1, 'Landslagen'),
     (2, '1749 års reglemente'),
@@ -133,7 +135,7 @@ VALUES
     (13, 'Hävd'),
     (14, 'Osagt'),
     (15, 'Syn');
-INSERT INTO "public"."winners" ("winner_id", "winner_description")
+INSERT INTO "winners" ("winner_id", "winner_description")
 VALUES
     (1, 'Nybyggare'),
     (2, 'Bonde'),
@@ -142,7 +144,7 @@ VALUES
     (5, 'Gemensamt'),
     (6, 'Oavgjort'),
     (7, '0');
-INSERT INTO "public"."seasons" ("season_id", "season_name")
+INSERT INTO "seasons" ("season_id", "season_name")
 VALUES
     (1, 'Vår'),
     (2, 'Sommar'),
@@ -152,7 +154,7 @@ VALUES
     (6, 'Åretrunt'),
     (7, 'Vårohöst'),
     (8, 'Oklart');
-INSERT INTO "public"."judgements" ("judgement_id", "sanction")
+INSERT INTO "judgements" ("judgement_id", "sanction")
 VALUES
     (1, 'Skadestånd'),
     (2, 'Vite'),
@@ -163,7 +165,7 @@ VALUES
     (7, 'Förmaning'),
     (8, 'Landshövdingehänvisning'),
     (9, 'Ingen ändring');
-INSERT INTO "public"."persons" ("person_id", "individual_id", "father_id", "mother_id", "given_name", "patronymic", "surname", "birth_date", "birth_year", "birth_place", "residence_date", "death_date", "death_year", "death_place", "event_date", "event_id", "community_name", "full_name")
+INSERT INTO "persons" ("person_id", "individual_id", "father_id", "mother_id", "given_name", "patronymic", "surname", "birth_date", "birth_year", "birth_place", "residence_date", "death_date", "death_year", "death_place", "event_date", "event_id", "community_name", "full_name")
 VALUES
     (1, 'I524', NULL, NULL, 'Bengt', 'Adamsson', NULL, 1792, 1792, 'Njarg', 1812, '1813', 1813, NULL, NULL, NULL, 'Norrvästerbyn', NULL),
     (2, 'I2472', NULL, NULL, 'Nils', 'Ammasson Paval', NULL, NULL, 1834, 'Tuorpon', 1880, NULL, NULL, NULL, NULL, NULL, 'Norrvästerbyn', NULL),
@@ -1165,7 +1167,7 @@ VALUES
     (2658, NULL, NULL, NULL, 'Hans', 'Sjulsson', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
     (2659, NULL, NULL, NULL, 'Klemet', 'Sjulsson', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
     (2661, NULL, NULL, NULL, 'Anund', 'Skägg?', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO "public"."persons" ("person_id", "individual_id", "father_id", "mother_id", "given_name", "patronymic", "surname", "birth_date", "birth_year", "birth_place", "residence_date", "death_date", "death_year", "death_place", "event_date", "event_id", "community_name", "full_name")
+INSERT INTO "persons" ("person_id", "individual_id", "father_id", "mother_id", "given_name", "patronymic", "surname", "birth_date", "birth_year", "birth_place", "residence_date", "death_date", "death_year", "death_place", "event_date", "event_id", "community_name", "full_name")
 VALUES
     (2662, NULL, NULL, NULL, 'Inga Maria', 'Svallo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
     (2663, NULL, NULL, NULL, 'Nils', 'Svallo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -1635,7 +1637,7 @@ VALUES
     (2732, NULL, NULL, NULL, 'Lars', 'Andersson', 'Stympa', NULL, 1830, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Semisjaur', NULL),
     (2737, NULL, NULL, NULL, 'Per', 'Persson', 'Fjellman', NULL, 1789, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Semisjaur', NULL),
     (2740, NULL, NULL, NULL, 'Per', 'Jonsson', NULL, NULL, 1833, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Semisjaur', NULL);
-INSERT INTO "public"."entries" ("entry_id", "actor_id", "community_id", "year", "description", "land_rights_status", "source_id", "reference_number", "season_id", "land_use_id", "original_placename", "winner_id", "legal_source_id", "judgement_id", "placename_id", "lay_judge_involved")
+INSERT INTO "entries" ("entry_id", "actor_id", "community_id", "year", "description", "land_rights_status", "source_id", "reference_number", "season_id", "land_use_id", "original_placename", "winner_id", "legal_source_id", "judgement_id", "placename_id", "lay_judge_involved")
 VALUES
     (1, 255, 2, 1733, 'Får inte hindra Nils Pångia att åverka landet vid östra delen av Månsjaur, på södra sidan, höst och vår.', 'Nej', 1, '0727', 7, 15, 'Månsjaur', NULL, NULL, NULL, 3068, FALSE),
     (2, 58, 2, 1734, 'Bör avhålla sig från att nyttja Solonajwi, då varken han eller hans ålderstigne fader har haft sina hemvister där av ålder', 'Nej', 1, '0786', 8, 3, 'Solonajwi', NULL, NULL, NULL, 5379, FALSE),
@@ -2637,7 +2639,7 @@ VALUES
     (1403, 2198, 5, 1759, 'Ska flytta häröver', 'Ja', 1, '1309', 5, 3, 'Kittjuksfjället', NULL, NULL, NULL, 5412, FALSE),
     (1404, 2160, 5, 1759, 'Ska flytta häröver', 'Ja', 1, '1309', 5, 3, 'Kittjuksfjället', NULL, NULL, NULL, 5412, FALSE),
     (1405, 2168, 5, 1759, 'Ska flytta häröver', 'Ja', 1, '1309', 5, 3, 'Kittjuksfjället', NULL, NULL, NULL, 5412, FALSE);
-INSERT INTO "public"."entries" ("entry_id", "actor_id", "community_id", "year", "description", "land_rights_status", "source_id", "reference_number", "season_id", "land_use_id", "original_placename", "winner_id", "legal_source_id", "judgement_id", "placename_id", "lay_judge_involved")
+INSERT INTO "entries" ("entry_id", "actor_id", "community_id", "year", "description", "land_rights_status", "source_id", "reference_number", "season_id", "land_use_id", "original_placename", "winner_id", "legal_source_id", "judgement_id", "placename_id", "lay_judge_involved")
 VALUES
     (1406, 2195, 5, 1759, 'Ska flytta häröver', 'Ja', 1, '1309', 5, 3, 'Kittjuksfjället', NULL, NULL, NULL, 5412, FALSE),
     (1407, 2171, 5, 1759, 'Ska flytta häröver', 'Ja', 1, '1309', 5, 3, 'Kittjuksfjället', NULL, NULL, NULL, 5412, FALSE),

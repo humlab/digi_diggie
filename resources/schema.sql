@@ -1,101 +1,72 @@
 
 SET client_encoding = 'UTF-8';
 
--- install postgis if not exists
+set search_path to "digidiggie_tog";
 
+-- install postgis if not exists
 create extension if not exists postgis;
 create extension if not exists postgis_topology;
 
-drop table if exists "person_properties";
-drop table if exists "entries";
-drop table if exists "persons";
-drop table if exists "placenames";
-drop table if exists "legal_sources";
-drop table if exists "communities";
-drop table if exists "parishes";
-drop table if exists "seasons";
-drop table if exists "sources";
-drop table if exists "land_use";
-drop table if exists "winners";
-drop table if exists "judgements";
-drop table if exists "properties";
+-- drop tables if they exist
+drop table if exists "seasons" cascade;
+drop table if exists "communities" cascade;
+drop table if exists "entries" cascade;
+drop table if exists "sources" cascade;
+drop table if exists "land_use" cascade;
+drop table if exists "persons" cascade;
+drop table if exists "legal_sources" cascade;
+drop table if exists "parishes" cascade;
+drop table if exists "winners" cascade;
+drop table if exists "translationmapping" cascade;
+drop table if exists "rowsource" cascade;
+drop table if exists "querydefinitions" cascade;
+drop table if exists "judgements" cascade;
 
-create table if not exists "placenames"
- (
-    "fid" integer primary key,
-    "geom" geometry,
-    "ortnamn" text,
-    "kvartsruta" text,
-    "nkoordinat" double precision,
-    "ekoordinat" double precision,
-    "lanskod" text,
-    "kommunkod" text,
-    "detaljtyp" text,
-    "sprak" text,
-    "lopnummer" text,
-    "sockenstadkod" text,
-    "sockenstadnamn" text
-);
 
-create table if not exists "legal_sources"
- (
+-- create tables
+create table if not exists "legal_sources" (
     "legal_source_id" serial primary key,
     "legal_source_name" text not null default ('')
 );
 
-create table if not exists "parishes"
- (
+create table if not exists "parishes" (
     "parish_id" serial primary key,
     "parish" text not null default ('')
 );
 
-create table if not exists "seasons"
- (
+create table if not exists "seasons" (
     "season_id" serial primary key,
     "season_name" text not null default ('')
 );
 
-create table if not exists "sources"
- (
+create table if not exists "sources" (
     "source_id" serial primary key,
     "source_name" text not null default (''),
     "source_abbreviation" varchar (255)
 );
 
-create table if not exists "land_use"
- (
+create table if not exists "land_use" (
     "land_use_id" serial primary key,
     "type" text not null default ('')
 );
 
-create table if not exists "communities"
-(
+create table if not exists "communities" (
     "community_id" serial primary key,
     "community_name" text not null default (''),
     "parish_id" integer null references "parishes"("parish_id")
 );
 
-create table if not exists "winners"
- (
+create table if not exists "winners" (
     "winner_id" serial primary key,
     "winner_description" text not null default ('')
 );
 
-create table if not exists "judgements"
- (
+create table if not exists "judgements" (
     "judgement_id" serial primary key,
     "sanction" text not null default ('')
 );
 
-create table if not exists "properties"
-(
-    "property_id" serial primary key,
-    "property_name" text,
-    "description" text
-);
-
-create table if not exists "persons"
- (
+create table if not exists "persons" (
     "person_id" serial primary key,
     "individual_id" varchar (255),
     "father_id" varchar (255),
@@ -116,18 +87,7 @@ create table if not exists "persons"
     "full_name" text null -- change after load to computed column
 );
 
-create table if not exists "person_properties"
-(
-    "person_property_id" serial primary key,
-    "person_id" integer null references "persons"("person_id"),
-    "property_id" integer null references "properties"("property_id"),
-    "specifier" text null,
-    "property_value" text not null default ('')
-);
-
-
-create table if not exists "entries"
- (
+create table if not exists "entries" (
     "entry_id" serial primary key,
     "actor_id" integer null references "persons"("person_id"),
     "community_id" integer null references "communities"("community_id"),
@@ -142,17 +102,41 @@ create table if not exists "entries"
     "winner_id" integer null references "winners"("winner_id"),
     "legal_source_id" integer null references "legal_sources"("legal_source_id"),
     "judgement_id" integer null references "judgements"("judgement_id"),
-    "placename_id" integer null references "placenames"("fid"),
+    "placename_id" integer null references "placenames"("id"),
     "lay_judge_involved" boolean not null default false
 );
 
+create table if not exists "translationmapping" (
+	"originaltable"	varchar (255),
+	"translatedtable" varchar (255), 
+	"originalcolumn" varchar (255), 
+	"translatedcolumn" varchar (255), 
+	"comment" varchar (255), 
+	"deprecateflag" varchar (255), 
+	"translatedexpression" varchar (255)
+);
+
+create table if not exists "rowsource" (
+	"originaltable"	varchar (255), 
+	"originalcolumn" varchar (255), 
+	"translatedtable" varchar (255), 
+	"translatedcolumn" varchar (255), 
+	"rowsource"	varchar (255)
+);
+
+create table if not exists "querydefinitions" (
+	"queryname" varchar (255), 
+	"sqltext" text
+);
+
+-- create indexes
 create index "persons_id_father_idx" on "persons" ("father_id");
 create index "persons_id_individu_idx" on "persons" ("individual_id");
 create index "persons_id_mother_idx" on "persons" ("mother_id");
-create index "entries_reference_number_idx" on "entries" ("reference_number");
 create index "parishes_parish_idx" on "parishes" ("parish");
 create index "communities_parish_id_idx" ON "communities" ("parish_id");
 create index "seasons_season_name_idx" ON "seasons" ("season_name");
+create index "entries_reference_number_idx" on "entries" ("reference_number");
 create index "entries_actor_id_idx" on "entries" ("actor_id");
 create index "entries_community_id_idx" on "entries" ("community_id");
 create index "entries_season_id_idx" on "entries" ("season_id");

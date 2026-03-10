@@ -4,6 +4,12 @@
 
 SHELL=/bin/bash
 
+INFO='\033[38;5;208m'
+SUCCESS='\033[38;5;82m'
+WARNING='\033[38;5;220m'
+ERROR='\033[38;5;196m'
+NC='\033[0m'
+
 set -e
 # set -o pipefail
 # IFS=$'\n\t'
@@ -18,7 +24,7 @@ KNOWN_TABLES=( "parishes" "communities" "sources" "land_use" "legal_sources" "wi
 
 g_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 g_database=${POSTGRES_DB:-digidiggie}
-g_schema=public
+g_schema=public # FIXME: #23 schema is currently hardcoded to `digidiggie_tog` in the SQL files, but should be made configurable
 g_command=
 g_skip_schema=NO
 g_skip_data=NO
@@ -111,7 +117,7 @@ function dump_schema() {
     local input_file=$1
     local output_file=$2
 
-    echo mdb-schema --not-null --default-values \
+    mdb-schema --not-null --default-values \
         --namespace="${g_schema}" \
         --drop-table \
         --not-null \
@@ -121,7 +127,7 @@ function dump_schema() {
         --relations \
         "$input_file" postgres > "$output_file"
 
-    echo "info: schema dumped to $output_file"
+    echo -e "${SUCCESS}success: schema dumped to $output_file${NC}"
 }
 
 g_dump_format="sql"
@@ -143,11 +149,11 @@ function dump_data() {
             mdb-export --no-header "$input_file" "$table" > "${table}.csv"
         done
     else
-        echo "error: only sql dump format is supported" >&2
+        echo -e "${ERROR}error: only sql dump format is supported${NC}" >&2
         exit 1
     fi
 
-    echo "info: data dumped to $output_file"
+    echo -e "${SUCCESS}success: data dumped to $output_file${NC}"
 
 }
 
@@ -167,6 +173,7 @@ function drop_data() {
     for table in $(mdb-tables "$input_file"); do
         table="${table,,}"
         execute_sql "drop table if exists \"$table\" cascade;" >& /dev/null
+        echo -e "${INFO}info: dropped table $table${NC}"
     done
 }
 
@@ -179,10 +186,10 @@ function format_sql_file() {
 
 function check_requirements() {
   for c in mdb-schema mdb-tables mdb-export psql; do
-    command -v "$c" >/dev/null 2>&1 || { echo "error: missing $c" >&2; exit 1; }
+    command -v "$c" >/dev/null 2>&1 || { echo -e "${ERROR}error: missing $c${NC}" >&2; exit 1; }
   done
   for d in "$g_host" "$g_user" "$g_port" "$g_database"; do
-    [ -n "$d" ] || { echo "error: missing database connection parameter" >&2; exit 1; }
+    [ -n "$d" ] || { echo -e "${ERROR}error: missing database connection parameter${NC}" >&2; exit 1; }
   done
   [ "$g_input_file" != "" ] || { usage "error: input file not specified" >&2;  }
   [ -f "$g_input_file" ] || { usage "error: input file $g_input_file not found" >&2;  }
@@ -190,22 +197,27 @@ function check_requirements() {
 
 function load_data() {
     local sql_file=$1
-    execute_sql_file "resources/pre-load.sql"
+
+    
+    echo -e "${INFO}info: loading data from $sql_file ...${NC}"
     execute_sql_file "$sql_file"
+    echo -e "${INFO}info: loading post-load SQL ...${NC}"
     execute_sql_file "resources/post-load.sql"
-    echo "info: data imported successfully into $g_database"
+    echo -e "${SUCCESS}success: data imported successfully into $g_database${NC}"
 }
 
 function load_schema() {
     local sql_file=$1
-    echo "info: loading schema from $sql_file ..."
+    echo -e "${INFO}info: loading pre-load SQL ...${NC}"
+    execute_sql_file "resources/pre-load.sql"
+    echo -e "${INFO}info: loading schema from $sql_file ...${NC}"
     execute_sql_file "$sql_file"
-    echo "info: schema imported successfully into $g_database"
+    echo -e "${SUCCESS}success: schema imported successfully into $g_database${NC}"
 }
 
 function extract_comments() {
     db="${1:?usage: $0 path/to.db.accdb}"
-    out="${2:-comments.sql}"
+    out="${2:-descriptions.sql}"
     > "$out"
     mdb-tables -1 "$db" |
     while IFS= read -r t; do
@@ -231,20 +243,18 @@ function extract_comments() {
     }
   '
 done >> "$out"
-echo "Wrote $(wc -l < "$out") lines to $out"
+echo -e "${SUCCESS}success: Wrote $(wc -l < "$out") lines to $out${NC}"
 }
 
 check_requirements
 
-echo "info: processing database $g_input_file ..."
+echo -e "${INFO}info: processing database $g_input_file ...${NC}"
+echo -e "${INFO}info: target database: $g_database, schema: $g_schema${NC}"
+echo -e "${INFO}info: skip flags: $g_skip_schema, skip data: $g_skip_data${NC}"
+echo -e "${INFO}info: data SQL file: $g_data_sql_file, schema SQL file: $g_schema_file${NC}"
 
-echo "info: target database: $g_database, schema: $g_schema"
-echo "info: skip flags: $g_skip_schema, skip data: $g_skip_data"
-echo "info: data SQL file: $g_data_sql_file, schema SQL file: $g_schema_file"
-
-echo ""
 if [ ! -f "${g_script_dir}/../.pgpass" ]; then
-    echo "warning: no .pgpass file found at ${g_script_dir}/.pgpass; ensure PGPASSWORD is set or you will be prompted for password"
+    echo -e "${WARNING}warning: no .pgpass file found at ${g_script_dir}/.pgpass; ensure PGPASSWORD is set or you will be prompted for password${NC}"
 fi
 
 if [ "$g_command" == "dump" ]; then
@@ -255,22 +265,22 @@ if [ "$g_command" == "dump" ]; then
         dump_schema "$g_input_file" "$g_schema_file"
     fi
     if [ "$g_skip_comments" == "NO" ]; then
-        extract_comments "$g_input_file" "resources/comments.sql"
+        extract_comments "$g_input_file" "resources/descriptions.sql"
     fi
     if [ "$g_skip_data" == "NO" ]; then
         dump_data "$g_input_file" "$g_data_sql_file"
         format_sql_file "$g_data_sql_file"
     fi
 elif [ "$g_command" == "load" ]; then
-    echo "info: PostgreSQL host: $g_host, user: $g_user, port: $g_port"
+    echo -e "${INFO}info: PostgreSQL host: $g_host, user: $g_user, port: $g_port${NC}"
+    drop_data "$g_input_file"
     if [ "$g_skip_schema" == "NO" ]; then
         load_schema "$g_schema_file"
     fi
     if [ "$g_skip_comments" == "NO" ]; then
-        execute_sql_file "resources/comments.sql"
+        execute_sql_file "resources/descriptions.sql"
     fi
     if [ "$g_skip_data" == "NO" ]; then
         load_data "$g_data_sql_file"
     fi
 fi
-

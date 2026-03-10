@@ -1,0 +1,11 @@
+.venv/
+**/.venv/
+data/
+archive/
+ortnamn_data/
+tmp/
+docker/
+resources/
+.git/
+**/__pycache__/
+**/node_modules/
