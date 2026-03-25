@@ -730,3 +730,464 @@ Private Function BuildRelationName( _
         SafeObjectName(parentTable) & "_" & _
         SafeObjectName(childField), 60)
 End Function
+
+' ============================================================
+' Create all indexes and foreign key constraints for DigiDiggie schema
+' ============================================================
+Public Sub CreateIndexesAndConstraints()
+    ' Creates all indexes and foreign key relationships for the DigiDiggie TNG schema
+    ' Call this after tables are created to optimize performance and enforce referential integrity
+    
+    Dim indexCount As Integer
+    Dim relationCount As Integer
+    Dim msg As String
+    
+    ' Confirm with user before proceeding
+    If MsgBox("Create all indexes and foreign key constraints for DigiDiggie TNG schema?" & vbNewLine & vbNewLine & _
+              "This will:" & vbNewLine & _
+              "• Create performance indexes on key fields" & vbNewLine & _
+              "• Establish foreign key relationships" & vbNewLine & _
+              "• Enforce referential integrity", _
+              vbYesNo + vbQuestion, _
+              "Create Indexes and Constraints") = vbNo Then
+        MsgBox "Operation cancelled by user.", vbInformation
+        Exit Sub
+    End If
+    
+    Debug.Print "=== CREATING INDEXES AND CONSTRAINTS ==="
+    Debug.Print "Starting index and constraint creation..."
+    Debug.Print ""
+    
+    ' Create indexes first
+    indexCount = CreateAllIndexes()
+    
+    ' Then create foreign key relationships
+    relationCount = CreateAllForeignKeyConstraints()
+    
+    Debug.Print ""
+    Debug.Print "Operation completed:"
+    Debug.Print "  Indexes created: " & indexCount
+    Debug.Print "  Foreign key relationships created: " & relationCount
+    
+    msg = "Indexes and constraints created successfully!" & vbCrLf & vbCrLf & _
+          "Indexes created: " & indexCount & vbCrLf & _
+          "Foreign key relationships: " & relationCount & vbCrLf & vbCrLf & _
+          "See Immediate Window (Ctrl+G) for details."
+    MsgBox msg, vbInformation
+End Sub
+
+' ============================================================
+' Create all performance indexes
+' ============================================================
+Private Function CreateAllIndexes() As Integer
+    ' Creates all indexes from the DigiDiggie schema
+    ' Returns count of indexes successfully created
+    
+    Dim db As DAO.Database
+    Dim successCount As Integer
+    
+    Set db = CurrentDb
+    successCount = 0
+    
+    Debug.Print "Creating performance indexes..."
+    
+    ' Community indexes
+    If CreateIndex("community", "communities_parish_id_idx", "parish_id", False) Then successCount = successCount + 1
+    
+    ' Court case indexes
+    If CreateIndex("court_case", "court_cases_case_year_idx", "case_year", False) Then successCount = successCount + 1
+    If CreateIndex("court_case", "court_cases_reference_number_idx", "reference_number", False) Then successCount = successCount + 1  
+    If CreateIndex("court_case", "court_cases_source_id_idx", "source_id", False) Then successCount = successCount + 1
+    
+    ' Court case entry indexes
+    If CreateIndex("court_case_entry", "entries_court_case_id_idx", "court_case_id", False) Then successCount = successCount + 1
+    If CreateIndex("court_case_entry", "entries_land_use_id_idx", "land_use_id", False) Then successCount = successCount + 1
+    If CreateIndex("court_case_entry", "entries_placename_id_idx", "placename_id", False) Then successCount = successCount + 1
+    If CreateIndex("court_case_entry", "entries_season_id_idx", "season_id", False) Then successCount = successCount + 1
+    
+    ' Ruling indexes
+    If CreateIndex("ruling", "rulings_legal_source_id_idx", "legal_source_id", False) Then successCount = successCount + 1
+    
+    ' Parish indexes
+    If CreateIndex("parish", "parishes_parish_idx", "parish", False) Then successCount = successCount + 1
+    
+    ' Person entry indexes
+    If CreateIndex("person_entry", "person_entries_person_id_idx", "person_id", False) Then successCount = successCount + 1
+    If CreateIndex("person_entry", "person_entries_community_id_idx", "community_id", False) Then successCount = successCount + 1
+    If CreateIndex("person_entry", "person_entries_court_case_entry_id_idx", "court_case_entry_id", False) Then successCount = successCount + 1
+    
+    ' Person outcome indexes
+    If CreateIndex("person_outcome", "person_outcomes_outcome_type_id_idx", "outcome_type_id", False) Then successCount = successCount + 1
+    If CreateIndex("person_outcome", "person_outcomes_person_id_idx", "person_id", False) Then successCount = successCount + 1
+    If CreateIndex("person_outcome", "person_outcomes_ruling_id_idx", "ruling_id", False) Then successCount = successCount + 1
+    
+    ' Season indexes
+    If CreateIndex("season", "seasons_season_name_idx", "season_name", False) Then successCount = successCount + 1
+    
+    CreateAllIndexes = successCount
+End Function
+
+' ============================================================
+' Create all foreign key constraints
+' ============================================================
+Private Function CreateAllForeignKeyConstraints() As Integer
+    ' Creates all foreign key relationships from the DigiDiggie schema
+    ' Returns count of relationships successfully created
+    
+    Dim db As DAO.Database
+    Dim successCount As Integer
+    
+    Set db = CurrentDb
+    successCount = 0
+    
+    Debug.Print ""
+    Debug.Print "Creating foreign key relationships..."
+    
+    ' Level 1: Simple lookups (no dependencies on other foreign tables)
+    If CreateFKRelation(db, "community", "parish_id", "parish", "parish_id", "community_parish_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "court_case", "source_id", "source", "source_id", "court_case_source_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "role", "role_type_id", "role_type", "role_type_id", "role_role_type_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "ruling", "ruling_type_id", "ruling_type", "ruling_type_id", "ruling_ruling_type_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "ruling", "legal_source_id", "legal_source", "legal_source_id", "ruling_legal_source_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_relationship", "relationship_type_id", "relationship_type", "relationship_type_id", "person_rel_type_fk") Then successCount = successCount + 1
+    
+    ' Level 2: Tables that depend on Level 1
+    If CreateFKRelation(db, "ruling", "court_case_id", "court_case", "court_case_id", "ruling_court_case_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "court_case_entry", "court_case_id", "court_case", "court_case_id", "entry_court_case_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "court_case_entry", "land_use_id", "land_use", "land_use_id", "entry_land_use_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "court_case_entry", "season_id", "season", "season_id", "entry_season_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "court_case_entry", "placename_id", "placename", "placename_id", "entry_placename_fk") Then successCount = successCount + 1
+    
+    ' Level 3: Tables that depend on Level 2
+    If CreateFKRelation(db, "person_entry", "person_id", "person", "person_id", "person_entry_person_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_entry", "community_id", "community", "community_id", "person_entry_community_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_entry", "court_case_entry_id", "court_case_entry", "court_case_entry_id", "person_entry_case_entry_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_entry", "role_id", "role", "role_id", "person_entry_role_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_entry", "land_rights_status_id", "land_rights_status", "land_rights_status_id", "person_entry_land_rights_fk") Then successCount = successCount + 1
+    
+    ' Level 4: Tables that depend on Level 3  
+    If CreateFKRelation(db, "person_outcome", "ruling_id", "ruling", "ruling_id", "person_outcome_ruling_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_outcome", "person_id", "person", "person_id", "person_outcome_person_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_outcome", "outcome_type_id", "outcome_type", "outcome_type_id", "person_outcome_type_fk") Then successCount = successCount + 1
+    
+    ' Person relationships (self-referencing)
+    If CreateFKRelation(db, "person_relationship", "person_1_id", "person", "person_id", "person_rel_person1_fk") Then successCount = successCount + 1
+    If CreateFKRelation(db, "person_relationship", "person_2_id", "person", "person_id", "person_rel_person2_fk") Then successCount = successCount + 1
+    
+    CreateAllForeignKeyConstraints = successCount
+End Function
+
+' ============================================================
+' Helper function to create a single index
+' ============================================================
+Private Function CreateIndex( _
+    ByVal tableName As String, _
+    ByVal indexName As String, _
+    ByVal fieldName As String, _
+    ByVal isUnique As Boolean) As Boolean
+    
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim tdf As DAO.TableDef
+    Dim idx As DAO.Index
+    
+    Set db = CurrentDb
+    
+    ' Check if table exists
+    If Not TableExists(tableName) Then
+        Debug.Print "  SKIPPED: Index " & indexName & " (table " & tableName & " does not exist)"
+        CreateIndex = False
+        Exit Function
+    End If
+    
+    Set tdf = db.TableDefs(tableName)
+    
+    ' Check if index already exists
+    If IndexExists(tableName, indexName) Then
+        Debug.Print "  SKIPPED: Index " & indexName & " (already exists)"
+        CreateIndex = True
+        Exit Function
+    End If
+    
+    ' Create the index
+    Set idx = tdf.CreateIndex(indexName)
+    idx.Unique = isUnique
+    idx.Fields.Append idx.CreateField(fieldName)
+    tdf.Indexes.Append idx
+    
+    Debug.Print "  Created index: " & indexName & " on " & tableName & "." & fieldName
+    CreateIndex = True
+    Exit Function
+    
+ErrorHandler:
+    Debug.Print "  ERROR creating index " & indexName & ": " & Err.Description
+    CreateIndex = False
+End Function
+
+' ============================================================
+' Helper function to create a foreign key relationship
+' ============================================================
+Private Function CreateFKRelation( _
+    ByVal db As DAO.Database, _
+    ByVal childTable As String, _
+    ByVal childField As String, _
+    ByVal parentTable As String, _
+    ByVal parentField As String, _
+    ByVal relationName As String) As Boolean
+    
+    On Error GoTo ErrorHandler
+    
+    Dim rel As DAO.Relation
+    Dim fld As DAO.Field
+    
+    ' Check if relationship already exists
+    If RelationExists(relationName) Then
+        Debug.Print "  SKIPPED: Relationship " & relationName & " (already exists)"
+        CreateFKRelation = True
+        Exit Function
+    End If
+    
+    ' Verify both tables exist
+    If Not TableExists(parentTable) Then
+        Debug.Print "  SKIPPED: " & relationName & " (parent table " & parentTable & " does not exist)"
+        CreateFKRelation = False
+        Exit Function
+    End If
+    
+    If Not TableExists(childTable) Then
+        Debug.Print "  SKIPPED: " & relationName & " (child table " & childTable & " does not exist)"
+        CreateFKRelation = False
+        Exit Function
+    End If
+    
+    ' Verify both fields exist
+    If Not FieldExists(parentTable, parentField) Then
+        Debug.Print "  SKIPPED: " & relationName & " (parent field " & parentTable & "." & parentField & " does not exist)"
+        CreateFKRelation = False
+        Exit Function
+    End If
+    
+    If Not FieldExists(childTable, childField) Then
+        Debug.Print "  SKIPPED: " & relationName & " (child field " & childTable & "." & childField & " does not exist)"
+        CreateFKRelation = False
+        Exit Function
+    End If
+    
+    ' Create the relationship
+    Set rel = db.CreateRelation(relationName, parentTable, childTable)
+    
+    ' Use minimal attributes - no cascade, basic referential integrity only
+    ' This matches the test that succeeded
+    rel.Attributes = 0
+    
+    ' Create the field relationship  
+    ' In Access DAO: CreateField uses parent table field, ForeignName is child table field
+    Set fld = rel.CreateField(parentField)
+    fld.ForeignName = childField
+    rel.Fields.Append fld
+    
+    ' Append the relationship to the database
+    db.Relations.Append rel
+    
+    Debug.Print "  Created FK: " & parentTable & "." & parentField & " → " & childTable & "." & childField
+    CreateFKRelation = True
+    Exit Function
+    
+ErrorHandler:
+    Debug.Print "  ERROR creating FK " & relationName & ": " & Err.Description
+    Debug.Print "    Details: " & childTable & "." & childField & " → " & parentTable & "." & parentField
+    Debug.Print "    Error Number: " & Err.Number
+    
+    ' Additional diagnostics for common issues
+    If Err.Number = 3265 Then  ' Item not found in collection
+        Debug.Print "    Possible cause: Field name mismatch or table not found"
+    ElseIf Err.Number = 3304 Then  ' You must enter a personal identifier
+        Debug.Print "    Possible cause: Field data type mismatch"
+    ElseIf Err.Number = 3022 Then  ' Changes to table were unsuccessful
+        Debug.Print "    Possible cause: Data integrity violation or existing data conflicts"
+    End If
+    
+    CreateFKRelation = False
+End Function
+
+' ============================================================
+' Test function to diagnose foreign key creation issues  
+' ============================================================
+Public Sub TestForeignKeyCreation()
+    ' Test creating a single, simple foreign key relationship to diagnose issues
+    
+    Dim db As DAO.Database
+    Dim rel As DAO.Relation  
+    Dim fld As DAO.Field
+    
+    Set db = CurrentDb
+    
+    Debug.Print "=== FOREIGN KEY CREATION DIAGNOSTICS ==="
+    Debug.Print ""
+    
+    ' Test case: community -> parish relationship
+    Debug.Print "Testing community -> parish relationship..."
+    
+    ' 1. Verify tables exist
+    Debug.Print "1. Checking tables exist:"
+    Debug.Print "   Community table exists: " & TableExists("community")
+    Debug.Print "   Parish table exists: " & TableExists("parish")
+    
+    ' 2. Verify fields exist  
+    Debug.Print "2. Checking fields exist:"
+    Debug.Print "   community.parish_id exists: " & FieldExists("community", "parish_id")
+    Debug.Print "   parish.parish_id exists: " & FieldExists("parish", "parish_id")
+    
+    ' 3. Check field data types
+    Debug.Print "3. Checking field data types:"
+    If TableExists("community") And FieldExists("community", "parish_id") Then
+        Debug.Print "   community.parish_id type: " & GetFieldDataType("community", "parish_id")
+    End If
+    If TableExists("parish") And FieldExists("parish", "parish_id") Then  
+        Debug.Print "   parish.parish_id type: " & GetFieldDataType("parish", "parish_id")
+    End If
+    
+    ' 4. Check for primary key on parent table
+    Debug.Print "4. Checking primary key:"
+    Debug.Print "   parish.parish_id is primary key: " & IsFieldPrimaryKey("parish", "parish_id")
+    
+    ' 5. Check for existing relationship
+    Debug.Print "5. Checking existing relationship:"
+    Debug.Print "   community_parish_fk exists: " & RelationExists("community_parish_fk")
+    
+    ' 6. Try creating with minimal attributes
+    Debug.Print "6. Attempting to create relationship with minimal attributes..."
+    
+    On Error GoTo TestError
+    
+    If Not RelationExists("test_community_parish") Then
+        Set rel = db.CreateRelation("test_community_parish", "parish", "community")
+        ' No special attributes - just basic relationship
+        rel.Attributes = 0
+        
+        Set fld = rel.CreateField("parish_id")    ' Parent field (PK)
+        fld.ForeignName = "parish_id"             ' Child field (FK)
+        rel.Fields.Append fld
+        
+        db.Relations.Append rel
+        Debug.Print "   SUCCESS: Basic relationship created!"
+        
+        ' Clean up test
+        db.Relations.Delete "test_community_parish"
+        Debug.Print "   Test relationship removed."
+    Else
+        Debug.Print "   Test relationship already exists - skipping."
+    End If
+    
+    Debug.Print ""
+    Debug.Print "Diagnostics complete. Check output above for issues."
+    Exit Sub
+    
+TestError:
+    Debug.Print "   ERROR: " & Err.Number & " - " & Err.Description
+    
+    ' Additional specific diagnostics
+    Select Case Err.Number
+        Case 3001
+            Debug.Print "   Error 3001 usually means:"
+            Debug.Print "     - Data type mismatch between fields"
+            Debug.Print "     - Missing primary key on parent field"  
+            Debug.Print "     - Invalid relationship parameters"
+        Case 3125
+            Debug.Print "   Error 3125: Field name is not valid"
+        Case 3265  
+            Debug.Print "   Error 3265: Item not found in collection"
+        Case 3029
+            Debug.Print "   Error 3029: Not a valid account name or password"
+    End Select
+End Sub
+
+' ============================================================
+' Helper function to get field data type as string
+' ============================================================
+Private Function GetFieldDataType(ByVal tableName As String, ByVal fieldName As String) As String
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim tdf As DAO.TableDef
+    Dim fld As DAO.Field
+    
+    Set db = CurrentDb
+    Set tdf = db.TableDefs(tableName)
+    Set fld = tdf.Fields(fieldName)
+    
+    Select Case fld.Type
+        Case dbBoolean: GetFieldDataType = "Boolean"
+        Case dbByte: GetFieldDataType = "Byte" 
+        Case dbInteger: GetFieldDataType = "Integer"
+        Case dbLong: GetFieldDataType = "Long"
+        Case dbCurrency: GetFieldDataType = "Currency"
+        Case dbSingle: GetFieldDataType = "Single"
+        Case dbDouble: GetFieldDataType = "Double"
+        Case dbDate: GetFieldDataType = "Date/Time"
+        Case dbText: GetFieldDataType = "Text(" & fld.Size & ")"
+        Case dbLongBinary: GetFieldDataType = "OLE Object"
+        Case dbMemo: GetFieldDataType = "Memo"
+        Case dbGUID: GetFieldDataType = "Replication ID"
+        Case Else: GetFieldDataType = "Unknown(" & fld.Type & ")"
+    End Select
+    Exit Function
+    
+ErrorHandler:
+    GetFieldDataType = "Error: " & Err.Description
+End Function
+
+' ============================================================
+' Helper function to check if field is primary key
+' ============================================================
+Private Function IsFieldPrimaryKey(ByVal tableName As String, ByVal fieldName As String) As Boolean
+    On Error GoTo ErrorHandler
+    
+    Dim db As DAO.Database
+    Dim tdf As DAO.TableDef
+    Dim idx As DAO.Index
+    Dim fld As DAO.Field
+    
+    Set db = CurrentDb
+    Set tdf = db.TableDefs(tableName)
+    
+    ' Check all indexes for primary key
+    For Each idx In tdf.Indexes
+        If idx.Primary Then
+            For Each fld In idx.Fields
+                If fld.Name = fieldName Then
+                    IsFieldPrimaryKey = True
+                    Exit Function
+                End If
+            Next fld
+        End If
+    Next idx
+    
+    IsFieldPrimaryKey = False
+    Exit Function
+    
+ErrorHandler:
+    IsFieldPrimaryKey = False
+End Function
+
+' ============================================================
+' Helper function to check if an index exists
+' ============================================================
+Private Function IndexExists(ByVal tableName As String, ByVal indexName As String) As Boolean
+    On Error GoTo NotFound
+    
+    Dim db As DAO.Database
+    Dim tdf As DAO.TableDef
+    Dim idx As DAO.Index
+    
+    Set db = CurrentDb
+    Set tdf = db.TableDefs(tableName)
+    Set idx = tdf.Indexes(indexName)
+    
+    IndexExists = True
+    Exit Function
+    
+NotFound:
+    IndexExists = False
+End Function
