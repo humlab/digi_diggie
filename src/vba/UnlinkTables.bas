@@ -175,6 +175,13 @@ Private Sub CreateLocalTableFromLinked( _
             If fldType = dbText Then
                 On Error Resume Next
                 newFld.Size = srcFld.Size
+                newFld.AllowZeroLength = True
+                On Error GoTo 0
+            End If
+
+            If fldType = dbMemo Then
+                On Error Resume Next
+                newFld.AllowZeroLength = True
                 On Error GoTo 0
             End If
         End If
