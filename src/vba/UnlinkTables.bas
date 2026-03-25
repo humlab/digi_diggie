@@ -143,6 +143,121 @@ ContinueCreateLoop:
 End Sub
 
 ' ============================================================
+' Remove all linked tables and remove "loc_" prefix from local tables
+' ============================================================
+Public Sub UnlinkTablesAndRemovePrefix( _
+    Optional ByVal localPrefix As String = "loc_")
+
+    Dim db As DAO.Database
+    Dim tdf As DAO.TableDef
+    Dim linkedTables As Collection
+    Dim localTables As Collection
+    Dim tableName As Variant
+    Dim newName As String
+    Dim msg As String
+    Dim linkedCount As Integer
+    Dim renamedCount As Integer
+
+    Set db = CurrentDb
+    Set linkedTables = New Collection
+    Set localTables = New Collection
+    linkedCount = 0
+    renamedCount = 0
+
+    ' Confirm with user before proceeding
+    If MsgBox("This will:" & vbNewLine & vbNewLine & _
+              "1. Delete ALL linked PostgreSQL tables" & vbNewLine & _
+              "2. Remove '" & localPrefix & "' prefix from local tables" & vbNewLine & vbNewLine & _
+              "This action cannot be undone. Continue?", _
+              vbYesNo + vbExclamation + vbDefaultButton2, _
+              "Unlink Tables and Remove Prefix") = vbNo Then
+        MsgBox "Operation cancelled by user.", vbInformation
+        Exit Sub
+    End If
+
+    ' 1) Find linked PostgreSQL tables and local tables with prefix
+    For Each tdf In db.TableDefs
+        If IsLinkedPostgresTable(tdf) Then
+            linkedTables.Add tdf.Name
+        ElseIf Left(tdf.Name, Len(localPrefix)) = localPrefix Then
+            ' Check if it's a user table (not system table)
+            If IsUserTable(tdf) Then
+                localTables.Add tdf.Name
+            End If
+        End If
+    Next tdf
+
+    ' Show what will be processed
+    Debug.Print "=== UNLINK TABLES AND REMOVE PREFIX ==="
+    Debug.Print "Found " & linkedTables.Count & " linked PostgreSQL tables to remove"
+    Debug.Print "Found " & localTables.Count & " local tables with prefix '" & localPrefix & "' to rename"
+    Debug.Print ""
+
+    ' 2) Remove all linked tables
+    If linkedTables.Count > 0 Then
+        Debug.Print "Removing linked tables:"
+        For Each tableName In linkedTables
+            Debug.Print "  Removing: " & tableName
+            DropTable CStr(tableName)
+            linkedCount = linkedCount + 1
+        Next tableName
+        Debug.Print ""
+    End If
+
+    ' 3) Rename local tables to remove prefix
+    If localTables.Count > 0 Then
+        Debug.Print "Renaming local tables (removing prefix):"
+        For Each tableName In localTables
+            newName = Mid(CStr(tableName), Len(localPrefix) + 1)
+            
+            ' Check if target name already exists
+            If TableExists(newName) Then
+                Debug.Print "  SKIPPED: " & tableName & " -> " & newName & " (target already exists)"
+            Else
+                Debug.Print "  Renaming: " & tableName & " -> " & newName
+                RenameTable CStr(tableName), newName
+                renamedCount = renamedCount + 1
+            End If
+        Next tableName
+    End If
+
+    Debug.Print ""
+    Debug.Print "Operation completed:"
+    Debug.Print "  Linked tables removed: " & linkedCount
+    Debug.Print "  Local tables renamed: " & renamedCount
+
+    msg = "Unlink and rename operation completed!" & vbCrLf & vbCrLf & _
+          "Linked tables removed: " & linkedCount & vbCrLf & _
+          "Local tables renamed: " & renamedCount & vbCrLf & vbCrLf & _
+          "See Immediate Window (Ctrl+G) for details."
+    MsgBox msg, vbInformation
+End Sub
+
+Private Function IsUserTable(ByVal tdf As DAO.TableDef) As Boolean
+    ' Check if this is a user table (not system, hidden, or linked)
+    Dim isSystem As Boolean
+    Dim isHidden As Boolean
+    Dim isLinked As Boolean
+    
+    isLinked = (Len(tdf.Connect) > 0)
+    isSystem = (Left(tdf.Name, 4) = "MSys") Or ((tdf.Attributes And dbSystemObject) <> 0)
+    isHidden = ((tdf.Attributes And dbHiddenObject) <> 0)
+    
+    IsUserTable = (Not isSystem) And (Not isHidden) And (Not isLinked)
+End Function
+
+Private Sub RenameTable(ByVal oldName As String, ByVal newName As String)
+    ' Rename a table using DoCmd.Rename
+    On Error GoTo ErrorHandler
+    
+    DoCmd.Rename newName, acTable, oldName
+    Exit Sub
+    
+ErrorHandler:
+    Debug.Print "  ERROR renaming " & oldName & " to " & newName & ": " & Err.Description
+End Sub
+
+' ============================================================
 ' Create a local table from a linked table definition
 ' ============================================================
 Private Sub CreateLocalTableFromLinked( _
@@ -392,8 +507,7 @@ Private Function IsLinkedPostgresTable(ByVal tdf As DAO.TableDef) As Boolean
     End If
 
     IsLinkedPostgresTable = _
-        (InStr(1, c, "PostgreSQL", vbTextCompare) > 0) Or _
-        (InStr(1, c, "psqlodbc", vbTextCompare) > 0)
+        (InStr(1, c, "ODBC", vbTextCompare) > 0)
 End Function
 
 ' ============================================================
