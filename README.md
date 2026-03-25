@@ -130,78 +130,20 @@ digi_diggie/
  - Open 
  - 
 
-
 ---
 
-## 🇸🇪 **Lantmäteriets koordinatsystem**
-
-Lantmäteriets geografiska data (t.ex. Ortnamn, GSD, Topografisk webbkarta, m.m.) levereras **nästan alltid i SWEREF 99 TM**, som har:
-
-| Egenskap          | Värde                                  |
-| ----------------- | -------------------------------------- |
-| **System**        | SWEREF 99 TM                           |
-| **EPSG / SRID**   | **3006**                               |
-| **Enhet**         | meter                                  |
-| **Koordinater**   | x ≈ 250000–850000, y ≈ 6100000–7700000 |
-| **Arealreferens** | Plan (projektion)                      |
-| **Typ**           | Projekterat koordinatsystem            |
-
-Detta är **det svenska nationella referenssystemet** för kartdata.
-
----
-
-## 🌍 **EPSG 4326 (WGS 84)**
-
-| Egenskap        | Värde                                  |
-| --------------- | -------------------------------------- |
-| **System**      | WGS 84 (lat/long)                      |
-| **SRID**        | 4326                                   |
-| **Enhet**       | grader (decimal degrees)               |
-| **Koordinater** | lat ≈ 55–69, lon ≈ 11–24               |
-| **Typ**         | Geografiskt koordinatsystem (sfäriskt) |
-
-Detta används främst för GPS, webbkartor (t.ex. Leaflet, OpenStreetMap, Google Maps), och datautbyte.
-
----
-
-## 🔍 **Hur du ser vilket system din data använder**
-
-Titta på dina koordinater (`nkoordinat`, `ekoordinat`):
-
-| Kolumn       | Exempelvärde | Tolkning                                              |
-| ------------ | ------------ | ----------------------------------------------------- |
-| `nkoordinat` | 6588464      | → tydligt **Y i meter** (≈ 6,588 km norr om ekvatorn) |
-| `ekoordinat` | 583500       | → **X i meter** (≈ 583 km östligt)                    |
-
-Eftersom de är **sex–sju siffror långa** och i **meter**, är detta **SWEREF 99 TM (EPSG 3006)**, inte grader.
-Om det vore 4326, skulle värdena ligga runt `lat ~ 59.3`, `lon ~ 17.0`.
-
----
-
-## ✅ **Slutsats för Ortnamn**
-
-För Lantmäteriets *Ortnamn*:
-
-> Använd alltid **SRID 3006** (SWEREF 99 TM).
-
----
-
-## 💡 **Exempel på korrekt PostGIS-hantering**
-
-Efter att du importerat CSV utan `geom`-kolumnen:
-
-```sql
-ALTER TABLE placenames
-  ADD COLUMN geom geometry(Point, 3006);
-
-UPDATE placenames
-  SET geom = ST_SetSRID(ST_MakePoint(ekoordinat, nkoordinat), 3006);
-```
-
-Vill du använda dem i t.ex. webbkarta (WGS84/4326):
-
-```sql
-SELECT ST_AsGeoJSON(ST_Transform(geom, 4326)) FROM placenames;
-```
-
----
+## Create local version of the database
+ 
+- Create a new MS Access file
+- Open VBA Editor (`Alt + F11`)
+   - Import both modules:
+     - File → Import File... → `automated_setup.vba`
+     - File → Import File... → `minimal_app_generator.vba`
+     - File → Import File... → `minimal_app_runtime.vba`
+     - File → Import File... → `UnlinkTables.bas`
+  - Run
+    1. `LinkAllTngTables` (in `automated_setup.vba`)
+    2. `BuildAllForms` (in `minimal_app_generator.vba`)
+    3. `MaterializeAllPostgresLinkedTables` (in `UnlinkTables.bas`)
+    4. `UnlinkTablesAndRemovePrefix` (in `UnlinkTables.bas`)
+    5. `CreateIndexesAndConstraints` (in `UnlinkTables.bas`)
