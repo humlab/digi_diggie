@@ -22,126 +22,55 @@
 -- - New records added in Access will auto-increment from max(existing_id)+1
 -- - After migration, re-create foreign key constraints via Access UI
 --
+-- EXECUTION ORDER:
+-- - LOOKUP TABLES (no dependencies) come first
+-- - DEPENDENT TABLES (with foreign keys) come after their dependencies
+--
 -- WARNING: This is a destructive operation. Back up your database before running!
 -- =====================================================================================================================
 
 -- =====================================================================================================================
--- COMMUNITY TABLE
+-- LOOKUP TABLES (NO DEPENDENCIES) - Process these first
 -- =====================================================================================================================
 
--- Step 1: Create temporary copy with data
-SELECT * INTO temp_community FROM community;
+-- =====================================================================================================================
+-- PARISH TABLE
+-- =====================================================================================================================
 
--- Step 2: Drop original table
-DROP TABLE community;
+SELECT * INTO temp_parish FROM parish;
 
--- Step 3: Create new table with COUNTER primary key
-CREATE TABLE community (
-    community_id COUNTER PRIMARY KEY,
-    community_name TEXT NOT NULL,
-    parish_id LONG
+DROP TABLE parish;
+
+CREATE TABLE parish (
+    parish_id COUNTER PRIMARY KEY,
+    parish TEXT NOT NULL
 );
 
--- Step 4: Insert data from temp table (including original IDs, counter continues from max)
-INSERT INTO community (community_id, community_name, parish_id)
-SELECT community_id, community_name, parish_id
-FROM temp_community;
+INSERT INTO parish (parish_id, parish)
+SELECT parish_id, parish
+FROM temp_parish;
 
--- Step 5: Drop temporary table
-DROP TABLE temp_community;
+DROP TABLE temp_parish;
 
 -- =====================================================================================================================
--- COURT_CASE TABLE
+-- SOURCE TABLE
 -- =====================================================================================================================
 
-SELECT * INTO temp_court_case FROM court_case;
+SELECT * INTO temp_source FROM source;
 
-DROP TABLE court_case;
+DROP TABLE source;
 
-CREATE TABLE court_case (
-    court_case_id COUNTER PRIMARY KEY,
-    source_id LONG NOT NULL,
-    reference_number VARCHAR(16),
-    district_court_name TEXT,
-    case_year LONG,
-    source_text LONGTEXT
+CREATE TABLE source (
+    source_id COUNTER PRIMARY KEY,
+    source_name TEXT NOT NULL,
+    source_abbreviation VARCHAR(255)
 );
 
-INSERT INTO court_case (court_case_id, source_id, reference_number, district_court_name, case_year, source_text)
-SELECT court_case_id, source_id, reference_number, district_court_name, case_year, source_text
-FROM temp_court_case;
+INSERT INTO source (source_id, source_name, source_abbreviation)
+SELECT source_id, source_name, source_abbreviation
+FROM temp_source;
 
-DROP TABLE temp_court_case;
-
--- =====================================================================================================================
--- COURT_CASE_ENTRY TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_court_case_entry FROM court_case_entry;
-
-DROP TABLE court_case_entry;
-
-CREATE TABLE court_case_entry (
-    court_case_entry_id COUNTER PRIMARY KEY,
-    court_case_id LONG NOT NULL,
-    entry_year LONG,
-    curated_text LONGTEXT,
-    original_placename TEXT,
-    season_id LONG,
-    land_use_id LONG,
-    placename_id LONG
-);
-
-INSERT INTO court_case_entry (court_case_entry_id, court_case_id, entry_year, curated_text, original_placename, season_id, land_use_id, placename_id)
-SELECT court_case_entry_id, court_case_id, entry_year, curated_text, original_placename, season_id, land_use_id, placename_id
-FROM temp_court_case_entry;
-
-DROP TABLE temp_court_case_entry;
-
--- =====================================================================================================================
--- PERSON TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_person FROM person;
-
-DROP TABLE person;
-
-CREATE TABLE person (
-    person_id COUNTER PRIMARY KEY,
-    given_name TEXT,
-    patronymic TEXT,
-    surname TEXT,
-    birth_year LONG,
-    death_year LONG,
-    community_name TEXT,
-    note LONGTEXT
-);
-
-INSERT INTO person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name, note)
-SELECT person_id, given_name, patronymic, surname, birth_year, death_year, community_name, note
-FROM temp_person;
-
-DROP TABLE temp_person;
-
--- =====================================================================================================================
--- LAND_RIGHTS_STATUS TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_land_rights_status FROM land_rights_status;
-
-DROP TABLE land_rights_status;
-
-CREATE TABLE land_rights_status (
-    land_rights_status_id COUNTER PRIMARY KEY,
-    land_rights_status VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL
-);
-
-INSERT INTO land_rights_status (land_rights_status_id, land_rights_status, description)
-SELECT land_rights_status_id, land_rights_status, description
-FROM temp_land_rights_status;
-
-DROP TABLE temp_land_rights_status;
+DROP TABLE temp_source;
 
 -- =====================================================================================================================
 -- LEGAL_SOURCE TABLE
@@ -182,23 +111,23 @@ FROM temp_land_use;
 DROP TABLE temp_land_use;
 
 -- =====================================================================================================================
--- PARISH TABLE
+-- SEASON TABLE
 -- =====================================================================================================================
 
-SELECT * INTO temp_parish FROM parish;
+SELECT * INTO temp_season FROM season;
 
-DROP TABLE parish;
+DROP TABLE season;
 
-CREATE TABLE parish (
-    parish_id COUNTER PRIMARY KEY,
-    parish TEXT NOT NULL
+CREATE TABLE season (
+    season_id COUNTER PRIMARY KEY,
+    season_name TEXT NOT NULL UNIQUE
 );
 
-INSERT INTO parish (parish_id, parish)
-SELECT parish_id, parish
-FROM temp_parish;
+INSERT INTO season (season_id, season_name)
+SELECT season_id, season_name
+FROM temp_season;
 
-DROP TABLE temp_parish;
+DROP TABLE temp_season;
 
 -- =====================================================================================================================
 -- OUTCOME_TYPE TABLE
@@ -221,26 +150,89 @@ FROM temp_outcome_type;
 DROP TABLE temp_outcome_type;
 
 -- =====================================================================================================================
--- PERSON_OUTCOME TABLE
+-- ROLE_TYPE TABLE
 -- =====================================================================================================================
 
-SELECT * INTO temp_person_outcome FROM person_outcome;
+SELECT * INTO temp_role_type FROM role_type;
 
-DROP TABLE person_outcome;
+DROP TABLE role_type;
 
-CREATE TABLE person_outcome (
-    person_outcome_id COUNTER PRIMARY KEY,
-    ruling_id LONG NOT NULL,
-    person_id LONG NOT NULL,
-    outcome_type_id LONG NOT NULL,
-    description TEXT
+CREATE TABLE role_type (
+    role_type_id COUNTER PRIMARY KEY,
+    role_type_name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL
 );
 
-INSERT INTO person_outcome (person_outcome_id, ruling_id, person_id, outcome_type_id, description)
-SELECT person_outcome_id, ruling_id, person_id, outcome_type_id, description
-FROM temp_person_outcome;
+INSERT INTO role_type (role_type_id, role_type_name, description)
+SELECT role_type_id, role_type_name, description
+FROM temp_role_type;
 
-DROP TABLE temp_person_outcome;
+DROP TABLE temp_role_type;
+
+-- =====================================================================================================================
+-- RULING_TYPE TABLE
+-- =====================================================================================================================
+
+SELECT * INTO temp_ruling_type FROM ruling_type;
+
+DROP TABLE ruling_type;
+
+CREATE TABLE ruling_type (
+    ruling_type_id COUNTER PRIMARY KEY,
+    ruling_type VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT NOT NULL
+);
+
+INSERT INTO ruling_type (ruling_type_id, ruling_type, description)
+SELECT ruling_type_id, ruling_type, description
+FROM temp_ruling_type;
+
+DROP TABLE temp_ruling_type;
+
+-- =====================================================================================================================
+-- RELATIONSHIP_TYPE TABLE
+-- =====================================================================================================================
+
+SELECT * INTO temp_relationship_type FROM relationship_type;
+
+DROP TABLE relationship_type;
+
+CREATE TABLE relationship_type (
+    relationship_type_id COUNTER PRIMARY KEY,
+    relationship_type_name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL
+);
+
+INSERT INTO relationship_type (relationship_type_id, relationship_type_name, description)
+SELECT relationship_type_id, relationship_type_name, description
+FROM temp_relationship_type;
+
+DROP TABLE temp_relationship_type;
+
+-- =====================================================================================================================
+-- PERSON TABLE
+-- =====================================================================================================================
+
+SELECT * INTO temp_person FROM person;
+
+DROP TABLE person;
+
+CREATE TABLE person (
+    person_id COUNTER PRIMARY KEY,
+    given_name TEXT,
+    patronymic TEXT,
+    surname TEXT,
+    birth_year LONG,
+    death_year LONG,
+    community_name TEXT,
+    [note] LONGTEXT
+);
+
+INSERT INTO person (person_id, given_name, patronymic, surname, birth_year, death_year, community_name, [note])
+SELECT person_id, given_name, patronymic, surname, birth_year, death_year, community_name, [note]
+FROM temp_person;
+
+DROP TABLE temp_person;
 
 -- =====================================================================================================================
 -- PLACENAME TABLE
@@ -272,7 +264,165 @@ FROM temp_placename;
 DROP TABLE temp_placename;
 
 -- =====================================================================================================================
--- PERSON_ENTRY TABLE
+-- LAND_RIGHTS_STATUS TABLE
+-- =====================================================================================================================
+
+SELECT * INTO temp_land_rights_status FROM land_rights_status;
+
+DROP TABLE land_rights_status;
+
+CREATE TABLE land_rights_status (
+    land_rights_status_id COUNTER PRIMARY KEY,
+    land_rights_status VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL
+);
+
+INSERT INTO land_rights_status (land_rights_status_id, land_rights_status, description)
+SELECT land_rights_status_id, land_rights_status, description
+FROM temp_land_rights_status;
+
+DROP TABLE temp_land_rights_status;
+
+-- =====================================================================================================================
+-- DEPENDENT TABLES (WITH FOREIGN KEYS) - Process these after their dependencies
+-- =====================================================================================================================
+
+-- =====================================================================================================================
+-- COMMUNITY TABLE (depends on: parish)
+-- =====================================================================================================================
+
+SELECT * INTO temp_community FROM community;
+
+DROP TABLE community;
+
+CREATE TABLE community (
+    community_id COUNTER PRIMARY KEY,
+    community_name TEXT NOT NULL,
+    parish_id LONG
+);
+
+INSERT INTO community (community_id, community_name, parish_id)
+SELECT community_id, community_name, parish_id
+FROM temp_community;
+
+DROP TABLE temp_community;
+
+-- =====================================================================================================================
+-- ROLE TABLE (depends on: role_type)
+-- =====================================================================================================================
+
+SELECT * INTO temp_role FROM role;
+
+DROP TABLE role;
+
+CREATE TABLE role (
+    role_id COUNTER PRIMARY KEY,
+    role_name TEXT NOT NULL UNIQUE,
+    role_type_id LONG NOT NULL,
+    description TEXT NOT NULL
+);
+
+INSERT INTO role (role_id, role_name, role_type_id, description)
+SELECT role_id, role_name, role_type_id, description
+FROM temp_role;
+
+DROP TABLE temp_role;
+
+-- =====================================================================================================================
+-- COURT_CASE TABLE (depends on: source)
+-- =====================================================================================================================
+
+SELECT * INTO temp_court_case FROM court_case;
+
+DROP TABLE court_case;
+
+CREATE TABLE court_case (
+    court_case_id COUNTER PRIMARY KEY,
+    source_id LONG NOT NULL,
+    reference_number VARCHAR(16),
+    district_court_name TEXT,
+    case_year LONG,
+    source_text LONGTEXT
+);
+
+INSERT INTO court_case (court_case_id, source_id, reference_number, district_court_name, case_year, source_text)
+SELECT court_case_id, source_id, reference_number, district_court_name, case_year, source_text
+FROM temp_court_case;
+
+DROP TABLE temp_court_case;
+
+-- =====================================================================================================================
+-- RULING TABLE (depends on: court_case, ruling_type, legal_source)
+-- =====================================================================================================================
+
+SELECT * INTO temp_ruling FROM ruling;
+
+DROP TABLE ruling;
+
+CREATE TABLE ruling (
+    ruling_id COUNTER PRIMARY KEY,
+    court_case_id LONG NOT NULL UNIQUE,
+    ruling_year LONG,
+    description TEXT,
+    ruling_type_id LONG NOT NULL,
+    legal_source_id LONG
+);
+
+INSERT INTO ruling (ruling_id, court_case_id, ruling_year, description, ruling_type_id, legal_source_id)
+SELECT ruling_id, court_case_id, ruling_year, description, ruling_type_id, legal_source_id
+FROM temp_ruling;
+
+DROP TABLE temp_ruling;
+
+-- =====================================================================================================================
+-- COURT_CASE_ENTRY TABLE (depends on: court_case, season, land_use, placename)
+-- =====================================================================================================================
+
+SELECT * INTO temp_court_case_entry FROM court_case_entry;
+
+DROP TABLE court_case_entry;
+
+CREATE TABLE court_case_entry (
+    court_case_entry_id COUNTER PRIMARY KEY,
+    court_case_id LONG NOT NULL,
+    entry_year LONG,
+    curated_text LONGTEXT,
+    original_placename TEXT,
+    season_id LONG,
+    land_use_id LONG,
+    placename_id LONG
+);
+
+INSERT INTO court_case_entry (court_case_entry_id, court_case_id, entry_year, curated_text, original_placename, season_id, land_use_id, placename_id)
+SELECT court_case_entry_id, court_case_id, entry_year, curated_text, original_placename, season_id, land_use_id, placename_id
+FROM temp_court_case_entry;
+
+DROP TABLE temp_court_case_entry;
+
+-- =====================================================================================================================
+-- PERSON_OUTCOME TABLE (depends on: ruling, person, outcome_type)
+-- =====================================================================================================================
+
+SELECT * INTO temp_person_outcome FROM person_outcome;
+
+DROP TABLE person_outcome;
+
+CREATE TABLE person_outcome (
+    person_outcome_id COUNTER PRIMARY KEY,
+    ruling_id LONG NOT NULL,
+    person_id LONG NOT NULL,
+    outcome_type_id LONG NOT NULL,
+    description TEXT
+);
+
+INSERT INTO person_outcome (person_outcome_id, ruling_id, person_id, outcome_type_id, description)
+SELECT person_outcome_id, ruling_id, person_id, outcome_type_id, description
+FROM temp_person_outcome;
+
+DROP TABLE temp_person_outcome;
+
+-- =====================================================================================================================
+-- PERSON_ENTRY TABLE (depends on: court_case_entry, person, community, land_rights_status, role)
 -- =====================================================================================================================
 
 SELECT * INTO temp_person_entry FROM person_entry;
@@ -296,130 +446,7 @@ FROM temp_person_entry;
 DROP TABLE temp_person_entry;
 
 -- =====================================================================================================================
--- ROLE_TYPE TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_role_type FROM role_type;
-
-DROP TABLE role_type;
-
-CREATE TABLE role_type (
-    role_type_id COUNTER PRIMARY KEY,
-    role_type_name TEXT NOT NULL UNIQUE,
-    description TEXT NOT NULL
-);
-
-INSERT INTO role_type (role_type_id, role_type_name, description)
-SELECT role_type_id, role_type_name, description
-FROM temp_role_type;
-
-DROP TABLE temp_role_type;
-
--- =====================================================================================================================
--- ROLE TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_role FROM role;
-
-DROP TABLE role;
-
-CREATE TABLE role (
-    role_id COUNTER PRIMARY KEY,
-    role_name TEXT NOT NULL UNIQUE,
-    role_type_id LONG NOT NULL,
-    description TEXT NOT NULL
-);
-
-INSERT INTO role (role_id, role_name, role_type_id, description)
-SELECT role_id, role_name, role_type_id, description
-FROM temp_role;
-
-DROP TABLE temp_role;
-
--- =====================================================================================================================
--- SEASON TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_season FROM season;
-
-DROP TABLE season;
-
-CREATE TABLE season (
-    season_id COUNTER PRIMARY KEY,
-    season_name TEXT NOT NULL UNIQUE
-);
-
-INSERT INTO season (season_id, season_name)
-SELECT season_id, season_name
-FROM temp_season;
-
-DROP TABLE temp_season;
-
--- =====================================================================================================================
--- RULING_TYPE TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_ruling_type FROM ruling_type;
-
-DROP TABLE ruling_type;
-
-CREATE TABLE ruling_type (
-    ruling_type_id COUNTER PRIMARY KEY,
-    ruling_type VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT NOT NULL
-);
-
-INSERT INTO ruling_type (ruling_type_id, ruling_type, description)
-SELECT ruling_type_id, ruling_type, description
-FROM temp_ruling_type;
-
-DROP TABLE temp_ruling_type;
-
--- =====================================================================================================================
--- RULING TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_ruling FROM ruling;
-
-DROP TABLE ruling;
-
-CREATE TABLE ruling (
-    ruling_id COUNTER PRIMARY KEY,
-    court_case_id LONG NOT NULL UNIQUE,
-    ruling_year LONG,
-    description TEXT,
-    ruling_type_id LONG NOT NULL,
-    legal_source_id LONG
-);
-
-INSERT INTO ruling (ruling_id, court_case_id, ruling_year, description, ruling_type_id, legal_source_id)
-SELECT ruling_id, court_case_id, ruling_year, description, ruling_type_id, legal_source_id
-FROM temp_ruling;
-
-DROP TABLE temp_ruling;
-
--- =====================================================================================================================
--- SOURCE TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_source FROM source;
-
-DROP TABLE source;
-
-CREATE TABLE source (
-    source_id COUNTER PRIMARY KEY,
-    source_name TEXT NOT NULL,
-    source_abbreviation VARCHAR(255)
-);
-
-INSERT INTO source (source_id, source_name, source_abbreviation)
-SELECT source_id, source_name, source_abbreviation
-FROM temp_source;
-
-DROP TABLE temp_source;
-
--- =====================================================================================================================
--- PERSON_RELATIONSHIP TABLE
+-- PERSON_RELATIONSHIP TABLE (depends on: person, relationship_type)
 -- =====================================================================================================================
 
 SELECT * INTO temp_person_relationship FROM person_relationship;
@@ -439,26 +466,6 @@ SELECT person_relationship_id, person_1_id, person_2_id, relationship_type_id, d
 FROM temp_person_relationship;
 
 DROP TABLE temp_person_relationship;
-
--- =====================================================================================================================
--- RELATIONSHIP_TYPE TABLE
--- =====================================================================================================================
-
-SELECT * INTO temp_relationship_type FROM relationship_type;
-
-DROP TABLE relationship_type;
-
-CREATE TABLE relationship_type (
-    relationship_type_id COUNTER PRIMARY KEY,
-    relationship_type_name TEXT NOT NULL UNIQUE,
-    description TEXT NOT NULL
-);
-
-INSERT INTO relationship_type (relationship_type_id, relationship_type_name, description)
-SELECT relationship_type_id, relationship_type_name, description
-FROM temp_relationship_type;
-
-DROP TABLE temp_relationship_type;
 
 -- =====================================================================================================================
 -- MIGRATION COMPLETE
