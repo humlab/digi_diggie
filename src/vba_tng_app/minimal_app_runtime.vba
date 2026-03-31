@@ -395,16 +395,26 @@ End Function
 Public Function frmPlacenameSearch_cmdSearch_Click()
     On Error Goto ErrHandler
         Dim searchTerm As String
-        Dim qdf As DAO.QueryDef
+        Dim sSql As String
         Dim db As DAO.Database
 
         Set db = CurrentDb
-        Set qdf = db.QueryDefs("qPlacenameSearch")
 
         searchTerm = "*" & Nz(Forms!frmPlacenameSearch!txtSearch, "") & "*"
-        qdf.Parameters("pSearch") = searchTerm
+        
+        sSql = "SELECT " & _
+                "TOP 200 p1.placename_id, " & _
+                "p1.placename, " & _
+                "IIf(Nz (pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _               
+                "p1.serial_number " & _
+                "FROM placename AS p1 " & _
+                "LEFT JOIN parish AS pr ON Val(p1.parish_code) = pr.parish_id " & _
+                "WHERE (p1.placename LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "   OR (p1.parish_name LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "   OR (pr.parish LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "ORDER BY p1.placename;"
 
-        Forms!frmPlacenameSearch!lstResults.RowSource = "qPlacenameSearch"
+        Forms!frmPlacenameSearch!lstResults.RowSource = sSql
         Forms!frmPlacenameSearch!lstResults.Requery
 
      Exit Function
