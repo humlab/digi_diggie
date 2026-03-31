@@ -468,16 +468,23 @@ End Function
 Public Function frmPersonSearch_cmdSearch_Click()
     On Error Goto ErrHandler
         Dim searchTerm As String
-        Dim qdf As DAO.QueryDef
+        Dim sSql As String
         Dim db As DAO.Database
 
         Set db = CurrentDb
-        Set qdf = db.QueryDefs("qPersonSearch")
 
         searchTerm = "*" & Nz(Forms!frmPersonSearch!txtSearch, "") & "*"
-        qdf.Parameters("pSearch") = searchTerm
+        
+        sSql = "SELECT " & _
+                    "TOP 200 person.person_id, " & _
+                    "person.full_name, " & _
+                    "person.birth_year, " & _
+                    "person.community_name " & _
+               "FROM person " & _
+               "WHERE (((person.[full_name]) LIKE '" & Replace(searchTerm, "'", "''") & "')) " & _
+               "ORDER BY person.full_name;"
 
-        Forms!frmPersonSearch!lstResults.RowSource = "qPersonSearch"
+        Forms!frmPersonSearch!lstResults.RowSource = sSql
         Forms!frmPersonSearch!lstResults.Requery
 
      Exit Function
