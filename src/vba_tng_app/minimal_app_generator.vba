@@ -319,6 +319,7 @@ Private Sub Create_frmCourtCase()
         ctl.Name = "cmdOpenEntryDetail"
         ctl.caption = "Open Entry Detail"
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
+        ctl.Enabled = False
 
         ' cmdCreateRuling button (visible only when no ruling exists)
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5100, yPos, 2000, 400)
@@ -419,6 +420,7 @@ Private Sub Create_sfrmCourtCaseEntries()
         frm.AllowAdditions = True
         frm.AllowEdits = True
         frm.OnLoad = "=sfrmCourtCaseEntries_OnLoad()" ' Auto-size columns
+        frm.OnCurrent = "=sfrmCourtCaseEntries_OnCurrent()" ' Sync parent detail button
 
         xPos = 0 ' Start position for columns
 

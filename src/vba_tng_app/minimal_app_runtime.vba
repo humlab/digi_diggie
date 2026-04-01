@@ -30,6 +30,7 @@ Public Function frmCourtCase_OnCurrent()
     If IsNull(courtCaseId) Then
         ' New/unsaved record - hide button Until saved
         Forms!frmCourtCase!cmdCreateRuling.Visible = False
+        UpdateOpenEntryDetailButtonState
      Exit Function
     End If
 
@@ -40,6 +41,9 @@ Public Function frmCourtCase_OnCurrent()
 
     ' Show button only when no ruling exists
     Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
+
+    ' Keep entry-detail action in sync with the linked entry subform selection.
+    UpdateOpenEntryDetailButtonState
 
     ' Requery the ruling subform To ensure it's in sync
     Forms!frmCourtCase!sfrmRuling.Form.Requery
@@ -131,6 +135,14 @@ Public Function sfrmCourtCaseEntries_cmdEntryDetail_Click()
      Exit Function
  ErrHandler:
         MsgBox "Error in sfrmCourtCaseEntries_cmdEntryDetail_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' sfrmCourtCaseEntries: OnCurrent event - Sync parent detail button state
+'------------------------------------------------------------------------------
+Public Function sfrmCourtCaseEntries_OnCurrent()
+    On Error Resume Next
+    UpdateOpenEntryDetailButtonState
 End Function
 
 '------------------------------------------------------------------------------
@@ -603,6 +615,7 @@ Public Function sfrmCourtCaseEntries_OnLoad()
     Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtPlacename.ColumnWidth = -2
     Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtOriginalPlacename.ColumnWidth = -2
     Forms!frmCourtCase!sfrmCourtCaseEntries.Form!cmdEntryDetail.ColumnWidth = -2
+    UpdateOpenEntryDetailButtonState
 End Function
 
 '------------------------------------------------------------------------------
@@ -642,6 +655,28 @@ End Function
 '==============================================================================
 ' HELPER FUNCTIONS
 '==============================================================================
+
+'------------------------------------------------------------------------------
+' Enable the parent entry-detail button only when a saved subform row is current
+'------------------------------------------------------------------------------
+Private Sub UpdateOpenEntryDetailButtonState()
+    On Error GoTo ErrHandler
+    Dim frmEntries As Form
+    Dim hasSelectedEntry As Boolean
+
+    Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = False
+
+    If IsNull(Forms!frmCourtCase!court_case_id) Then Exit Sub
+
+    Set frmEntries = Forms!frmCourtCase!sfrmCourtCaseEntries.Form
+    hasSelectedEntry = Not frmEntries.NewRecord And Not IsNull(frmEntries!court_case_entry_id)
+
+    Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = hasSelectedEntry
+    Exit Sub
+
+ErrHandler:
+    Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = False
+End Sub
 
 '------------------------------------------------------------------------------
 ' Open entry detail safely for a known entry ID
