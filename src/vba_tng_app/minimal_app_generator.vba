@@ -216,7 +216,7 @@ Private Sub CreateQueries()
                 "IIf(Nz(pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _
                 "p1.serial_number " & _
                 "FROM placename AS p1 " & _
-                "LEFT JOIN parish AS pr ON p1.parish_code = CStr(pr.parish_id) " & _
+                "LEFT JOIN parish AS pr ON Val(p1.parish_code) = pr.parish_id " & _
                 "WHERE (p1.placename LIKE [pSearch]) " & _
                 "   OR (p1.parish_name LIKE [pSearch]) " & _
                 "   OR (pr.parish LIKE [pSearch]) " & _
