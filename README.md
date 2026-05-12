@@ -116,20 +116,6 @@ digi_diggie/
 └── scripts/                      # Shell scripts
 ```
 
-## Download the placename database
-
-### Python scripts
-
-### Prerequistes
-
- - Account and credentials to https://geotorget.lantmateriet.se/
- - Authority to download [Ortnamn, vector](https://geotorget.lantmateriet.se/geodataprodukter/ortnamn-nedladdning-vektor-api)
-  
-### Steps
- - Log in to https://geotorget.lantmateriet.se/
- - Open 
- - 
-
 ---
 
 ## Create local version of the database
