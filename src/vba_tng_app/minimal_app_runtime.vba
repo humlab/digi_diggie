@@ -392,13 +392,9 @@ Public Function frmPlacenameSearch_OnLoad()
     On Error Resume Next
     ' Show top 50 placenames by default
     Forms!frmPlacenameSearch!lstResults.RowSource = _
-    "SELECT TOP 50 p1.placename_id, p1.placename, " & _
-    "IIf(Nz(DLookup('parish', 'parish', 'parish_id=' & Val(Nz([p1].[parish_code], '0'))), '') <> '', " & _
-    "Nz(DLookup('parish', 'parish', 'parish_id=' & Val(Nz([p1].[parish_code], '0'))), ''), " & _
-    "Nz(p1.parish_name, '')) AS parish_display, " & _
-    "p1.serial_number " & _
-    "FROM placename AS p1 " & _
-    "ORDER BY p1.placename"
+        "SELECT TOP 50 placename_id, placename, parish_name AS parish_display, serial_number " & _
+        "FROM placename " & _
+        "ORDER BY placename"
 End Function
 
 '------------------------------------------------------------------------------
@@ -415,16 +411,14 @@ Public Function frmPlacenameSearch_cmdSearch_Click()
         searchTerm = "*" & Nz(Forms!frmPlacenameSearch!txtSearch, "") & "*"
         
         sSql = "SELECT " & _
-                "TOP 200 p1.placename_id, " & _
-                "p1.placename, " & _
-                "IIf(Nz (pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _               
-                "p1.serial_number " & _
-                "FROM placename AS p1 " & _
-                "LEFT JOIN parish AS pr ON Val(p1.parish_code) = pr.parish_id " & _
-                "WHERE (p1.placename LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
-                "   OR (p1.parish_name LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
-                "   OR (pr.parish LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
-                "ORDER BY p1.placename;"
+                "TOP 200 placename_id, " & _
+                "placename, " & _
+                "parish_name AS parish_display, " & _
+                "serial_number " & _
+                "FROM placename " & _
+                "WHERE (placename LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "   OR (parish_name LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "ORDER BY placename;"
 
         Forms!frmPlacenameSearch!lstResults.RowSource = sSql
         Forms!frmPlacenameSearch!lstResults.Requery
