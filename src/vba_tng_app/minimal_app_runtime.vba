@@ -409,9 +409,8 @@ Public Function frmPlacenameSearch_cmdSearch_Click()
         Set db = CurrentDb
 
         searchTerm = "*" & Nz(Forms!frmPlacenameSearch!txtSearch, "") & "*"
-        
         sSql = "SELECT " & _
-                "TOP 200 placename_id, " & _
+                "placename_id, " & _
                 "placename, " & _
                 "parish_name AS parish_display, " & _
                 "serial_number " & _
@@ -490,9 +489,8 @@ Public Function frmPersonSearch_cmdSearch_Click()
         Set db = CurrentDb
 
         searchTerm = "*" & Nz(Forms!frmPersonSearch!txtSearch, "") & "*"
-        
         sSql = "SELECT " & _
-                    "TOP 200 person.person_id, " & _
+                    "person.person_id, " & _
                     "person.full_name, " & _
                     "person.birth_year, " & _
                     "person.community_name " & _
