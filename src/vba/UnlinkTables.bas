@@ -1191,3 +1191,41 @@ Private Function IndexExists(ByVal tableName As String, ByVal indexName As Strin
 NotFound:
     IndexExists = False
 End Function
+
+' ============================================================
+' Run full materialization pipeline in order:
+'   1. MaterializeAllPostgresLinkedTables
+'   2. UnlinkTablesAndRemovePrefix
+'   3. CreateIndexesAndConstraints
+'
+' Each step will prompt for confirmation individually.
+' ============================================================
+Public Sub RunMaterializationPipeline( _
+    Optional ByVal localPrefix As String = "loc_", _
+    Optional ByVal dropIfExists As Boolean = False)
+
+    If MsgBox("Run the full materialization pipeline?" & vbNewLine & vbNewLine & _
+              "Steps:" & vbNewLine & _
+              "  1. Materialize all linked PostgreSQL tables" & vbNewLine & _
+              "  2. Unlink PostgreSQL tables and remove prefix" & vbNewLine & _
+              "  3. Create indexes and foreign key constraints" & vbNewLine & vbNewLine & _
+              "Each step will prompt for individual confirmation.", _
+              vbYesNo + vbQuestion, "Run Materialization Pipeline") = vbNo Then
+        MsgBox "Pipeline cancelled by user.", vbInformation
+        Exit Sub
+    End If
+
+    Debug.Print "=== MATERIALIZATION PIPELINE START ==="
+
+    Debug.Print "Step 1: MaterializeAllPostgresLinkedTables"
+    MaterializeAllPostgresLinkedTables localPrefix, dropIfExists
+
+    Debug.Print "Step 2: UnlinkTablesAndRemovePrefix"
+    UnlinkTablesAndRemovePrefix localPrefix
+
+    Debug.Print "Step 3: CreateIndexesAndConstraints"
+    CreateIndexesAndConstraints
+
+    Debug.Print "=== MATERIALIZATION PIPELINE COMPLETE ==="
+    MsgBox "Pipeline complete. See Immediate Window (Ctrl+G) for details.", vbInformation
+End Sub

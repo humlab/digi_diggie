@@ -122,7 +122,7 @@ digi_diggie/
  
 - Create a new MS Access file
 - Open VBA Editor (`Alt + F11`)
-   - Import both modules:
+   - Import modules:
      - File → Import File... → `automated_setup.vba`
      - File → Import File... → `minimal_app_generator.vba`
      - File → Import File... → `minimal_app_runtime.vba`
@@ -130,6 +130,4 @@ digi_diggie/
   - Run
     1. `LinkAllTngTables` (in `automated_setup.vba`)
     2. `BuildAllForms` (in `minimal_app_generator.vba`)
-    3. `MaterializeAllPostgresLinkedTables` (in `UnlinkTables.bas`)
-    4. `UnlinkTablesAndRemovePrefix` (in `UnlinkTables.bas`)
-    5. `CreateIndexesAndConstraints` (in `UnlinkTables.bas`)
+    3. `RunMaterializationPipeline`
