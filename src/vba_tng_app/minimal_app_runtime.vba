@@ -1,6 +1,10 @@
 Option Compare Database
 Option Explicit
 
+' Module-level variable used to pass person_id back from frmPersonSearch
+' when the caller uses target="_return" (e.g., the Add Person flow).
+Private g_SelectedPersonId As Variant
+
 '==============================================================================
 ' modMinimalAppRuntime
 ' Purpose: Runtime event handlers For DigiDiggie TNG minimal forms
@@ -180,8 +184,38 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()
     On Error Goto ErrHandler
-        Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.SetFocus
-        DoCmd.GoToRecord , , acNewRec
+        Dim entryId As Variant
+        Dim db As DAO.Database
+        Dim rs As DAO.Recordset
+
+        ' Ensure the current entry is saved before adding a person to it
+        entryId = Forms!frmCourtCaseEntryDetail!court_case_entry_id
+        If IsNull(entryId) Then
+            MsgBox "Please save the court case entry first.", vbInformation
+            Exit Function
+        End If
+
+        ' Open person search dialog; result comes back via g_SelectedPersonId
+        g_SelectedPersonId = Null
+        DoCmd.OpenForm "frmPersonSearch", , , , , acDialog, _
+            "caller=frmCourtCaseEntryDetail;target=_return"
+
+        ' If the user cancelled without selecting, do nothing
+        If IsNull(g_SelectedPersonId) Then Exit Function
+
+        ' Insert a new person_entry row via DAO so the JOIN-based person_name
+        ' resolves correctly after the subsequent requery.
+        Set db = CurrentDb
+        Set rs = db.OpenRecordset("SELECT * FROM person_entry WHERE 1=0", dbOpenDynaset, dbAppendOnly)
+        rs.AddNew
+        rs!court_case_entry_id = CLng(entryId)
+        rs!person_id = CLng(g_SelectedPersonId)
+        rs.Update
+        rs.Close
+
+        ' Refresh subform so the new row (with person_name from JOIN) appears
+        ConfigurePersonEntrySubform "frmCourtCaseEntryDetail"
+
      Exit Function
 ErrHandler:
         MsgBox "Error in frmCourtCaseEntryDetail_cmdAddPersonEntry_Click: " & Err.Description, vbCritical
@@ -528,7 +562,12 @@ Public Function frmPersonSearch_cmdSelect_Click()
 
         ' Write back To caller
         If callerForm <> "" And targetControl <> "" Then
-            Forms(callerForm).Controls(targetControl).Value = selectedId
+            If targetControl = "_return" Then
+                ' Return via module-level variable (used by Add Person flow)
+                g_SelectedPersonId = selectedId
+            Else
+                Forms(callerForm).Controls(targetControl).Value = selectedId
+            End If
         End If
 
         DoCmd.Close acForm, "frmPersonSearch"
