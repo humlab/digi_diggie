@@ -156,7 +156,19 @@ begin
         "sockenstad" as "parish_name",
         st_transform(st_setsrid(st_makepoint(622159, 7286643), 3006), 4326) as geom
     from digidiggie_tog.placenames
-      on conflict (placename_id) do nothing;
+      on conflict (placename_id) do update set
+		placename = excluded.placename,
+		northing = excluded.northing,
+		easting = excluded.easting,
+		serial_number = excluded.serial_number,
+		name_type_code = excluded.name_type_code,
+		language_code = excluded.language_code,
+		parish_code = excluded.parish_code,
+		county_code = excluded.county_code,
+		municipality_code = excluded.municipality_code,
+		combined_placename = excluded.combined_placename,
+		parish_name = excluded.parish_name,
+		geom = excluded.geom;
 
     /***********************************************************************************************************
     ** Person: Create person_entry from old entries
