@@ -401,8 +401,8 @@ Private Sub CreateLocalForeignKeysFromPostgres( _
 
                     If Not RelationExists(relName) Then
                         Set rel = db.CreateRelation(relName, parentLocal, localTableName)
-                        rel.Fields.Append rel.CreateField(fkColumn)
-                        rel.Fields(fkColumn).ForeignName = pkColumn
+                        rel.Fields.Append rel.CreateField(pkColumn)
+                        rel.Fields(pkColumn).ForeignName = fkColumn
 
                         On Error Resume Next
                         db.Relations.Append rel
