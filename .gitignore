@@ -9,3 +9,4 @@ data/ortnamn
 archive
 *.bak
 lib
+tsv_export

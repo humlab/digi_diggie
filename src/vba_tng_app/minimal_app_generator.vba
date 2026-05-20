@@ -216,7 +216,7 @@ Private Sub CreateQueries()
                 "IIf(Nz(pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display, " & _
                 "p1.serial_number " & _
                 "FROM placename AS p1 " & _
-                "LEFT JOIN parish AS pr ON p1.parish_code = CStr(pr.parish_id) " & _
+                "LEFT JOIN parish AS pr ON Val(p1.parish_code) = pr.parish_id " & _
                 "WHERE (p1.placename LIKE [pSearch]) " & _
                 "   OR (p1.parish_name LIKE [pSearch]) " & _
                 "   OR (pr.parish LIKE [pSearch]) " & _
@@ -319,6 +319,7 @@ Private Sub Create_frmCourtCase()
         ctl.Name = "cmdOpenEntryDetail"
         ctl.caption = "Open Entry Detail"
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
+        ctl.Enabled = False
 
         ' cmdCreateRuling button (visible only when no ruling exists)
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5100, yPos, 2000, 400)
@@ -419,6 +420,7 @@ Private Sub Create_sfrmCourtCaseEntries()
         frm.AllowAdditions = True
         frm.AllowEdits = True
         frm.OnLoad = "=sfrmCourtCaseEntries_OnLoad()" ' Auto-size columns
+        frm.OnCurrent = "=sfrmCourtCaseEntries_OnCurrent()" ' Sync parent detail button
 
         xPos = 0 ' Start position for columns
 

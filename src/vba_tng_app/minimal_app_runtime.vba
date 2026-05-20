@@ -1,6 +1,10 @@
 Option Compare Database
 Option Explicit
 
+' Module-level variable used to pass person_id back from frmPersonSearch
+' when the caller uses target="_return" (e.g., the Add Person flow).
+Private g_SelectedPersonId As Variant
+
 '==============================================================================
 ' modMinimalAppRuntime
 ' Purpose: Runtime event handlers For DigiDiggie TNG minimal forms
@@ -30,6 +34,7 @@ Public Function frmCourtCase_OnCurrent()
     If IsNull(courtCaseId) Then
         ' New/unsaved record - hide button Until saved
         Forms!frmCourtCase!cmdCreateRuling.Visible = False
+        UpdateOpenEntryDetailButtonState
      Exit Function
     End If
 
@@ -40,6 +45,9 @@ Public Function frmCourtCase_OnCurrent()
 
     ' Show button only when no ruling exists
     Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
+
+    ' Keep entry-detail action in sync with the linked entry subform selection.
+    UpdateOpenEntryDetailButtonState
 
     ' Requery the ruling subform To ensure it's in sync
     Forms!frmCourtCase!sfrmRuling.Form.Requery
@@ -134,6 +142,14 @@ Public Function sfrmCourtCaseEntries_cmdEntryDetail_Click()
 End Function
 
 '------------------------------------------------------------------------------
+' sfrmCourtCaseEntries: OnCurrent event - Sync parent detail button state
+'------------------------------------------------------------------------------
+Public Function sfrmCourtCaseEntries_OnCurrent()
+    On Error Resume Next
+    UpdateOpenEntryDetailButtonState
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCaseEntryDetail: OnLoad event - Auto-populate placename display
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_OnLoad()
@@ -168,8 +184,38 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()
     On Error Goto ErrHandler
-        Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.SetFocus
-        DoCmd.GoToRecord , , acNewRec
+        Dim entryId As Variant
+        Dim db As DAO.Database
+        Dim rs As DAO.Recordset
+
+        ' Ensure the current entry is saved before adding a person to it
+        entryId = Forms!frmCourtCaseEntryDetail!court_case_entry_id
+        If IsNull(entryId) Then
+            MsgBox "Please save the court case entry first.", vbInformation
+            Exit Function
+        End If
+
+        ' Open person search dialog; result comes back via g_SelectedPersonId
+        g_SelectedPersonId = Null
+        DoCmd.OpenForm "frmPersonSearch", , , , , acDialog, _
+            "caller=frmCourtCaseEntryDetail;target=_return"
+
+        ' If the user cancelled without selecting, do nothing
+        If IsNull(g_SelectedPersonId) Then Exit Function
+
+        ' Insert a new person_entry row via DAO so the JOIN-based person_name
+        ' resolves correctly after the subsequent requery.
+        Set db = CurrentDb
+        Set rs = db.OpenRecordset("SELECT * FROM person_entry WHERE 1=0", dbOpenDynaset, dbAppendOnly)
+        rs.AddNew
+        rs!court_case_entry_id = CLng(entryId)
+        rs!person_id = CLng(g_SelectedPersonId)
+        rs.Update
+        rs.Close
+
+        ' Refresh subform so the new row (with person_name from JOIN) appears
+        ConfigurePersonEntrySubform "frmCourtCaseEntryDetail"
+
      Exit Function
 ErrHandler:
         MsgBox "Error in frmCourtCaseEntryDetail_cmdAddPersonEntry_Click: " & Err.Description, vbCritical
@@ -380,13 +426,9 @@ Public Function frmPlacenameSearch_OnLoad()
     On Error Resume Next
     ' Show top 50 placenames by default
     Forms!frmPlacenameSearch!lstResults.RowSource = _
-    "SELECT TOP 50 p1.placename_id, p1.placename, " & _
-    "IIf(Nz(DLookup('parish', 'parish', 'parish_id=' & Val(Nz([p1].[parish_code], '0'))), '') <> '', " & _
-    "Nz(DLookup('parish', 'parish', 'parish_id=' & Val(Nz([p1].[parish_code], '0'))), ''), " & _
-    "Nz(p1.parish_name, '')) AS parish_display, " & _
-    "p1.serial_number " & _
-    "FROM placename AS p1 " & _
-    "ORDER BY p1.placename"
+        "SELECT TOP 50 placename_id, placename, parish_name AS parish_display, serial_number " & _
+        "FROM placename " & _
+        "ORDER BY placename"
 End Function
 
 '------------------------------------------------------------------------------
@@ -395,16 +437,23 @@ End Function
 Public Function frmPlacenameSearch_cmdSearch_Click()
     On Error Goto ErrHandler
         Dim searchTerm As String
-        Dim qdf As DAO.QueryDef
+        Dim sSql As String
         Dim db As DAO.Database
 
         Set db = CurrentDb
-        Set qdf = db.QueryDefs("qPlacenameSearch")
 
         searchTerm = "*" & Nz(Forms!frmPlacenameSearch!txtSearch, "") & "*"
-        qdf.Parameters("pSearch") = searchTerm
+        sSql = "SELECT " & _
+                "placename_id, " & _
+                "placename, " & _
+                "parish_name AS parish_display, " & _
+                "serial_number " & _
+                "FROM placename " & _
+                "WHERE (placename LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "   OR (parish_name LIKE '" & Replace(searchTerm, "'", "''") & "') " & _
+                "ORDER BY placename;"
 
-        Forms!frmPlacenameSearch!lstResults.RowSource = "qPlacenameSearch"
+        Forms!frmPlacenameSearch!lstResults.RowSource = sSql
         Forms!frmPlacenameSearch!lstResults.Requery
 
      Exit Function
@@ -468,16 +517,22 @@ End Function
 Public Function frmPersonSearch_cmdSearch_Click()
     On Error Goto ErrHandler
         Dim searchTerm As String
-        Dim qdf As DAO.QueryDef
+        Dim sSql As String
         Dim db As DAO.Database
 
         Set db = CurrentDb
-        Set qdf = db.QueryDefs("qPersonSearch")
 
         searchTerm = "*" & Nz(Forms!frmPersonSearch!txtSearch, "") & "*"
-        qdf.Parameters("pSearch") = searchTerm
+        sSql = "SELECT " & _
+                    "person.person_id, " & _
+                    "person.full_name, " & _
+                    "person.birth_year, " & _
+                    "person.community_name " & _
+               "FROM person " & _
+               "WHERE (((person.[full_name]) LIKE '" & Replace(searchTerm, "'", "''") & "')) " & _
+               "ORDER BY person.full_name;"
 
-        Forms!frmPersonSearch!lstResults.RowSource = "qPersonSearch"
+        Forms!frmPersonSearch!lstResults.RowSource = sSql
         Forms!frmPersonSearch!lstResults.Requery
 
      Exit Function
@@ -507,7 +562,12 @@ Public Function frmPersonSearch_cmdSelect_Click()
 
         ' Write back To caller
         If callerForm <> "" And targetControl <> "" Then
-            Forms(callerForm).Controls(targetControl).Value = selectedId
+            If targetControl = "_return" Then
+                ' Return via module-level variable (used by Add Person flow)
+                g_SelectedPersonId = selectedId
+            Else
+                Forms(callerForm).Controls(targetControl).Value = selectedId
+            End If
         End If
 
         DoCmd.Close acForm, "frmPersonSearch"
@@ -586,6 +646,7 @@ Public Function sfrmCourtCaseEntries_OnLoad()
     Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtPlacename.ColumnWidth = -2
     Forms!frmCourtCase!sfrmCourtCaseEntries.Form!txtOriginalPlacename.ColumnWidth = -2
     Forms!frmCourtCase!sfrmCourtCaseEntries.Form!cmdEntryDetail.ColumnWidth = -2
+    UpdateOpenEntryDetailButtonState
 End Function
 
 '------------------------------------------------------------------------------
@@ -625,6 +686,28 @@ End Function
 '==============================================================================
 ' HELPER FUNCTIONS
 '==============================================================================
+
+'------------------------------------------------------------------------------
+' Enable the parent entry-detail button only when a saved subform row is current
+'------------------------------------------------------------------------------
+Private Sub UpdateOpenEntryDetailButtonState()
+    On Error GoTo ErrHandler
+    Dim frmEntries As Form
+    Dim hasSelectedEntry As Boolean
+
+    Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = False
+
+    If IsNull(Forms!frmCourtCase!court_case_id) Then Exit Sub
+
+    Set frmEntries = Forms!frmCourtCase!sfrmCourtCaseEntries.Form
+    hasSelectedEntry = Not frmEntries.NewRecord And Not IsNull(frmEntries!court_case_entry_id)
+
+    Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = hasSelectedEntry
+    Exit Sub
+
+ErrHandler:
+    Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = False
+End Sub
 
 '------------------------------------------------------------------------------
 ' Open entry detail safely for a known entry ID
