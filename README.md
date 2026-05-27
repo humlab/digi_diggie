@@ -126,8 +126,8 @@ digi_diggie/
      - File → Import File... → `automated_setup.vba`
      - File → Import File... → `minimal_app_generator.vba`
      - File → Import File... → `minimal_app_runtime.vba`
-     - File → Import File... → `UnlinkTables.bas`
+     - File → Import File... → `materialize_linked_tables.vba`
   - Run
     1. `LinkAllTngTables` (in `automated_setup.vba`)
     2. `BuildAllForms` (in `minimal_app_generator.vba`)
-    3. `RunMaterializationPipeline`
+    3. `RunMaterializationPipeline` (in `materialize_linked_tables.vba`)
