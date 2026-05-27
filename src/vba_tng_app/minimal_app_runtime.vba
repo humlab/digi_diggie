@@ -334,7 +334,8 @@ Public Function frmCourtCase_cmdCreateRuling_Click()
         ' Requery the ruling form
         Forms!frmCourtCase!sfrmRuling.Form.Requery
 
-        ' Hide the Create Ruling button now that a ruling exists
+        ' Move focus away before hiding cmdCreateRuling (can't hide the focused control)
+        DoCmd.GoToControl "cmdNewCase"
         Forms!frmCourtCase!cmdCreateRuling.Visible = False
 
         MsgBox "Ruling created.", vbInformation
