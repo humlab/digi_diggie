@@ -311,13 +311,13 @@ Private Sub Create_frmCourtCase()
         ' cmdNewCase button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
         ctl.Name = "cmdNewCase"
-        ctl.caption = "New Case"
+        ctl.caption = "New Court Case"
         ctl.OnClick = "=frmCourtCase_cmdNewCase_Click()"
 
         ' cmdOpenEntryDetail button
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2400, yPos, 2500, 400)
         ctl.Name = "cmdOpenEntryDetail"
-        ctl.caption = "Open Entry Detail"
+        ctl.caption = "Open Court Case Entry"
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
         ctl.Enabled = False
 
