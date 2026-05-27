@@ -308,37 +308,37 @@ Private Sub Create_frmCourtCase()
 
         yPos = yPos + 1450
 
+        ' cmdPrevious button
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 1200, 400)
+        ctl.Name = "cmdPrevious"
+        ctl.caption = "< Previous"
+        ctl.OnClick = "=frmCourtCase_cmdPrevious_Click()"
+
+        ' cmdNext button
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 1500, yPos, 1200, 400)
+        ctl.Name = "cmdNext"
+        ctl.caption = "Next >"
+        ctl.OnClick = "=frmCourtCase_cmdNext_Click()"
+
         ' cmdNewCase button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos, 2000, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 3000, yPos, 2000, 400)
         ctl.Name = "cmdNewCase"
         ctl.caption = "New Court Case"
         ctl.OnClick = "=frmCourtCase_cmdNewCase_Click()"
 
         ' cmdOpenEntryDetail button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2400, yPos, 2500, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5200, yPos, 2500, 400)
         ctl.Name = "cmdOpenEntryDetail"
         ctl.caption = "Open Court Case Entry"
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
         ctl.Enabled = False
 
         ' cmdCreateRuling button (visible only when no ruling exists)
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5100, yPos, 2000, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7900, yPos, 2000, 400)
         ctl.Name = "cmdCreateRuling"
         ctl.caption = "Create Ruling"
         ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
         ctl.Visible = True ' Default To visible (no ruling initially)
-
-        ' cmdPrevious button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7300, yPos, 1200, 400)
-        ctl.Name = "cmdPrevious"
-        ctl.caption = "< Previous"
-        ctl.OnClick = "=frmCourtCase_cmdPrevious_Click()"
-
-        ' cmdNext button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 8600, yPos, 1200, 400)
-        ctl.Name = "cmdNext"
-        ctl.caption = "Next >"
-        ctl.OnClick = "=frmCourtCase_cmdNext_Click()"
 
         yPos = yPos + 800
         Debug.Print "Creating tab control at yPos: " & yPos
