@@ -33,7 +33,7 @@ Public Function frmCourtCase_OnCurrent()
 
     If IsNull(courtCaseId) Then
         ' New/unsaved record - hide button Until saved
-        Forms!frmCourtCase!cmdCreateRuling.Visible = False
+        Forms!frmCourtCase!cmdCreateRuling.Enabled = False
         UpdateOpenEntryDetailButtonState
      Exit Function
     End If
@@ -43,8 +43,8 @@ Public Function frmCourtCase_OnCurrent()
     hasRuling = Not rs.EOF
     rs.Close
 
-    ' Show button only when no ruling exists
-    Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
+    ' Enable button only when no ruling exists
+    Forms!frmCourtCase!cmdCreateRuling.Enabled = Not hasRuling
 
     ' Keep entry-detail action in sync with the linked entry subform selection.
     UpdateOpenEntryDetailButtonState
@@ -334,9 +334,9 @@ Public Function frmCourtCase_cmdCreateRuling_Click()
         ' Requery the ruling form
         Forms!frmCourtCase!sfrmRuling.Form.Requery
 
-        ' Move focus away before hiding cmdCreateRuling (can't hide the focused control)
+        ' Move focus away before disabling cmdCreateRuling (can't disable the focused control)
         DoCmd.GoToControl "cmdNewCase"
-        Forms!frmCourtCase!cmdCreateRuling.Visible = False
+        Forms!frmCourtCase!cmdCreateRuling.Enabled = False
 
         MsgBox "Ruling created.", vbInformation
 
@@ -356,8 +356,8 @@ Public Function sfrmRuling_OnCurrent()
     hasRuling = Not (Forms!frmCourtCase!sfrmRuling.Form.Recordset.EOF And _
     Forms!frmCourtCase!sfrmRuling.Form.Recordset.BOF)
 
-    ' Show/hide Create Ruling button on parent form
-    Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
+    ' Enable/disable Create Ruling button on parent form
+    Forms!frmCourtCase!cmdCreateRuling.Enabled = Not hasRuling
 
     ' Show/hide "No ruling" Label in subform
     Forms!frmCourtCase!sfrmRuling.Form!lblNoRuling.Visible = Not hasRuling
