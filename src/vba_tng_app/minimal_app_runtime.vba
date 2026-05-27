@@ -226,27 +226,38 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_cmdDeletePersonEntry_Click()
     On Error Goto ErrHandler
+        Dim subFrm As Form
         Dim rs As DAO.Recordset
+        Dim db As DAO.Database
+        Dim personEntryId As Variant
 
-        With Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form
-            Set rs = .RecordsetClone
-            If rs.BOF And rs.EOF Then
-                MsgBox "No person entry record is selected.", vbInformation
-                rs.Close
-                Exit Function
-            End If
+        Set subFrm = Forms!frmCourtCaseEntryDetail!sfrmPersonEntryByEntry.Form
+
+        Set rs = subFrm.RecordsetClone
+        If rs.BOF And rs.EOF Then
+            MsgBox "No person entry record is selected.", vbInformation
+            rs.Close
+            Exit Function
+        End If
+        rs.Close
+
+        If subFrm.NewRecord Then
+            MsgBox "No person entry record is selected.", vbInformation
+            Exit Function
+        End If
+
+        If MsgBox("Delete selected person entry?", vbQuestion + vbYesNo, "Confirm Delete") = vbYes Then
+            ' Read the PK from a clone synced to the current row, then delete via DAO.
+            ' The subform uses a JOIN-based RecordSource so its recordset is non-deletable directly.
+            Set rs = subFrm.RecordsetClone
+            rs.Bookmark = subFrm.Bookmark
+            personEntryId = rs!person_entry_id
             rs.Close
 
-            If .NewRecord Then
-                MsgBox "No person entry record is selected.", vbInformation
-                Exit Function
-            End If
-
-            If MsgBox("Delete selected person entry?", vbQuestion + vbYesNo, "Confirm Delete") = vbYes Then
-                .SetFocus
-                DoCmd.RunCommand acCmdDeleteRecord
-            End If
-        End With
+            Set db = CurrentDb
+            db.Execute "DELETE FROM person_entry WHERE person_entry_id = " & CLng(personEntryId), dbFailOnError
+            ConfigurePersonEntrySubform "frmCourtCaseEntryDetail"
+        End If
 
      Exit Function
 ErrHandler:
