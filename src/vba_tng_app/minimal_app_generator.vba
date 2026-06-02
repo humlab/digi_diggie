@@ -800,13 +800,13 @@ Private Sub Create_sfrmRuling()
 
         ' Buttons above the label, which is just above sfrmPersonOutcomes
         ' cmdAddOutcome
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos - 700, 1700, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos - 700, 2500, 300)
         ctl.Name = "cmdAddOutcome"
         ctl.caption = "Add Personal Outcome"
         ctl.OnClick = "=sfrmRuling_cmdAddOutcome_Click()"
 
         ' cmdDeleteOutcome
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2000, yPos - 700, 1700, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2800, yPos - 700, 2800, 300)
         ctl.Name = "cmdDeleteOutcome"
         ctl.caption = "Delete Personal Outcome"
         ctl.OnClick = "=sfrmRuling_cmdDeleteOutcome_Click()"
