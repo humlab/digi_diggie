@@ -1193,12 +1193,21 @@ NotFound:
 End Function
 
 ' ============================================================
+' Enable Access's native "Compact on Close" feature for this database session
+' ============================================================
+Public Sub EnableCompactOnClose()
+    ' Turns on the native "Compact on Close" feature for this database session
+    Application.SetOption "Auto Compact", True
+End Sub
+
+' ============================================================
 ' Run full materialization pipeline in order:
 '   1. MaterializeAllPostgresLinkedTables
 '   2. UnlinkTablesAndRemovePrefix
 '   3. CreateIndexesAndConstraints
 '
 ' Each step will prompt for confirmation individually.
+' At the end, Access's native "Compact on Close" feature will be enabled for this session to optimize the database file after all changes.
 ' ============================================================
 Public Sub RunMaterializationPipeline( _
     Optional ByVal localPrefix As String = "loc_", _
@@ -1225,6 +1234,9 @@ Public Sub RunMaterializationPipeline( _
 
     Debug.Print "Step 3: CreateIndexesAndConstraints"
     CreateIndexesAndConstraints
+
+    Debug.Print "Enabling Access's native Compact on Close feature for this session..."
+    EnableCompactOnClose
 
     Debug.Print "=== MATERIALIZATION PIPELINE COMPLETE ==="
     MsgBox "Pipeline complete. See Immediate Window (Ctrl+G) for details.", vbInformation
