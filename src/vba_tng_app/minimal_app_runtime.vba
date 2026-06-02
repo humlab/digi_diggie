@@ -386,13 +386,32 @@ End Function
 '------------------------------------------------------------------------------
 Public Function sfrmRuling_cmdAddOutcome_Click()
     On Error Goto ErrHandler
-        If IsNull(Forms!frmCourtCase!sfrmRuling.Form!ruling_id) Then
+        Dim rulingId As Variant
+        Dim db As DAO.Database
+        Dim rs As DAO.Recordset
+
+        ' Get parent ruling_id
+        rulingId = Forms!frmCourtCase!sfrmRuling.Form!ruling_id
+        If IsNull(rulingId) Then
             MsgBox "Please create/save a ruling first.", vbInformation
             Exit Function
         End If
 
+        ' Insert new person_outcome with default outcome_type_id (first one)
+        Set db = CurrentDb
+        Set rs = db.OpenRecordset("person_outcome", dbOpenDynaset)
+        rs.AddNew
+        rs!ruling_id = CLng(rulingId)
+        rs!outcome_type_id = DMin("outcome_type_id", "outcome_type")
+        rs.Update
+        rs.Close
+
+        ' Requery subform to show new record
+        Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.Form.Requery
+
+        ' Set focus to the new record (the last one) in the person outcomes subform for better UX
         Forms!frmCourtCase!sfrmRuling.Form!sfrmPersonOutcomes.SetFocus
-        DoCmd.GoToRecord , , acNewRec
+        DoCmd.GoToRecord , , acLast
 
      Exit Function
 ErrHandler:
