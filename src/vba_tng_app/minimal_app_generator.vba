@@ -732,7 +732,6 @@ Private Sub Create_sfrmRuling()
         Dim frm As Form
         Dim ctl As Control
         Dim yPos As Integer
-        Dim outcomeButtonsTop As Integer
         Dim strFormName As String
 
         Set frm = CreateForm()
@@ -749,10 +748,10 @@ Private Sub Create_sfrmRuling()
         yPos = 200
 
         ' lblNoRuling - shown when no ruling exists
-        Set ctl = CreateControl(frm.Name, acLabel, acDetail, "", "", 200, yPos, 6000, 400)
+        Set ctl = CreateControl(frm.Name, acLabel, acDetail, "", "", 3500, yPos, 6000, 400)
         ctl.Name = "lblNoRuling"
         ctl.caption = "No ruling yet. Click 'Create Ruling' button above To add one."
-        ctl.ForeColor = RGB(128, 128, 128) ' Gray text
+        ctl.ForeColor = RGB(128, 0, 0) ' Red text
 
         ' yPos = yPos + 600
 
@@ -761,7 +760,6 @@ Private Sub Create_sfrmRuling()
         ctl.Name = "txtRulingYear"
         ctl.ControlSource = "ruling_year"
         CreateLabel frm.Name, "lblRulingYear", "Year:", 200, yPos, 1200, 300
-        outcomeButtonsTop = yPos
 
         yPos = yPos + 500
 
@@ -798,7 +796,22 @@ Private Sub Create_sfrmRuling()
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         CreateLabel frm.Name, "lblDescription", "Description:", 200, yPos, 1200, 300
 
-        yPos = yPos + 900
+        yPos = yPos + 1500
+
+        ' Buttons above the label, which is just above sfrmPersonOutcomes
+        ' cmdAddOutcome
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 200, yPos - 700, 1700, 300)
+        ctl.Name = "cmdAddOutcome"
+        ctl.caption = "Add Personal Outcome"
+        ctl.OnClick = "=sfrmRuling_cmdAddOutcome_Click()"
+
+        ' cmdDeleteOutcome
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2000, yPos - 700, 1700, 300)
+        ctl.Name = "cmdDeleteOutcome"
+        ctl.caption = "Delete Personal Outcome"
+        ctl.OnClick = "=sfrmRuling_cmdDeleteOutcome_Click()"
+
+        CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 350, 3000, 300
 
         ' sfrmPersonOutcomes subform (embedded in ruling)
         Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 9000, 2000)
@@ -808,19 +821,6 @@ Private Sub Create_sfrmRuling()
         ctl.LinkChildFields = "ruling_id"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
         ctl.VerticalAnchor = acVerticalAnchorBoth ' Stretch vertically
-        CreateLabel strFormName, "lblPersonOutcomes", "Person Outcomes:", 200, yPos - 250, 3000, 300
-
-        ' cmdAddOutcome
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5600, outcomeButtonsTop, 1700, 300)
-        ctl.Name = "cmdAddOutcome"
-        ctl.caption = "Add Outcome"
-        ctl.OnClick = "=sfrmRuling_cmdAddOutcome_Click()"
-
-        ' cmdDeleteOutcome
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7400, outcomeButtonsTop, 1700, 300)
-        ctl.Name = "cmdDeleteOutcome"
-        ctl.caption = "Delete Outcome"
-        ctl.OnClick = "=sfrmRuling_cmdDeleteOutcome_Click()"
 
         DoCmd.Close acForm, strFormName, acSaveYes
         DoCmd.Rename "sfrmRuling", acForm, strFormName
