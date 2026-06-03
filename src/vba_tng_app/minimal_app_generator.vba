@@ -26,6 +26,8 @@ End Sub
 ' Main Entry Point
 '------------------------------------------------------------------------------
 Public Sub BuildAllForms()
+    Application.Echo False
+
     On Error GoTo ErrHandler
 
         Debug.Print "Starting BuildAllForms..."
@@ -57,9 +59,13 @@ Public Sub BuildAllForms()
         Debug.Print "BuildAllForms completed successfully."
      Exit Sub
 
+ExitHandler:
+    Application.Echo True
+
 ErrHandler:
         MsgBox "Error in BuildAllForms: " & Err.Description, vbCritical
         Debug.Print "Error in BuildAllForms: " & Err.Description
+        Resume ExitHandler
 End Sub
 
 '------------------------------------------------------------------------------
