@@ -26,11 +26,16 @@ End Sub
 ' Main Entry Point
 '------------------------------------------------------------------------------
 Public Sub BuildAllForms()
-    Application.Echo False
+    ' Turn off screen updating for performance (remember To turn back on in error handler)
+    Application.Echo False, "Building forms, please wait..."
 
     On Error GoTo ErrHandler
 
         Debug.Print "Starting BuildAllForms..."
+
+        ' Close all open forms And tables To prevent "object is open" errors during deletion
+        CloseAllOpenForms
+        CloseAllOpenTables
 
         ' Delete existing forms If they exist
         DeleteFormsIfExist
@@ -57,12 +62,13 @@ Public Sub BuildAllForms()
         ' "Open frmCourtCase To begin data entry.", vbInformation, "Build Complete"
 
         Debug.Print "BuildAllForms completed successfully."
-     Exit Sub
 
 ExitHandler:
-    Application.Echo True
+    Application.Echo True ' Ensure screen turns back on after completion
+    Exit Sub
 
 ErrHandler:
+        Application.Echo True ' Ensure screen turns on if error occurs
         MsgBox "Error in BuildAllForms: " & Err.Description, vbCritical
         Debug.Print "Error in BuildAllForms: " & Err.Description
         Resume ExitHandler
@@ -198,6 +204,40 @@ Private Sub DeleteFormsIfExist()
 
     On Error GoTo 0
 End Sub
+
+'------------------------------------------------------------------------------
+' Helper: Close all open tables To prevent "object is open" errors during deletion
+'------------------------------------------------------------------------------
+Private Sub CloseAllOpenTables()
+    ' Closes any open table datasheets in the UI, if present
+    On Error Resume Next
+
+    Dim accObj As Access.AccessObject
+    For Each accObj In CurrentData.AllTables
+        If SysCmd(acSysCmdGetObjectState, acTable, accObj.Name) <> 0 Then
+            DoCmd.Close acTable, accObj.Name, acSaveNo
+        End If
+    Next
+
+    On Error GoTo 0
+End Sub
+
+'------------------------------------------------------------------------------
+' Helper: Close all open forms To prevent "object is open" errors during deletion
+'------------------------------------------------------------------------------
+Public Sub CloseAllOpenForms()
+    On Error Resume Next
+    Dim i As Long
+    
+    ' Loop backwards to prevent index shift errors
+    For i = Forms.Count - 1 To 0 Step -1
+        ' acSaveYes saves layout/design changes, not record data
+        DoCmd.Close acForm, Forms(i).Name, acSaveYes
+    Next i
+
+    On Error GoTo 0
+End Sub
+
 
 '------------------------------------------------------------------------------
 ' Create Saved Queries
