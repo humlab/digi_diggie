@@ -565,15 +565,15 @@ Private Sub Create_frmCourtCaseEntryDetail()
         yPos = 200
 
         ' entry_year
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 2000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2200, yPos, 2000, 300)
         ctl.Name = "txtEntryYear"
         ctl.ControlSource = "entry_year"
-        CreateLabel frm.Name, "lblEntryYear", "Entry Year:", 200, yPos, 800, 300
+        CreateLabel frm.Name, "lblEntryYear", "Entry Year:", 200, yPos, 1000, 300
 
         yPos = yPos + 500
 
         ' season_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2000, yPos, 3000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2200, yPos, 3000, 300)
         ctl.Name = "cboSeasonId"
         ctl.ControlSource = "season_id"
         ctl.RowSource = "Select season_id, season_name FROM season ORDER BY season_name;"
@@ -586,7 +586,7 @@ Private Sub Create_frmCourtCaseEntryDetail()
         yPos = yPos + 500
 
         ' land_use_id
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2000, yPos, 4000, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2200, yPos, 4000, 300)
         ctl.Name = "cboLandUseId"
         ctl.ControlSource = "land_use_id"
         ctl.RowSource = "Select land_use_id, description FROM land_use ORDER BY description;"
@@ -599,19 +599,19 @@ Private Sub Create_frmCourtCaseEntryDetail()
         yPos = yPos + 500
 
         ' txtPlacenameId (bound)
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 1500, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2200, yPos, 1300, 300)
         ctl.Name = "txtPlacenameId"
         ctl.ControlSource = "placename_id"
         CreateLabel frm.Name, "lblPlacenameId", "Placename ID:", 200, yPos, 1600, 300
 
         ' txtPlacenameDisplay (unbound)
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 3600, yPos, 4000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 3600, yPos, 3100, 300)
         ctl.Name = "txtPlacenameDisplay"
         ctl.Enabled = False
         ctl.Locked = True
 
         ' cmdPickPlacename
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7700, yPos, 1500, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6800, yPos, 1400, 300)
         ctl.Name = "cmdPickPlacename"
         ctl.caption = "Pick..."
         ctl.OnClick = "=frmCourtCaseEntryDetail_cmdPickPlacename_Click()"
@@ -619,16 +619,16 @@ Private Sub Create_frmCourtCaseEntryDetail()
         yPos = yPos + 500
 
         ' original_placename
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2200, yPos, 6000, 300)
         ctl.Name = "txtOriginalPlacename"
         ctl.ControlSource = "original_placename"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
-        CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename:", 200, yPos, 1600, 300
+        CreateLabel frm.Name, "lblOriginalPlacename", "Original Placename:", 200, yPos, 1900, 300
 
         yPos = yPos + 500
 
         ' curated_text
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 1200)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2200, yPos, 6000, 1200)
         ctl.Name = "txtCuratedText"
         ctl.ControlSource = "curated_text"
         ctl.HorizontalAnchor = acHorizontalAnchorBoth ' Stretch horizontally
@@ -638,19 +638,19 @@ Private Sub Create_frmCourtCaseEntryDetail()
         yPos = yPos + 2000
 
         ' cmdAddPersonEntry
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6200, yPos - 380, 1700, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 4700, yPos - 380, 1700, 300)
         ctl.Name = "cmdAddPersonEntry"
         ctl.caption = "Add Person"
         ctl.OnClick = "=frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()"
 
         ' cmdDeletePersonEntry
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 8000, yPos - 380, 1700, 300)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6500, yPos - 380, 1700, 300)
         ctl.Name = "cmdDeletePersonEntry"
         ctl.caption = "Delete Person"
         ctl.OnClick = "=frmCourtCaseEntryDetail_cmdDeletePersonEntry_Click()"
 
         ' sfrmPersonEntryByEntry subform
-        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 9000, 2000)
+        Set ctl = CreateControl(frm.Name, acSubform, acDetail, "", "", 200, yPos, 8000, 2000)
         ctl.Name = "sfrmPersonEntryByEntry"
         ctl.SourceObject = "Form.sfrmPersonEntryByEntry"
         ctl.LinkMasterFields = "court_case_entry_id"
