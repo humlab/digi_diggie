@@ -59,6 +59,7 @@ End Function
 Public Function frmCourtCase_cmdNewCase_Click()
     On Error Goto ErrHandler
         DoCmd.GoToRecord , , acNewRec
+        Forms!frmCourtCase!cmdCreateRuling.Enabled = True
      Exit Function
  ErrHandler:
         MsgBox "Error in frmCourtCase_cmdNewCase_Click: " & Err.Description, vbCritical
