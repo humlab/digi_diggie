@@ -78,6 +78,7 @@ Public Function LinkAllTngTables() As Boolean
     Set db = Nothing
     
     LinkAllTngTables = True
+    Debug.Print "All tables linked successfully."
     Exit Function
     
 ErrorHandler:
