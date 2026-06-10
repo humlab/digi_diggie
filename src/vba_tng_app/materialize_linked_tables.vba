@@ -745,9 +745,9 @@ Public Sub CreateIndexesAndConstraints()
     ' Confirm with user before proceeding
     If MsgBox("Create all indexes and foreign key constraints for DigiDiggie TNG schema?" & vbNewLine & vbNewLine & _
               "This will:" & vbNewLine & _
-              "• Create performance indexes on key fields" & vbNewLine & _
-              "• Establish foreign key relationships" & vbNewLine & _
-              "• Enforce referential integrity", _
+              "1. Create performance indexes on key fields" & vbNewLine & _
+              "2. Establish foreign key relationships" & vbNewLine & _
+              "3. Enforce referential integrity", _
               vbYesNo + vbQuestion, _
               "Create Indexes and Constraints") = vbNo Then
         MsgBox "Operation cancelled by user.", vbInformation
@@ -990,13 +990,13 @@ Private Function CreateFKRelation( _
     ' Append the relationship to the database
     db.Relations.Append rel
     
-    Debug.Print "  Created FK: " & parentTable & "." & parentField & " → " & childTable & "." & childField
+    Debug.Print "  Created FK: " & parentTable & "." & parentField & " to " & childTable & "." & childField
     CreateFKRelation = True
     Exit Function
     
 ErrorHandler:
     Debug.Print "  ERROR creating FK " & relationName & ": " & Err.Description
-    Debug.Print "    Details: " & childTable & "." & childField & " → " & parentTable & "." & parentField
+    Debug.Print "    Details: " & childTable & "." & childField & " to " & parentTable & "." & parentField
     Debug.Print "    Error Number: " & Err.Number
     
     ' Additional diagnostics for common issues
