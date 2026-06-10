@@ -29,7 +29,8 @@ Option Explicit
 
 Public Sub MaterializeAllPostgresLinkedTables( _
     Optional ByVal localPrefix As String = "loc_", _
-    Optional ByVal dropIfExists As Boolean = False)
+    Optional ByVal dropIfExists As Boolean = False, _
+    Optional ByVal showMessageBoxes As Boolean = True)
 
     Dim db As DAO.Database
     Dim tdf As DAO.TableDef
@@ -139,14 +140,17 @@ ContinueCreateLoop:
           "Local prefix: " & localPrefix & vbCrLf & _
           "Tables processed: " & linkedTables.Count & vbCrLf & vbCrLf & _
           "See Immediate Window (Ctrl+G) for details."
-    MsgBox msg, vbInformation
+    If showMessageBoxes Then
+        MsgBox msg, vbInformation
+    End If
 End Sub
 
 ' ============================================================
 ' Remove all linked tables and remove "loc_" prefix from local tables
 ' ============================================================
 Public Sub UnlinkTablesAndRemovePrefix( _
-    Optional ByVal localPrefix As String = "loc_")
+    Optional ByVal localPrefix As String = "loc_", _
+    Optional ByVal showMessageBoxes As Boolean = True)
 
     Dim db As DAO.Database
     Dim tdf As DAO.TableDef
@@ -165,14 +169,16 @@ Public Sub UnlinkTablesAndRemovePrefix( _
     renamedCount = 0
 
     ' Confirm with user before proceeding
-    If MsgBox("This will:" & vbNewLine & vbNewLine & _
-              "1. Delete ALL linked PostgreSQL tables" & vbNewLine & _
-              "2. Remove '" & localPrefix & "' prefix from local tables" & vbNewLine & vbNewLine & _
-              "This action cannot be undone. Continue?", _
-              vbYesNo + vbExclamation + vbDefaultButton2, _
-              "Unlink Tables and Remove Prefix") = vbNo Then
-        MsgBox "Operation cancelled by user.", vbInformation
-        Exit Sub
+    If showMessageBoxes Then
+        If MsgBox("This will:" & vbNewLine & vbNewLine & _
+                  "1. Delete ALL linked PostgreSQL tables" & vbNewLine & _
+                  "2. Remove '" & localPrefix & "' prefix from local tables" & vbNewLine & vbNewLine & _
+                  "This action cannot be undone. Continue?", _
+                  vbYesNo + vbExclamation + vbDefaultButton2, _
+                  "Unlink Tables and Remove Prefix") = vbNo Then
+            MsgBox "Operation cancelled by user.", vbInformation
+            Exit Sub
+        End If
     End If
 
     ' 1) Find linked PostgreSQL tables and local tables with prefix
@@ -230,7 +236,9 @@ Public Sub UnlinkTablesAndRemovePrefix( _
           "Linked tables removed: " & linkedCount & vbCrLf & _
           "Local tables renamed: " & renamedCount & vbCrLf & vbCrLf & _
           "See Immediate Window (Ctrl+G) for details."
-    MsgBox msg, vbInformation
+    If showMessageBoxes Then
+        MsgBox msg, vbInformation
+    End If
 End Sub
 
 Private Function IsUserTable(ByVal tdf As DAO.TableDef) As Boolean
@@ -734,7 +742,8 @@ End Function
 ' ============================================================
 ' Create all indexes and foreign key constraints for DigiDiggie schema
 ' ============================================================
-Public Sub CreateIndexesAndConstraints()
+Public Sub CreateIndexesAndConstraints( _
+    Optional ByVal showMessageBoxes As Boolean = True)
     ' Creates all indexes and foreign key relationships for the DigiDiggie TNG schema
     ' Call this after tables are created to optimize performance and enforce referential integrity
     
@@ -743,15 +752,17 @@ Public Sub CreateIndexesAndConstraints()
     Dim msg As String
     
     ' Confirm with user before proceeding
-    If MsgBox("Create all indexes and foreign key constraints for DigiDiggie TNG schema?" & vbNewLine & vbNewLine & _
-              "This will:" & vbNewLine & _
-              "1. Create performance indexes on key fields" & vbNewLine & _
-              "2. Establish foreign key relationships" & vbNewLine & _
-              "3. Enforce referential integrity", _
-              vbYesNo + vbQuestion, _
-              "Create Indexes and Constraints") = vbNo Then
-        MsgBox "Operation cancelled by user.", vbInformation
-        Exit Sub
+    If showMessageBoxes Then
+        If MsgBox("Create all indexes and foreign key constraints for DigiDiggie TNG schema?" & vbNewLine & vbNewLine & _
+                  "This will:" & vbNewLine & _
+                  "1. Create performance indexes on key fields" & vbNewLine & _
+                  "2. Establish foreign key relationships" & vbNewLine & _
+                  "3. Enforce referential integrity", _
+                  vbYesNo + vbQuestion, _
+                  "Create Indexes and Constraints") = vbNo Then
+            MsgBox "Operation cancelled by user.", vbInformation
+            Exit Sub
+        End If
     End If
     
     Debug.Print "=== CREATING INDEXES AND CONSTRAINTS ==="
@@ -773,7 +784,9 @@ Public Sub CreateIndexesAndConstraints()
           "Indexes created: " & indexCount & vbCrLf & _
           "Foreign key relationships: " & relationCount & vbCrLf & vbCrLf & _
           "See Immediate Window (Ctrl+G) for details."
-    MsgBox msg, vbInformation
+    If showMessageBoxes Then
+        MsgBox msg, vbInformation
+    End If
 End Sub
 
 ' ============================================================
@@ -1211,33 +1224,38 @@ End Sub
 ' ============================================================
 Public Sub RunMaterializationPipeline( _
     Optional ByVal localPrefix As String = "loc_", _
-    Optional ByVal dropIfExists As Boolean = False)
+    Optional ByVal dropIfExists As Boolean = False, _
+    Optional ByVal showMessageBoxes As Boolean = False)
 
-    If MsgBox("Run the full materialization pipeline?" & vbNewLine & vbNewLine & _
-              "Steps:" & vbNewLine & _
-              "  1. Materialize all linked PostgreSQL tables" & vbNewLine & _
-              "  2. Unlink PostgreSQL tables and remove prefix" & vbNewLine & _
-              "  3. Create indexes and foreign key constraints" & vbNewLine & vbNewLine & _
-              "Each step will prompt for individual confirmation.", _
-              vbYesNo + vbQuestion, "Run Materialization Pipeline") = vbNo Then
-        MsgBox "Pipeline cancelled by user.", vbInformation
-        Exit Sub
+    If showMessageBoxes Then
+        If MsgBox("Run the full materialization pipeline?" & vbNewLine & vbNewLine & _
+                  "Steps:" & vbNewLine & _
+                  "  1. Materialize all linked PostgreSQL tables" & vbNewLine & _
+                  "  2. Unlink PostgreSQL tables and remove prefix" & vbNewLine & _
+                  "  3. Create indexes and foreign key constraints" & vbNewLine & vbNewLine & _
+                  "Each step will prompt for individual confirmation.", _
+                  vbYesNo + vbQuestion, "Run Materialization Pipeline") = vbNo Then
+            MsgBox "Pipeline cancelled by user.", vbInformation
+            Exit Sub
+        End If
     End If
 
     Debug.Print "=== MATERIALIZATION PIPELINE START ==="
 
     Debug.Print "Step 1: MaterializeAllPostgresLinkedTables"
-    MaterializeAllPostgresLinkedTables localPrefix, dropIfExists
+    MaterializeAllPostgresLinkedTables localPrefix, dropIfExists, showMessageBoxes
 
     Debug.Print "Step 2: UnlinkTablesAndRemovePrefix"
-    UnlinkTablesAndRemovePrefix localPrefix
+    UnlinkTablesAndRemovePrefix localPrefix, showMessageBoxes
 
     Debug.Print "Step 3: CreateIndexesAndConstraints"
-    CreateIndexesAndConstraints
+    CreateIndexesAndConstraints showMessageBoxes
 
     Debug.Print "Enabling Access's native Compact on Close feature for this session..."
     EnableCompactOnClose
 
     Debug.Print "=== MATERIALIZATION PIPELINE COMPLETE ==="
-    MsgBox "Pipeline complete. See Immediate Window (Ctrl+G) for details.", vbInformation
+    If showMessageBoxes Then
+        MsgBox "Pipeline complete. See Immediate Window (Ctrl+G) for details.", vbInformation
+    End If
 End Sub
