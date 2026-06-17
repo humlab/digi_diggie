@@ -4,24 +4,23 @@ Option Explicit
 ' Automated setup script for DigiDiggie TNG Access App
 Public Sub AutomatedFullSetup()
     On Error GoTo ErrorHandler
-    
     Dim success As Boolean
-    
-    ' Step 1: Link all tables
-    MsgBox "Step 1: Linking PostgreSQL tables...", vbInformation
+
+    ' Step 1: Link tables
     success = LinkAllTngTables()
     If Not success Then
-        MsgBox "Failed to link tables. Setup aborted.", vbCritical
+        MsgBox "Table linking failed. Please check the debug output for details.", vbCritical
         Exit Sub
     End If
-    
-    ' Step 2: Import and run form generator
-    MsgBox "Step 2: Generating forms...", vbInformation
-    ' Assumes generate_tng_app module is already imported
-    Call BuildForms_DigiDiggie_TNG
-    
-    MsgBox "Setup complete! Your DigiDiggie TNG app is ready.", vbInformation, "Success"
-    Exit Sub
+
+    ' Step 2: Build forms
+    BuildAllForms
+
+    ' Step 3: Run materialization pipeline
+    RunMaterializationPipeline
+
+    MsgBox "Automated setup completed successfully!", vbInformation
+    Exit Sub    
     
 ErrorHandler:
     MsgBox "Setup error: " & Err.Description, vbCritical
