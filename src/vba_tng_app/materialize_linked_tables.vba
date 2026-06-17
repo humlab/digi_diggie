@@ -1227,6 +1227,8 @@ Public Sub RunMaterializationPipeline( _
     Optional ByVal dropIfExists As Boolean = False, _
     Optional ByVal showMessageBoxes As Boolean = False)
 
+    Dim successCount As Integer
+
     If showMessageBoxes Then
         If MsgBox("Run the full materialization pipeline?" & vbNewLine & vbNewLine & _
                   "Steps:" & vbNewLine & _
@@ -1248,8 +1250,9 @@ Public Sub RunMaterializationPipeline( _
     Debug.Print "Step 2: UnlinkTablesAndRemovePrefix"
     UnlinkTablesAndRemovePrefix localPrefix, showMessageBoxes
 
-    Debug.Print "Step 3: CreateIndexesAndConstraints"
-    CreateIndexesAndConstraints showMessageBoxes
+    ' Step 3: Create all indexes
+    successCount = CreateAllIndexes()
+    Debug.Print "Step 3: CreateAllIndexes - " & successCount & " indexes created."
 
     Debug.Print "Enabling Access's native Compact on Close feature for this session..."
     EnableCompactOnClose
