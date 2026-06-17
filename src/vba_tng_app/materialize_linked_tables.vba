@@ -736,7 +736,7 @@ Private Function BuildRelationName( _
     BuildRelationName = Left$("rel_" & _
         SafeObjectName(childTable) & "_" & _
         SafeObjectName(parentTable) & "_" & _
-        SafeObjectName(childField), 60)
+        SafeObjectName(childField), 64) ' Access relation names max length is 64 chars
 End Function
 
 ' ============================================================
@@ -947,7 +947,9 @@ Private Function CreateFKRelation( _
     ByVal childField As String, _
     ByVal parentTable As String, _
     ByVal parentField As String, _
-    ByVal relationName As String) As Boolean
+    ByVal relationName As String, _
+    Optional ByVal cascadeDeletes As Boolean = False) As Boolean
+    
     
     On Error GoTo ErrorHandler
     
@@ -990,9 +992,10 @@ Private Function CreateFKRelation( _
     ' Create the relationship
     Set rel = db.CreateRelation(relationName, parentTable, childTable)
     
-    ' Use minimal attributes - no cascade, basic referential integrity only
-    ' This matches the test that succeeded
-    rel.Attributes = 0
+    ' Set cascade delete attribute if specified
+    If cascadeDeletes Then
+        rel.Attributes = dbRelationDeleteCascade
+    End If
     
     ' Create the field relationship  
     ' In Access DAO: CreateField uses parent table field, ForeignName is child table field
@@ -1003,7 +1006,7 @@ Private Function CreateFKRelation( _
     ' Append the relationship to the database
     db.Relations.Append rel
     
-    Debug.Print "  Created FK: " & parentTable & "." & parentField & " to " & childTable & "." & childField
+    Debug.Print "  Created FK: " & parentTable & "." & parentField & " to " & childTable & "." & childField & " (Relation Name: " & relationName & ", Cascade Deletes: " & cascadeDeletes & ")"
     CreateFKRelation = True
     Exit Function
     
@@ -1019,6 +1022,8 @@ ErrorHandler:
         Debug.Print "    Possible cause: Field data type mismatch"
     ElseIf Err.Number = 3022 Then  ' Changes to table were unsuccessful
         Debug.Print "    Possible cause: Data integrity violation or existing data conflicts"
+    ElseIf Err.Number = 3707 Then  ' The relationship already exists
+        Debug.Print "    Possible cause: Relationship with same name already exists"
     End If
     
     CreateFKRelation = False
@@ -1214,6 +1219,34 @@ Public Sub EnableCompactOnClose()
 End Sub
 
 ' ============================================================
+' Update existing relationships to set cascade delete where appropriate
+' Updates the following relationships to enable cascade delete:
+'   - person_outcome -> ruling
+'   - person_entry -> court_case_entry
+'   - ruling -> court_case
+'   - court_case_entry -> court_case
+' ============================================================
+Private Sub UpdateCascadeDeleteOnRelationships()
+    Dim db As DAO.Database
+    Dim rel As DAO.Relation
+    Set db = CurrentDb
+
+    On Error Resume Next
+    ' Remove existing relations that we will update
+    db.Relations.Delete "rel_loc_person_outcome_loc_ruling_ruling_id"
+    db.Relations.Delete "rel_loc_person_entry_loc_court_case_entry_court_case_entry_id"
+    db.Relations.Delete "rel_loc_ruling_loc_court_case_court_case_id"
+    db.Relations.Delete "rel_loc_court_case_entry_loc_court_case_court_case_id"
+
+    ' Recreate with cascade delete
+    CreateFKRelation db, "person_outcome", "ruling_id", "ruling", "ruling_id", "rel_loc_person_outcome_loc_ruling_ruling_id", True
+    CreateFKRelation db, "person_entry", "court_case_entry_id", "court_case_entry", "court_case_entry_id", "rel_loc_person_entry_loc_court_case_entry_court_case_entry_id", True
+    CreateFKRelation db, "ruling", "court_case_id", "court_case", "court_case_id", "rel_loc_ruling_loc_court_case_court_case_id", True
+    CreateFKRelation db, "court_case_entry", "court_case_id", "court_case", "court_case_id", "rel_loc_court_case_entry_loc_court_case_court_case_id", True
+
+End Sub
+
+' ============================================================
 ' Run full materialization pipeline in order:
 '   1. MaterializeAllPostgresLinkedTables
 '   2. UnlinkTablesAndRemovePrefix
@@ -1253,6 +1286,10 @@ Public Sub RunMaterializationPipeline( _
     ' Step 3: Create all indexes
     successCount = CreateAllIndexes()
     Debug.Print "Step 3: CreateAllIndexes - " & successCount & " indexes created."
+
+    ' Step 4: Update relationships to set cascade delete where appropriate
+    UpdateCascadeDeleteOnRelationships
+    Debug.Print "Step 4: UpdateCascadeDeleteOnRelationships - cascade delete enabled on key relationships."
 
     Debug.Print "Enabling Access's native Compact on Close feature for this session..."
     EnableCompactOnClose
