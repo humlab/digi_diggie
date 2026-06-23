@@ -307,6 +307,7 @@ Private Sub Create_frmCourtCase()
         frm.AutoResize = False ' Allow manual resizing
         frm.AutoCenter = True
         frm.OnCurrent = "=frmCourtCase_OnCurrent()" ' Update button visibility
+        frm.OnDirty = "=frmCourtCase_OnDirty()" ' Enable Save button when form is dirty
 
         yPos = 200
 
@@ -366,21 +367,28 @@ Private Sub Create_frmCourtCase()
         ctl.caption = "Next >"
         ctl.OnClick = "=frmCourtCase_cmdNext_Click()"
 
+        ' cmdSaveCase button
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 2800, yPos, 2000, 400)
+        ctl.Name = "cmdSaveCase"
+        ctl.caption = "Save Court Case"
+        ctl.OnClick = "=frmCourtCase_cmdSaveCase_Click()"
+        ctl.Enabled = False ' Disabled until form is dirty
+
         ' cmdNewCase button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 3000, yPos, 2000, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 4900, yPos, 1800, 400)
         ctl.Name = "cmdNewCase"
         ctl.caption = "New Court Case"
         ctl.OnClick = "=frmCourtCase_cmdNewCase_Click()"
 
         ' cmdOpenEntryDetail button
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 5200, yPos, 2500, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 6800, yPos, 2200, 400)
         ctl.Name = "cmdOpenEntryDetail"
         ctl.caption = "Open Court Case Entry"
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
         ctl.Enabled = False
 
         ' cmdCreateRuling button (visible only when no ruling exists)
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 7900, yPos, 2000, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 9100, yPos, 1600, 400)
         ctl.Name = "cmdCreateRuling"
         ctl.caption = "Create Ruling"
         ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"

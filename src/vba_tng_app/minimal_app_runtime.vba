@@ -32,8 +32,9 @@ Public Function frmCourtCase_OnCurrent()
     courtCaseId = Forms!frmCourtCase!court_case_id
 
     If IsNull(courtCaseId) Then
-        ' New/unsaved record - hide button Until saved
+        ' New/unsaved record - disable buttons until saved
         Forms!frmCourtCase!cmdCreateRuling.Enabled = False
+        Forms!frmCourtCase!cmdSaveCase.Enabled = False
         UpdateOpenEntryDetailButtonState
      Exit Function
     End If
@@ -46,11 +47,36 @@ Public Function frmCourtCase_OnCurrent()
     ' Enable button only when no ruling exists
     Forms!frmCourtCase!cmdCreateRuling.Enabled = Not hasRuling
 
+    ' Disable Save button on navigation (record is clean after navigating)
+    Forms!frmCourtCase!cmdSaveCase.Enabled = False
+
     ' Keep entry-detail action in sync with the linked entry subform selection.
     UpdateOpenEntryDetailButtonState
 
     ' Requery the ruling subform To ensure it's in sync
     Forms!frmCourtCase!sfrmRuling.Form.Requery
+End Function
+
+'------------------------------------------------------------------------------
+' frmCourtCase: OnDirty event - Enable Save button when form has unsaved changes
+'------------------------------------------------------------------------------
+Public Function frmCourtCase_OnDirty()
+    On Error Resume Next
+    Forms!frmCourtCase!cmdSaveCase.Enabled = True
+End Function
+
+'------------------------------------------------------------------------------
+' frmCourtCase: Save Case button
+'------------------------------------------------------------------------------
+Public Function frmCourtCase_cmdSaveCase_Click()
+    On Error Goto ErrHandler
+        If Forms!frmCourtCase!sfrmRuling.Form.Dirty Then Forms!frmCourtCase!sfrmRuling.Form.Dirty = False
+        If Forms!frmCourtCase.Dirty Then RunCommand acCmdSaveRecord
+        Forms!frmCourtCase!cmdSaveCase.Enabled = False
+        frmCourtCase_OnCurrent
+     Exit Function
+ ErrHandler:
+        MsgBox "Error in frmCourtCase_cmdSaveCase_Click: " & Err.Description, vbCritical
 End Function
 
 '------------------------------------------------------------------------------
@@ -335,11 +361,13 @@ Public Function frmCourtCase_cmdCreateRuling_Click()
         ' Requery the ruling form
         Forms!frmCourtCase!sfrmRuling.Form.Requery
 
-        ' Move focus away before disabling cmdCreateRuling (can't disable the focused control)
-        DoCmd.GoToControl "cmdNewCase"
-        Forms!frmCourtCase!cmdCreateRuling.Enabled = False
-
         MsgBox "Ruling created.", vbInformation
+
+        ' Switch to the ruling subform tab and move focus there,
+        ' which also moves focus away from cmdCreateRuling (required before disabling it)
+        Forms!frmCourtCase!tabMain.Value = 1
+        Forms!frmCourtCase!sfrmRuling.Form!txtRulingYear.SetFocus
+        Forms!frmCourtCase!cmdCreateRuling.Enabled = False
 
      Exit Function
  ErrHandler:
