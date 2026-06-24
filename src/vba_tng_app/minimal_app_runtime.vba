@@ -17,6 +17,40 @@ Private g_SelectedPersonId As Variant
 '==============================================================================
 
 '------------------------------------------------------------------------------
+' frmCourtCaseList: OnLoad event
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseList_OnLoad()
+    On Error Resume Next
+    Forms!frmCourtCaseList.Width = 9000
+End Function
+
+'------------------------------------------------------------------------------
+' frmCourtCaseList: Open button - Open selected case in detail form
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseList_cmdOpen_Click()
+    On Error GoTo ErrHandler
+        Dim courtCaseId As Variant
+        Dim frm As Form
+
+        Set frm = Forms!frmCourtCaseList
+        courtCaseId = frm!court_case_id
+
+        If IsNull(courtCaseId) Then
+            MsgBox "Please select a saved court case.", vbInformation
+            Exit Function
+        End If
+
+        ' Commit any pending edits before opening the detail form
+        If frm.Dirty Then frm.Dirty = False
+
+        DoCmd.OpenForm "frmCourtCase", , , "court_case_id=" & CLng(courtCaseId)
+
+     Exit Function
+ ErrHandler:
+        MsgBox "Error in frmCourtCaseList_cmdOpen_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCase: OnCurrent event - Update button visibility
 '------------------------------------------------------------------------------
 Public Function frmCourtCase_OnCurrent()

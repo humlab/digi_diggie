@@ -50,6 +50,7 @@ Public Sub BuildAllForms()
         Create_sfrmRuling
         Create_frmCourtCaseEntryDetail
         Create_frmCourtCase
+        Create_frmCourtCaseList
         Create_frmPlacenameSearch
         Create_frmPersonSearch
         Create_frmPerson
@@ -194,7 +195,7 @@ Private Sub DeleteFormsIfExist()
     Dim formNames As Variant
     Dim i As Integer
 
-    formNames = Array("frmCourtCase", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
+    formNames = Array("frmCourtCase", "frmCourtCaseList", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
     "sfrmPersonEntryByEntry", "sfrmRuling", "sfrmPersonOutcomes", _
     "frmPlacenameSearch", "frmPersonSearch", "frmPerson", "frmLookups")
 
@@ -447,6 +448,119 @@ Private Sub Create_frmCourtCase()
 ErrHandler:
         MsgBox "Error in Create_frmCourtCase: " & Err.Description, vbCritical
         Debug.Print "ERROR in Create_frmCourtCase: " & Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Create Form: frmCourtCaseList (Continuous form list of all court cases)
+'------------------------------------------------------------------------------
+Private Sub Create_frmCourtCaseList()
+    On Error GoTo ErrHandler
+        Dim frm As Form
+        Dim ctl As Control
+        Dim strFormName As String
+        Dim yPos As Integer
+        Dim lblX As Integer
+        Dim ctrlX As Integer
+
+        Set frm = CreateForm()
+        strFormName = frm.Name
+        frm.RecordSource = "SELECT court_case_id, source_id, reference_number, case_year, " & _
+            "district_court_name, source_text " & _
+            "FROM court_case " & _
+            "ORDER BY court_case_id ASC, reference_number;"
+        frm.Caption = "Court Cases"
+        frm.DefaultView = 1 ' Continuous Forms
+        frm.NavigationButtons = True
+        frm.RecordSelectors = True
+        frm.AllowAdditions = True
+        frm.AllowDeletions = True
+        frm.AllowEdits = True
+        frm.DividingLines = True
+        frm.OnLoad = "=frmCourtCaseList_OnLoad()"
+
+        lblX = 200
+        ctrlX = 2000
+        yPos = 200
+
+        ' court_case_id
+        CreateLabel frm.Name, "lblCourtCaseId", "Case ID:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
+        ctl.Name = "txtCourtCaseId"
+        ctl.ControlSource = "court_case_id"
+        yPos = yPos + 500
+
+        ' source_id
+        CreateLabel frm.Name, "lblSourceId", "Source:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 2000, 300)
+        ctl.Name = "cboSourceId"
+        ctl.ControlSource = "source_id"
+        ctl.RowSource = "SELECT source_id, source_abbreviation FROM source ORDER BY source_abbreviation;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;2cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' reference_number
+        CreateLabel frm.Name, "lblReferenceNumber", "Reference #:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 2500, 300)
+        ctl.Name = "txtReferenceNumber"
+        ctl.ControlSource = "reference_number"
+        yPos = yPos + 500
+
+        ' case_year
+        CreateLabel frm.Name, "lblCaseYear", "Year:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
+        ctl.Name = "txtCaseYear"
+        ctl.ControlSource = "case_year"
+        yPos = yPos + 500
+
+        ' district_court_name
+        CreateLabel frm.Name, "lblDistrictCourtName", "District Court:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 5500, 300)
+        ctl.Name = "txtDistrictCourtName"
+        ctl.ControlSource = "district_court_name"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        yPos = yPos + 500
+
+        ' source_text
+        CreateLabel frm.Name, "lblSourceText", "Source Text:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 5500, 800)
+        ctl.Name = "txtSourceText"
+        ctl.ControlSource = "source_text"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.EnterKeyBehavior = True
+        ctl.ScrollBars = 2
+        yPos = yPos + 1100
+
+        ' FIXME: Does this work? I want to display "Yes" or "No" based on whether a ruling exists for this court_case_id. This is an unbound, read-only indicator.
+        ' has_ruling (unbound, read-only indicator)
+        CreateLabel frm.Name, "lblHasRuling", "Ruling:", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
+        ctl.Name = "txtHasRuling"
+        ctl.ControlSource = "=IIF(DCount('*','ruling','court_case_id=[court_case_id]')>0,'Yes','No')"
+        ctl.Locked = True
+        ctl.Enabled = False
+        ctl.TextAlign = 2
+        yPos = yPos + 500
+
+        ' cmdOpen button
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", ctrlX, yPos, 1200, 400)
+        ctl.Name = "cmdOpen"
+        ctl.Caption = "Open..."
+        ctl.OnClick = "=frmCourtCaseList_cmdOpen_Click()"
+
+        frm.Section(acDetail).Height = yPos + 800
+
+        DoCmd.Close acForm, strFormName, acSaveYes
+        DoCmd.Rename "frmCourtCaseList", acForm, strFormName
+
+        Debug.Print "frmCourtCaseList created."
+     Exit Sub
+
+ErrHandler:
+        MsgBox "Error in Create_frmCourtCaseList: " & Err.Description, vbCritical
+        Debug.Print "ERROR in Create_frmCourtCaseList: " & Err.Description
 End Sub
 
 '------------------------------------------------------------------------------
