@@ -533,12 +533,11 @@ Private Sub Create_frmCourtCaseList()
         ctl.ScrollBars = 2
         yPos = yPos + 1100
 
-        ' FIXME: Does this work? I want to display "Yes" or "No" based on whether a ruling exists for this court_case_id. This is an unbound, read-only indicator.
         ' has_ruling (unbound, read-only indicator)
         CreateLabel frm.Name, "lblHasRuling", "Ruling:", lblX, yPos, 1600, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
         ctl.Name = "txtHasRuling"
-        ctl.ControlSource = "=IIF(DCount('*','ruling','court_case_id=[court_case_id]')>0,'Yes','No')"
+        ctl.ControlSource = "=IIF(IsNull([court_case_id]),'',IIF(DCount('*','ruling','court_case_id=' & [court_case_id])>0,'Yes','No'))"
         ctl.Locked = True
         ctl.Enabled = False
         ctl.TextAlign = 2
