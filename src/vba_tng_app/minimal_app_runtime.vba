@@ -17,6 +17,14 @@ Private g_SelectedPersonId As Variant
 '==============================================================================
 
 '------------------------------------------------------------------------------
+' frmPersonEntryList: OnLoad event
+'------------------------------------------------------------------------------
+Public Function frmPersonEntryList_OnLoad()
+    On Error Resume Next
+    Forms!frmPersonEntryList.Width = 12000
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCaseList: OnLoad event
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseList_OnLoad()

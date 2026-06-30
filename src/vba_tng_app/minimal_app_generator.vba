@@ -52,6 +52,7 @@ Public Sub BuildAllForms()
         Create_frmCourtCase
         Create_frmCourtCaseList
         Create_frmPlacenameSearch
+        Create_frmPersonEntryList
         Create_frmPersonSearch
         Create_frmPerson
         ' Create_frmLookups ' Optional
@@ -195,7 +196,7 @@ Private Sub DeleteFormsIfExist()
     Dim formNames As Variant
     Dim i As Integer
 
-    formNames = Array("frmCourtCase", "frmCourtCaseList", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
+    formNames = Array("frmCourtCase", "frmCourtCaseList", "frmPersonEntryList", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
     "sfrmPersonEntryByEntry", "sfrmRuling", "sfrmPersonOutcomes", _
     "frmPlacenameSearch", "frmPersonSearch", "frmPerson", "frmLookups")
 
@@ -1070,6 +1071,115 @@ Private Sub Create_sfrmPersonOutcomes()
 
 ErrHandler:
         MsgBox "Error in Create_sfrmPersonOutcomes: " & Err.Description, vbCritical
+End Sub
+
+'------------------------------------------------------------------------------
+' Create Form: frmPersonEntryList (Continuous form list of person entries)
+'------------------------------------------------------------------------------
+Private Sub Create_frmPersonEntryList()
+    On Error GoTo ErrHandler
+        Dim frm As Form
+        Dim ctl As Control
+        Dim strFormName As String
+        Dim yPos As Integer
+        Dim lblX As Integer
+        Dim ctrlX As Integer
+        Dim txtX As Integer
+
+        Set frm = CreateForm()
+        strFormName = frm.Name
+        frm.RecordSource = "SELECT pe.person_entry_id, pe.court_case_entry_id, pe.person_id, " & _
+            "pe.community_id, pe.land_rights_status_id, pe.role_id, " & _
+            "cce.curated_text " & _
+            "FROM person_entry AS pe " & _
+            "INNER JOIN court_case_entry AS cce ON pe.court_case_entry_id = cce.court_case_entry_id " & _
+            "ORDER BY pe.person_entry_id;"
+        frm.Caption = "Person Entries"
+        frm.DefaultView = 1 ' Continuous Forms
+        frm.NavigationButtons = True
+        frm.RecordSelectors = True
+        frm.AllowAdditions = False
+        frm.AllowDeletions = False
+        frm.AllowEdits = True
+        frm.DividingLines = True
+        frm.OnLoad = "=frmPersonEntryList_OnLoad()"
+
+        lblX = 200
+        ctrlX = 2000
+        txtX = 6800
+        yPos = 200
+
+        ' person_id
+        CreateLabel frm.Name, "lblPersonId", "Person", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4000, 300)
+        ctl.Name = "cboPersonId"
+        ctl.ControlSource = "person_id"
+        ctl.RowSource = "SELECT person_id, full_name FROM person ORDER BY full_name;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;6cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' community_id
+        CreateLabel frm.Name, "lblCommunityId", "Community", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4000, 300)
+        ctl.Name = "cboCommunityId"
+        ctl.ControlSource = "community_id"
+        ctl.RowSource = "SELECT community_id, community_name FROM community ORDER BY community_name;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;5cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' land_rights_status_id
+        CreateLabel frm.Name, "lblLandRightsStatusId", "Land right status", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4000, 300)
+        ctl.Name = "cboLandRightsStatusId"
+        ctl.ControlSource = "land_rights_status_id"
+        ctl.RowSource = "SELECT land_rights_status_id, land_rights_status FROM land_rights_status ORDER BY land_rights_status;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;5cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' role_id
+        CreateLabel frm.Name, "lblRoleId", "Role", lblX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4000, 300)
+        ctl.Name = "cboRoleId"
+        ctl.ControlSource = "role_id"
+        ctl.RowSource = "SELECT role_id, role_name FROM role ORDER BY role_name;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;5cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' curated_text (read-only)
+        CreateLabel frm.Name, "lblCuratedText", "Curated Text", txtX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX + 1600, yPos, 5500, 1200)
+        ctl.Name = "txtCuratedText"
+        ctl.ControlSource = "curated_text"
+        ctl.Locked = True
+        ctl.Enabled = False
+        ctl.BackColor = RGB(240, 240, 240)
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.EnterKeyBehavior = True
+        ctl.ScrollBars = 2
+
+        frm.Section(acDetail).Height = yPos + 1400
+
+        DoCmd.Close acForm, strFormName, acSaveYes
+        DoCmd.Rename "frmPersonEntryList", acForm, strFormName
+
+        Debug.Print "frmPersonEntryList created."
+     Exit Sub
+
+ErrHandler:
+        MsgBox "Error in Create_frmPersonEntryList: " & Err.Description, vbCritical
+        Debug.Print "ERROR in Create_frmPersonEntryList: " & Err.Description
 End Sub
 
 '------------------------------------------------------------------------------
