@@ -1155,11 +1155,11 @@ Private Sub Create_frmPersonEntryList()
         ctl.ColumnWidths = "0cm;5cm"
         ctl.BoundColumn = 1
         ctl.LimitToList = True
-        yPos = yPos + 500
+        yPos = 200
 
         ' curated_text (read-only)
         CreateLabel frm.Name, "lblCuratedText", "Curated Text", txtX, yPos, 1600, 300
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX + 1600, yPos, 5500, 1200)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX, yPos + 300, 5500, 1200)
         ctl.Name = "txtCuratedText"
         ctl.ControlSource = "curated_text"
         ctl.Locked = True
