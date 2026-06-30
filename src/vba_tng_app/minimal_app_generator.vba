@@ -51,6 +51,7 @@ Public Sub BuildAllForms()
         Create_frmCourtCaseEntryDetail
         Create_frmCourtCase
         Create_frmCourtCaseList
+        'Create_frmCourtCaseEntriesList
         Create_frmPlacenameSearch
         Create_frmPersonEntryList
         Create_frmPersonSearch
@@ -196,7 +197,7 @@ Private Sub DeleteFormsIfExist()
     Dim formNames As Variant
     Dim i As Integer
 
-    formNames = Array("frmCourtCase", "frmCourtCaseList", "frmPersonEntryList", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
+    formNames = Array("frmCourtCase", "frmCourtCaseList", "frmCourtCaseEntriesList", "frmPersonEntryList", "sfrmCourtCaseEntries", "frmCourtCaseEntryDetail", _
     "sfrmPersonEntryByEntry", "sfrmRuling", "sfrmPersonOutcomes", _
     "frmPlacenameSearch", "frmPersonSearch", "frmPerson", "frmLookups")
 
@@ -1177,6 +1178,117 @@ Private Sub Create_frmPersonEntryList()
 ErrHandler:
         MsgBox "Error in Create_frmPersonEntryList: " & Err.Description, vbCritical
         Debug.Print "ERROR in Create_frmPersonEntryList: " & Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Create Form: frmCourtCaseEntriesList (Continuous form: all court case entries)
+'------------------------------------------------------------------------------
+Private Sub Create_frmCourtCaseEntriesList()
+    On Error GoTo ErrHandler
+        Dim frm As Form
+        Dim ctl As Control
+        Dim strFormName As String
+        Dim yPos As Integer
+        Dim lblX As Integer
+        Dim ctrlX As Integer
+        Dim txtX As Integer
+
+        Set frm = CreateForm()
+        strFormName = frm.Name
+        frm.RecordSource = "SELECT cce.court_case_entry_id, cce.court_case_id, cce.entry_year, " & _
+            "cce.season_id, cce.land_use_id, cce.original_placename, " & _
+            "cce.placename_id, p.placename AS placename_display, cce.curated_text " & _
+            "FROM court_case_entry AS cce " & _
+            "LEFT JOIN placename AS p ON cce.placename_id = p.placename_id " & _
+            "ORDER BY cce.court_case_id, cce.court_case_entry_id;"
+        frm.Caption = "Court Case Entries"
+        frm.DefaultView = 1 ' Continuous Forms
+        frm.NavigationButtons = True
+        frm.RecordSelectors = True
+        frm.AllowAdditions = True
+        frm.AllowDeletions = True
+        frm.AllowEdits = True
+        frm.DividingLines = True
+
+        lblX = 200
+        ctrlX = 2200
+        txtX = 6800
+        yPos = 200
+
+        ' entry_year
+        CreateLabel frm.Name, "lblEntryYear", "Entry Year", lblX, yPos, 1800, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1500, 300)
+        ctl.Name = "txtEntryYear"
+        ctl.ControlSource = "entry_year"
+        yPos = yPos + 500
+
+        ' season_id
+        CreateLabel frm.Name, "lblSeasonId", "Season", lblX, yPos, 1800, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 3500, 300)
+        ctl.Name = "cboSeasonId"
+        ctl.ControlSource = "season_id"
+        ctl.RowSource = "SELECT season_id, season_name FROM season ORDER BY season_name;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;5cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' land_use_id
+        CreateLabel frm.Name, "lblLandUseId", "Land Use", lblX, yPos, 1800, 300
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 3500, 300)
+        ctl.Name = "cboLandUseId"
+        ctl.ControlSource = "land_use_id"
+        ctl.RowSource = "SELECT land_use_id, description FROM land_use ORDER BY description;"
+        ctl.ColumnCount = 2
+        ctl.ColumnWidths = "0cm;5cm"
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
+        yPos = yPos + 500
+
+        ' original_placename (source)
+        CreateLabel frm.Name, "lblOriginalPlacename", "Placename (source)", lblX, yPos, 1800, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 3500, 300)
+        ctl.Name = "txtOriginalPlacename"
+        ctl.ControlSource = "original_placename"
+        yPos = yPos + 500
+
+        ' placename_id (standardised) + display text + Pick button
+        CreateLabel frm.Name, "lblPlacenameId", "Placename (standardised)", lblX, yPos, 1800, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1300, 300)
+        ctl.Name = "txtPlacenameId"
+        ctl.ControlSource = "placename_id"
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX + 1400, yPos, 2000, 300)
+        ctl.Name = "txtPlacenameDisplay"
+        ctl.ControlSource = "placename_display"
+        ctl.Locked = True
+        ctl.Enabled = False
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", ctrlX + 3500, yPos, 800, 300)
+        ctl.Name = "cmdPickPlacename"
+        ctl.Caption = "Pick"       
+        ctl.OnClick = "=frmCourtCaseEntryDetail_cmdPickPlacename_Click()"
+
+        ' curated_text (right panel, spans full height)
+        yPos = 200
+        CreateLabel frm.Name, "lblCuratedText", "Curated Text", txtX, yPos, 1600, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX, yPos + 300, 5500, 1700)
+        ctl.Name = "txtCuratedText"
+        ctl.ControlSource = "curated_text"
+        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.EnterKeyBehavior = True
+        ctl.ScrollBars = 2
+
+        frm.Section(acDetail).Height = 2300
+
+        DoCmd.Close acForm, strFormName, acSaveYes
+        DoCmd.Rename "frmCourtCaseEntriesList", acForm, strFormName
+
+        Debug.Print "frmCourtCaseEntriesList created."
+     Exit Sub
+
+ErrHandler:
+        MsgBox "Error in Create_frmCourtCaseEntriesList: " & Err.Description, vbCritical
+        Debug.Print "ERROR in Create_frmCourtCaseEntriesList: " & Err.Description
 End Sub
 
 '------------------------------------------------------------------------------
