@@ -1089,9 +1089,10 @@ Private Sub Create_frmPersonEntryList()
 
         Set frm = CreateForm()
         strFormName = frm.Name
+        ' FIXME: Clean up the SQL to remove unnecessary joins and fields, and ensure it only shows entries for the current court case if needed.
         frm.RecordSource = "SELECT pe.person_entry_id, pe.court_case_entry_id, pe.person_id, " & _
             "pe.community_id, pe.land_rights_status_id, pe.role_id, " & _
-            "cce.curated_text " & _
+            "pe.curated_text " & _
             "FROM person_entry AS pe " & _
             "INNER JOIN court_case_entry AS cce ON pe.court_case_entry_id = cce.court_case_entry_id " & _
             "ORDER BY pe.person_entry_id;"
