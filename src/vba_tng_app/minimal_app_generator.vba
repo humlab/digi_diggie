@@ -1115,8 +1115,16 @@ Private Sub Create_frmPersonEntryList()
         txtX = 6800
         yPos = 200
 
+        ' person_entry_id (hidden, primary key)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX - 800, yPos, 600, 300)
+        ctl.Name = "txtPersonEntryId"
+        ctl.ControlSource = "person_entry_id"
+        ctl.Visible = False
+        ctl.BorderStyle = 0
+        ctl.TextAlign = 2
+
         ' person_id
-        CreateLabel frm.Name, "lblPersonId", "Person", lblX, yPos, 1600, 300
+        CreateLabel frm.Name, "lblPersonId", "Person", lblX, yPos, 800, 300
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4000, 300)
         ctl.Name = "cboPersonId"
         ctl.ControlSource = "person_id"
@@ -1165,10 +1173,10 @@ Private Sub Create_frmPersonEntryList()
 
         ' curated_text
         CreateLabel frm.Name, "lblCuratedText", "Curated Text", txtX, yPos, 1600, 300
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX, yPos + 300, 5500, 1200)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX, yPos + 300, 7500, 1200)
         ctl.Name = "txtCuratedText"
         ctl.ControlSource = "curated_text"
-        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.HorizontalAnchor = acHorizontalAnchorLeft
         ctl.EnterKeyBehavior = True
         ctl.ScrollBars = 2
 
