@@ -470,7 +470,7 @@ Private Sub Create_frmCourtCaseList()
             "district_court_name, source_text " & _
             "FROM court_case " & _
             "ORDER BY court_case_id ASC, reference_number;"
-        frm.Caption = "Court Cases"
+        frm.Caption = "Court Case List"
         frm.DefaultView = 1 ' Continuous Forms
         frm.NavigationButtons = True
         frm.RecordSelectors = True
@@ -488,6 +488,8 @@ Private Sub Create_frmCourtCaseList()
         CreateLabel frm.Name, "lblCourtCaseId", "Case ID:", lblX, yPos, 1600, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
         ctl.Name = "txtCourtCaseId"
+        ctl.BorderStyle = 0
+        ctl.TextAlign = 1 'Left
         ctl.ControlSource = "court_case_id"
         yPos = yPos + 500
 
@@ -504,25 +506,26 @@ Private Sub Create_frmCourtCaseList()
         yPos = yPos + 500
 
         ' reference_number
-        CreateLabel frm.Name, "lblReferenceNumber", "Reference #:", lblX, yPos, 1600, 300
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 2500, 300)
+        CreateLabel frm.Name, "lblReferenceNumber", "Reference #:", lblX, yPos, 2000, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 2000, 300)
         ctl.Name = "txtReferenceNumber"
         ctl.ControlSource = "reference_number"
         yPos = yPos + 500
 
         ' case_year
-        CreateLabel frm.Name, "lblCaseYear", "Year:", lblX, yPos, 1600, 300
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
+        CreateLabel frm.Name, "lblCaseYear", "Year:", lblX, yPos, 2000, 300
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 2000, 300)
         ctl.Name = "txtCaseYear"
         ctl.ControlSource = "case_year"
+        ctl.TextAlign = 1 'Left
         yPos = yPos + 500
 
         ' district_court_name
-        CreateLabel frm.Name, "lblDistrictCourtName", "District Court:", lblX, yPos, 1600, 300
+        CreateLabel frm.Name, "lblDistrictCourtName", "District Court:", lblX, yPos, 2000, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 5500, 300)
         ctl.Name = "txtDistrictCourtName"
         ctl.ControlSource = "district_court_name"
-        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.HorizontalAnchor = acHorizontalAnchorLeft
         yPos = yPos + 500
 
         ' source_text
@@ -530,19 +533,20 @@ Private Sub Create_frmCourtCaseList()
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 5500, 800)
         ctl.Name = "txtSourceText"
         ctl.ControlSource = "source_text"
-        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.HorizontalAnchor = acHorizontalAnchorLeft
         ctl.EnterKeyBehavior = True
         ctl.ScrollBars = 2
         yPos = yPos + 1100
 
         ' has_ruling (unbound, read-only indicator)
-        CreateLabel frm.Name, "lblHasRuling", "Ruling:", lblX, yPos, 1600, 300
+        CreateLabel frm.Name, "lblHasRuling", "Has ruling:", lblX, yPos, 1600, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1200, 300)
         ctl.Name = "txtHasRuling"
         ctl.ControlSource = "=IIF(IsNull([court_case_id]),'',IIF(DCount('*','ruling','court_case_id=' & [court_case_id])>0,'Yes','No'))"
         ctl.Locked = True
         ctl.Enabled = False
-        ctl.TextAlign = 2
+        ctl.BorderStyle = 0
+        ctl.TextAlign = 1 'Left
         yPos = yPos + 500
 
         ' cmdOpen button
