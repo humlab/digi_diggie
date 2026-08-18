@@ -1284,12 +1284,18 @@ Private Sub Create_frmCourtCaseEntriesList()
         ' curated_text (right panel, spans full height)
         yPos = 200
         CreateLabel frm.Name, "lblCuratedText", "Curated Text", txtX, yPos, 1600, 300
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX, yPos + 300, 5500, 1700)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", txtX, yPos + 300, 7500, 1600)
         ctl.Name = "txtCuratedText"
         ctl.ControlSource = "curated_text"
-        ctl.HorizontalAnchor = acHorizontalAnchorBoth
+        ctl.HorizontalAnchor = acHorizontalAnchorLeft
         ctl.EnterKeyBehavior = True
         ctl.ScrollBars = 2
+
+        ' cmdOpenDetail
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", txtX, yPos + 2000, 2000, 300)
+        ctl.Name = "cmdOpenDetail"
+        ctl.Caption = "Open Detail"
+        ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
 
         frm.Section(acDetail).Height = 2300
 
