@@ -51,7 +51,7 @@ Public Sub BuildAllForms()
         Create_frmCourtCaseEntryDetail
         Create_frmCourtCase
         Create_frmCourtCaseList
-        'Create_frmCourtCaseEntriesList
+        Create_frmCourtCaseEntriesList
         Create_frmPlacenameSearch
         Create_frmPersonEntryList
         Create_frmPersonSearch
@@ -1279,7 +1279,7 @@ Private Sub Create_frmCourtCaseEntriesList()
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", ctrlX + 3500, yPos, 800, 300)
         ctl.Name = "cmdPickPlacename"
         ctl.Caption = "Pick"       
-        ctl.OnClick = "=frmCourtCaseEntryDetail_cmdPickPlacename_Click()"
+        ctl.OnClick = "=frmCourtCaseEntriesList_cmdPickPlacename_Click()"
 
         ' curated_text (right panel, spans full height)
         yPos = 200
@@ -1295,7 +1295,7 @@ Private Sub Create_frmCourtCaseEntriesList()
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", txtX, yPos + 2000, 2000, 300)
         ctl.Name = "cmdOpenDetail"
         ctl.Caption = "Open Detail"
-        ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
+        ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()" ' FIXME: This should open the frmCourtCaseEntryDetail form for the selected entry. Need to implement a way to pass the selected entry ID to the detail form.
 
         frm.Section(acDetail).Height = 2300
 

@@ -248,6 +248,22 @@ Public Function frmCourtCaseEntryDetail_cmdPickPlacename_Click()
 End Function
 
 '------------------------------------------------------------------------------
+' frmCourtCaseEntriesList: Pick Placename button (current record in continuous form)
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseEntriesList_cmdPickPlacename_Click()
+    On Error Goto ErrHandler
+        DoCmd.OpenForm "frmPlacenameSearch", , , , , acDialog, _
+        "caller=frmCourtCaseEntriesList;target=txtPlacenameId"
+
+        ' Update display field after picker closes
+        UpdatePlacenameDisplay "frmCourtCaseEntriesList"
+
+     Exit Function
+ ErrHandler:
+        MsgBox "Error in frmCourtCaseEntriesList_cmdPickPlacename_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCaseEntryDetail: Add person entry button
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()
