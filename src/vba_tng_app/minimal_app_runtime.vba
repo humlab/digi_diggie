@@ -218,6 +218,32 @@ Public Function sfrmCourtCaseEntries_OnCurrent()
 End Function
 
 '------------------------------------------------------------------------------
+' frmCourtCaseEntriesList: Open Detail button (current record in continuous form)
+'------------------------------------------------------------------------------
+Public Function frmCourtCaseEntriesList_cmdOpenDetail_Click()
+    On Error Goto ErrHandler
+        Dim frmEntries As Form
+        Dim entryId As Variant
+
+        Set frmEntries = Forms!frmCourtCaseEntriesList
+
+        If frmEntries.NewRecord Or IsNull(frmEntries!court_case_entry_id) Then
+            MsgBox "Please select a saved entry first.", vbInformation
+            Exit Function
+        End If
+
+        ' Commit pending edits before opening detail form.
+        If frmEntries.Dirty Then frmEntries.Dirty = False
+
+        entryId = frmEntries!court_case_entry_id
+        OpenCourtCaseEntryDetail CLng(entryId)
+
+     Exit Function
+ ErrHandler:
+        MsgBox "Error in frmCourtCaseEntriesList_cmdOpenDetail_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
 ' frmCourtCaseEntryDetail: OnLoad event - Auto-populate placename display
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_OnLoad()

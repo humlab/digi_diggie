@@ -1295,7 +1295,7 @@ Private Sub Create_frmCourtCaseEntriesList()
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", txtX, yPos + 2000, 2000, 300)
         ctl.Name = "cmdOpenDetail"
         ctl.Caption = "Open Detail"
-        ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()" ' FIXME: This should open the frmCourtCaseEntryDetail form for the selected entry. Need to implement a way to pass the selected entry ID to the detail form.
+        ctl.OnClick = "=frmCourtCaseEntriesList_cmdOpenDetail_Click()"
 
         frm.Section(acDetail).Height = 2300
 
