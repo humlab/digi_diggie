@@ -76,6 +76,7 @@ Public Function frmCourtCase_OnCurrent()
     If IsNull(courtCaseId) Then
         ' New/unsaved record - disable buttons until saved
         Forms!frmCourtCase!cmdCreateRuling.Enabled = False
+        Forms!frmCourtCase!cmdCreateRuling.Visible = True
         Forms!frmCourtCase!cmdSaveCase.Enabled = False
         UpdateOpenEntryDetailButtonState
      Exit Function
@@ -86,8 +87,9 @@ Public Function frmCourtCase_OnCurrent()
     hasRuling = Not rs.EOF
     rs.Close
 
-    ' Enable button only when no ruling exists
+    ' Enable/Hide button only when no ruling exists
     Forms!frmCourtCase!cmdCreateRuling.Enabled = Not hasRuling
+    Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
 
     ' Disable Save button on navigation (record is clean after navigating)
     Forms!frmCourtCase!cmdSaveCase.Enabled = False
@@ -433,9 +435,10 @@ Public Function frmCourtCase_cmdCreateRuling_Click()
         Forms!frmCourtCase!tabMain.Value = 1
         Forms!frmCourtCase!sfrmRuling.Form!txtRulingYear.SetFocus
         Forms!frmCourtCase!cmdCreateRuling.Enabled = False
+        Forms!frmCourtCase!cmdCreateRuling.Visible = False
 
      Exit Function
- ErrHandler:
+  ErrHandler:
         MsgBox "Error in frmCourtCase_cmdCreateRuling_Click: " & Err.Description, vbCritical
 End Function
 
@@ -452,6 +455,7 @@ Public Function sfrmRuling_OnCurrent()
 
     ' Enable/disable Create Ruling button on parent form
     Forms!frmCourtCase!cmdCreateRuling.Enabled = Not hasRuling
+    Forms!frmCourtCase!cmdCreateRuling.Visible = Not hasRuling
 
     ' Show/hide "No ruling" Label in subform
     Forms!frmCourtCase!sfrmRuling.Form!lblNoRuling.Visible = Not hasRuling
