@@ -1476,8 +1476,18 @@ Private Sub Create_frmPerson()
         frm.PopUp = True
         frm.Modal = True
         frm.OnClose = "=frmPerson_OnClose()" ' Return new person_id to caller
+        frm.BeforeUpdate = "=frmPerson_BeforeUpdate()" ' Keep full_name in sync
 
         yPos = 200
+
+        ' full_name (derived from given_name + patronymic + surname)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 6000, 300)
+        ctl.Name = "txtFullName"
+        ctl.ControlSource = "full_name"
+        ctl.Locked = True
+        CreateLabel frm.Name, "lblFullName", "Full Name:", 200, yPos, 1600, 300
+
+        yPos = yPos + 500
 
         ' given_name
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 4000, 300)

@@ -262,11 +262,10 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntryDetail_cmdPickPlacename_Click()
     On Error Goto ErrHandler
-        DoCmd.OpenForm "frmPlacenameSearch", , , , , acDialog, _
+        ' Modal via design-time Modal property; acNormal so OpenForm returns
+        ' (picker positions itself in OnLoad; display updates in the select handler)
+        DoCmd.OpenForm "frmPlacenameSearch", , , , , acNormal, _
         "caller=frmCourtCaseEntryDetail;target=txtPlacenameId"
-
-        ' Update display field after picker closes
-        UpdatePlacenameDisplay "frmCourtCaseEntryDetail"
 
      Exit Function
  ErrHandler:
@@ -278,11 +277,10 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmCourtCaseEntriesList_cmdPickPlacename_Click()
     On Error Goto ErrHandler
-        DoCmd.OpenForm "frmPlacenameSearch", , , , , acDialog, _
+        ' Modal via design-time Modal property; acNormal so OpenForm returns
+        ' (picker positions itself in OnLoad)
+        DoCmd.OpenForm "frmPlacenameSearch", , , , , acNormal, _
         "caller=frmCourtCaseEntriesList;target=txtPlacenameId"
-
-        ' Update display field after picker closes
-        UpdatePlacenameDisplay "frmCourtCaseEntriesList"
 
      Exit Function
  ErrHandler:
@@ -295,8 +293,6 @@ End Function
 Public Function frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()
     On Error Goto ErrHandler
         Dim entryId As Variant
-        Dim db As DAO.Database
-        Dim rs As DAO.Recordset
 
         ' Ensure the current entry is saved before adding a person to it
         entryId = Forms!frmCourtCaseEntryDetail!court_case_entry_id
@@ -305,29 +301,15 @@ Public Function frmCourtCaseEntryDetail_cmdAddPersonEntry_Click()
             Exit Function
         End If
 
-        ' Open person search dialog; result comes back via g_SelectedPersonId
+        ' Modal via design-time Modal property; acNormal so OpenForm returns
+        ' (picker positions itself in OnLoad). The person_entry row is inserted
+        ' by frmPersonSearch_cmdSelect_Click when a person is selected.
         g_SelectedPersonId = Null
-        DoCmd.OpenForm "frmPersonSearch", , , , , acDialog, _
+        DoCmd.OpenForm "frmPersonSearch", , , , , acNormal, _
             "caller=frmCourtCaseEntryDetail;target=_return"
 
-        ' If the user cancelled without selecting, do nothing
-        If IsNull(g_SelectedPersonId) Then Exit Function
-
-        ' Insert a new person_entry row via DAO so the JOIN-based person_name
-        ' resolves correctly after the subsequent requery.
-        Set db = CurrentDb
-        Set rs = db.OpenRecordset("SELECT * FROM person_entry WHERE 1=0", dbOpenDynaset, dbAppendOnly)
-        rs.AddNew
-        rs!court_case_entry_id = CLng(entryId)
-        rs!person_id = CLng(g_SelectedPersonId)
-        rs.Update
-        rs.Close
-
-        ' Refresh subform so the new row (with person_name from JOIN) appears
-        ConfigurePersonEntrySubform "frmCourtCaseEntryDetail"
-
      Exit Function
-ErrHandler:
+ ErrHandler:
         MsgBox "Error in frmCourtCaseEntryDetail_cmdAddPersonEntry_Click: " & Err.Description, vbCritical
 End Function
 
@@ -578,7 +560,9 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmPlacenameSearch_OnLoad()
     On Error Resume Next
-    ' Show top 50 placenames by default
+    PositionDialogWindow "frmPlacenameSearch"
+
+        ' Show top 50 placenames by default
     Forms!frmPlacenameSearch!lstResults.RowSource = _
         "SELECT TOP 50 placename_id, placename, parish_name AS parish_display, serial_number " & _
         "FROM placename " & _
@@ -638,6 +622,8 @@ Public Function frmPlacenameSearch_cmdSelect_Click()
         ' Write back To caller
         If callerForm <> "" And targetControl <> "" Then
             Forms(callerForm).Controls(targetControl).Value = selectedId
+            ' Update display field after selection
+            UpdatePlacenameDisplay callerForm
         End If
 
         DoCmd.Close acForm, "frmPlacenameSearch"
@@ -659,6 +645,8 @@ End Function
 '------------------------------------------------------------------------------
 Public Function frmPersonSearch_OnLoad()
     On Error Resume Next
+    PositionDialogWindow "frmPersonSearch"
+
     ' Show top 50 persons by default
     Forms!frmPersonSearch!lstResults.RowSource = _
         "SELECT TOP 50 person_id, full_name, birth_year, community_name " & _
@@ -702,6 +690,9 @@ Public Function frmPersonSearch_cmdSelect_Click()
         Dim selectedId As Variant
         Dim callerForm As String
         Dim targetControl As String
+        Dim entryId As Variant
+        Dim db As DAO.Database
+        Dim rs As DAO.Recordset
 
         ' Get selected person_id
         If IsNull(Forms!frmPersonSearch!lstResults) Then
@@ -717,8 +708,22 @@ Public Function frmPersonSearch_cmdSelect_Click()
         ' Write back To caller
         If callerForm <> "" And targetControl <> "" Then
             If targetControl = "_return" Then
-                ' Return via module-level variable (used by Add Person flow)
+                ' Add Person flow: insert a new person_entry row via DAO so the
+                ' JOIN-based person_name resolves correctly after the requery.
                 g_SelectedPersonId = selectedId
+                entryId = Forms!frmCourtCaseEntryDetail!court_case_entry_id
+                If Not IsNull(entryId) Then
+                    Set db = CurrentDb
+                    Set rs = db.OpenRecordset("SELECT * FROM person_entry WHERE 1=0", dbOpenDynaset, dbAppendOnly)
+                    rs.AddNew
+                    rs!court_case_entry_id = CLng(entryId)
+                    rs!person_id = CLng(selectedId)
+                    rs.Update
+                    rs.Close
+
+                    ' Refresh subform so the new row (with person_name from JOIN) appears
+                    ConfigurePersonEntrySubform "frmCourtCaseEntryDetail"
+                End If
             Else
                 Forms(callerForm).Controls(targetControl).Value = selectedId
             End If
@@ -745,6 +750,16 @@ Public Function frmPersonSearch_cmdNewPerson_Click()
      Exit Function
  ErrHandler:
         MsgBox "Error in frmPersonSearch_cmdNewPerson_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' frmPerson: BeforeUpdate event - Keep full_name in sync
+' (full_name is a generated column in PostgreSQL; in a materialized local
+' table it is a regular column that must be maintained on save)
+'------------------------------------------------------------------------------
+Public Function frmPerson_BeforeUpdate()
+    On Error Resume Next
+    Forms!frmPerson!txtFullName = Nz(Forms!frmPerson!txtGivenName, "") & " " & Nz(Forms!frmPerson!txtPatronymic, "") & " " & Nz(Forms!frmPerson!txtSurname, "")
 End Function
 
 '------------------------------------------------------------------------------
@@ -925,6 +940,23 @@ Private Sub EnsureCourtCaseEntryDetailWindow()
 
 ErrHandler:
     Debug.Print "Error in EnsureCourtCaseEntryDetailWindow: " & Err.Description
+End Sub
+
+'------------------------------------------------------------------------------
+' Position a dialog form at a fixed location (called from the form's OnLoad)
+'------------------------------------------------------------------------------
+Private Sub PositionDialogWindow(dialogFormName As String)
+    On Error GoTo ErrHandler
+    Dim dlg As Form
+
+    Set dlg = Forms(dialogFormName)
+
+    DoCmd.MoveSize 1200, 900, dlg.WindowWidth, dlg.WindowHeight
+
+    Exit Sub
+
+ErrHandler:
+    Debug.Print "Error in PositionDialogWindow (" & Err.Number & "): " & Err.Description
 End Sub
 
 '------------------------------------------------------------------------------
