@@ -73,6 +73,8 @@ Public Function frmCourtCase_OnCurrent()
     ' Get current court Case ID
     courtCaseId = Forms!frmCourtCase!court_case_id
 
+    UpdateAddEntryButtonState
+
     If IsNull(courtCaseId) Then
         ' New/unsaved record - disable buttons until saved
         Forms!frmCourtCase!cmdCreateRuling.Enabled = False
@@ -217,6 +219,7 @@ End Function
 Public Function sfrmCourtCaseEntries_OnCurrent()
     On Error Resume Next
     UpdateOpenEntryDetailButtonState
+    UpdateAddEntryButtonState
 End Function
 
 '------------------------------------------------------------------------------
@@ -440,6 +443,56 @@ Public Function frmCourtCase_cmdCreateRuling_Click()
      Exit Function
   ErrHandler:
         MsgBox "Error in frmCourtCase_cmdCreateRuling_Click: " & Err.Description, vbCritical
+End Function
+
+'------------------------------------------------------------------------------
+' frmCourtCase: Add Court Case Entry button
+' Creates a blank entry for the current case and opens the entry detail form.
+' Only available while the case has no entries (see UpdateAddEntryButtonState).
+'------------------------------------------------------------------------------
+Public Function frmCourtCase_cmdAddEntry_Click()
+    On Error Goto ErrHandler
+        Dim db As DAO.Database
+        Dim rs As DAO.Recordset
+        Dim courtCaseId As Variant
+        Dim entryId As Variant
+
+        Set db = CurrentDb
+
+        courtCaseId = Forms!frmCourtCase!court_case_id
+        If IsNull(courtCaseId) Then
+            MsgBox "Please save the court Case first.", vbInformation
+         Exit Function
+        End If
+
+        ' Guard: hide the button again if an entry already exists
+        If DCount("*", "court_case_entry", "court_case_id=" & courtCaseId) > 0 Then
+            UpdateAddEntryButtonState
+         Exit Function
+        End If
+
+        ' Insert a blank entry linked to this case
+        Set rs = db.OpenRecordset("court_case_entry", dbOpenDynaset)
+        rs.AddNew
+        rs!court_case_id = courtCaseId
+        rs.Update
+        rs.Close
+
+        ' Read back the new ID with DMax (reading rs!field right after
+        ' Update is unreliable for auto-number/linked-table counters)
+        entryId = DMax("court_case_entry_id", "court_case_entry")
+
+        ' Move focus to the entries subform control before hiding the button
+        Forms!frmCourtCase!sfrmCourtCaseEntries.SetFocus
+        UpdateAddEntryButtonState
+        Forms!frmCourtCase!sfrmCourtCaseEntries.Form.Requery
+
+        ' Open the detail form for the new entry
+        OpenCourtCaseEntryDetail CLng(entryId)
+
+     Exit Function
+  ErrHandler:
+        MsgBox "Error in frmCourtCase_cmdAddEntry_Click: " & Err.Description, vbCritical
 End Function
 
 '------------------------------------------------------------------------------
@@ -880,6 +933,31 @@ Private Sub UpdateOpenEntryDetailButtonState()
 
 ErrHandler:
     Forms!frmCourtCase!cmdOpenEntryDetail.Enabled = False
+End Sub
+
+'------------------------------------------------------------------------------
+' Show/enable the Add Entry button only when a saved case has no entries yet
+'------------------------------------------------------------------------------
+Private Sub UpdateAddEntryButtonState()
+    On Error Resume Next
+    Dim courtCaseId As Variant
+    Dim hasEntry As Boolean
+
+    courtCaseId = Forms!frmCourtCase!court_case_id
+
+    If IsNull(courtCaseId) Then
+        ' New/unsaved record - disable button until saved
+        Forms!frmCourtCase!cmdAddEntry.Enabled = False
+        Forms!frmCourtCase!cmdAddEntry.Visible = True
+     Exit Sub
+    End If
+
+    ' Check If a court case entry exists For this Case
+    hasEntry = DCount("*", "court_case_entry", "court_case_id=" & courtCaseId) > 0
+
+    ' Enable/Hide button only when no entry exists
+    Forms!frmCourtCase!cmdAddEntry.Enabled = Not hasEntry
+    Forms!frmCourtCase!cmdAddEntry.Visible = Not hasEntry
 End Sub
 
 '------------------------------------------------------------------------------

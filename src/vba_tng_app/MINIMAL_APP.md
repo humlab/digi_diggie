@@ -262,6 +262,13 @@ In sfrmCourtCaseEntries:
 - cmdEntryDetail_Click:
   - `DoCmd.OpenForm "frmCourtCaseEntryDetail", , , "court_case_entry_id=" & Me.court_case_entry_id, , acDialog`
 
+## Add Court Case Entry button
+On frmCourtCase (action row, between `cmdOpenEntryDetail` and `cmdCreateRuling`):
+- cmdAddEntry: initially disabled + hidden
+  - Visible/enabled only when the current case is saved (has court_case_id) AND has no court_case_entry rows (a blank datasheet row in progress also counts as an entry)
+  - Click: INSERT a blank `court_case_entry` row for the current case, Requery the entries datasheet, hide the button, then open `frmCourtCaseEntryDetail` on the new entry
+  - State synced by `UpdateAddEntryButtonState()` from `frmCourtCase_OnCurrent` and `sfrmCourtCaseEntries_OnCurrent`
+
 ---
 
 # Implementation Notes (Must Follow)

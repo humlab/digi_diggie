@@ -301,6 +301,8 @@ Private Sub Create_frmCourtCase()
         strFormName = frm.Name
         frm.RecordSource = "court_case"
         frm.caption = "Court Case"
+        ' Ensure the form is wide enough for the full button row
+        If frm.Width < 13100 Then frm.Width = 13100
         frm.DefaultView = 0 ' Single Form
         frm.NavigationButtons = True
         frm.RecordSelectors = True
@@ -390,8 +392,16 @@ Private Sub Create_frmCourtCase()
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
         ctl.Enabled = False
 
+        ' cmdAddEntry button (initially disabled + hidden, shown when case has no entries)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 9100, yPos, 2200, 400)
+        ctl.Name = "cmdAddEntry"
+        ctl.caption = "Add Court Case Entry"
+        ctl.OnClick = "=frmCourtCase_cmdAddEntry_Click()"
+        ctl.Enabled = False
+        ctl.Visible = False
+
         ' cmdCreateRuling button (visible only when no ruling exists)
-        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 9100, yPos, 1600, 400)
+        Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 11400, yPos, 1600, 400)
         ctl.Name = "cmdCreateRuling"
         ctl.caption = "Create Ruling"
         ctl.OnClick = "=frmCourtCase_cmdCreateRuling_Click()"
