@@ -448,7 +448,7 @@ End Function
 '------------------------------------------------------------------------------
 ' frmCourtCase: Add Court Case Entry button
 ' Creates a blank entry for the current case and opens the entry detail form.
-' Only available while the case has no entries (see UpdateAddEntryButtonState).
+' A case may have many entries - always available once the case is saved.
 '------------------------------------------------------------------------------
 Public Function frmCourtCase_cmdAddEntry_Click()
     On Error Goto ErrHandler
@@ -465,12 +465,6 @@ Public Function frmCourtCase_cmdAddEntry_Click()
          Exit Function
         End If
 
-        ' Guard: hide the button again if an entry already exists
-        If DCount("*", "court_case_entry", "court_case_id=" & courtCaseId) > 0 Then
-            UpdateAddEntryButtonState
-         Exit Function
-        End If
-
         ' Insert a blank entry linked to this case
         Set rs = db.OpenRecordset("court_case_entry", dbOpenDynaset)
         rs.AddNew
@@ -482,7 +476,7 @@ Public Function frmCourtCase_cmdAddEntry_Click()
         ' Update is unreliable for auto-number/linked-table counters)
         entryId = DMax("court_case_entry_id", "court_case_entry")
 
-        ' Move focus to the entries subform control before hiding the button
+        ' Move focus to the entries subform control, then refresh it
         Forms!frmCourtCase!sfrmCourtCaseEntries.SetFocus
         UpdateAddEntryButtonState
         Forms!frmCourtCase!sfrmCourtCaseEntries.Form.Requery
@@ -936,12 +930,12 @@ ErrHandler:
 End Sub
 
 '------------------------------------------------------------------------------
-' Show/enable the Add Entry button only when a saved case has no entries yet
+' Show the Add Entry button for any saved case (multiple entries allowed);
+' disabled while the case is unsaved (mirrors cmdCreateRuling, no existence check)
 '------------------------------------------------------------------------------
 Private Sub UpdateAddEntryButtonState()
     On Error Resume Next
     Dim courtCaseId As Variant
-    Dim hasEntry As Boolean
 
     courtCaseId = Forms!frmCourtCase!court_case_id
 
@@ -952,12 +946,9 @@ Private Sub UpdateAddEntryButtonState()
      Exit Sub
     End If
 
-    ' Check If a court case entry exists For this Case
-    hasEntry = DCount("*", "court_case_entry", "court_case_id=" & courtCaseId) > 0
-
-    ' Enable/Hide button only when no entry exists
-    Forms!frmCourtCase!cmdAddEntry.Enabled = Not hasEntry
-    Forms!frmCourtCase!cmdAddEntry.Visible = Not hasEntry
+    ' A court case can have many entries - always visible/enabled once saved
+    Forms!frmCourtCase!cmdAddEntry.Enabled = True
+    Forms!frmCourtCase!cmdAddEntry.Visible = True
 End Sub
 
 '------------------------------------------------------------------------------

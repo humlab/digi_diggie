@@ -264,9 +264,10 @@ In sfrmCourtCaseEntries:
 
 ## Add Court Case Entry button
 On frmCourtCase (action row, between `cmdOpenEntryDetail` and `cmdCreateRuling`):
-- cmdAddEntry: initially disabled + hidden
-  - Visible/enabled only when the current case is saved (has court_case_id) AND has no court_case_entry rows (a blank datasheet row in progress also counts as an entry)
-  - Click: INSERT a blank `court_case_entry` row for the current case, Requery the entries datasheet, hide the button, then open `frmCourtCaseEntryDetail` on the new entry
+- cmdAddEntry: initially disabled + hidden (until first OnCurrent)
+  - Visible + enabled for any saved case (has court_case_id) — a case may have MANY entries, so no existence check
+  - Visible but disabled while the case is unsaved (mirrors cmdCreateRuling)
+  - Click: INSERT a blank `court_case_entry` row for the current case, Requery the entries datasheet, then open `frmCourtCaseEntryDetail` on the new entry
   - State synced by `UpdateAddEntryButtonState()` from `frmCourtCase_OnCurrent` and `sfrmCourtCaseEntries_OnCurrent`
 
 ---

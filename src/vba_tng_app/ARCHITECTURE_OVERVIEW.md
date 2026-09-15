@@ -87,7 +87,7 @@ graph TB
 - **Key Actions**:
   - `cmdNewCase` - Navigate to new record
   - `cmdOpenEntryDetail` - Open detail dialog for selected entry
-  - `cmdAddEntry` - Creates a blank entry for the case and opens its detail dialog (action row, between Open and Create Ruling; hidden until a saved case has no entries)
+  - `cmdAddEntry` - Creates a blank entry for the case and opens its detail dialog (action row, between Open and Create Ruling; a case may have many entries, so it stays visible/enabled for any saved case)
   - `cmdCreateRuling` - Create ruling record (button hides after creation)
 
 ### 2. Detail Dialog (Purple)
@@ -404,9 +404,9 @@ sfrmPersonEntryByEntry.cmdPickPerson
   - `sfrmRuling_OnCurrent()` - Updates when ruling state changes
 
 **`cmdAddEntry` Button** (action row, between `cmdOpenEntryDetail` and `cmdCreateRuling`):
-- **Visible When**: Current case is saved AND has no `court_case_entry` rows
-- **Hidden When**: Case is unsaved (no ID), or any entry exists (including a blank datasheet row being filled in)
-- **Action**: Inserts a blank `court_case_entry` row for the case, requeries `sfrmCourtCaseEntries`, hides itself, and opens `frmCourtCaseEntryDetail` on the new entry
+- **Visible/Enabled When**: Current case is saved (has `court_case_id`) — regardless of how many `court_case_entry` rows exist, since a case may have many entries
+- **Visible but Disabled When**: Case is unsaved (no ID yet) — mirrors `cmdCreateRuling`
+- **Action**: Inserts a blank `court_case_entry` row for the case, requeries `sfrmCourtCaseEntries`, and opens `frmCourtCaseEntryDetail` on the new entry
 - **Controlled By**: `UpdateAddEntryButtonState()`, called from `frmCourtCase_OnCurrent()` and `sfrmCourtCaseEntries_OnCurrent()`
 
 ### Ruling Subform Dynamic Display

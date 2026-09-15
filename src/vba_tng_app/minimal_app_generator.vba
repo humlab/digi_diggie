@@ -392,7 +392,7 @@ Private Sub Create_frmCourtCase()
         ctl.OnClick = "=frmCourtCase_cmdOpenEntryDetail_Click()"
         ctl.Enabled = False
 
-        ' cmdAddEntry button (initially disabled + hidden, shown when case has no entries)
+        ' cmdAddEntry button (starts disabled + hidden; OnCurrent shows/enables it for any saved case)
         Set ctl = CreateControl(frm.Name, acCommandButton, acDetail, "", "", 9100, yPos, 2200, 400)
         ctl.Name = "cmdAddEntry"
         ctl.caption = "Add Court Case Entry"
