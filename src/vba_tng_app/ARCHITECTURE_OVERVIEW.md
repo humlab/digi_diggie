@@ -14,8 +14,12 @@ graph TB
     subgraph "Detail Dialog"
         frmEntryDetail["<b>frmCourtCaseEntryDetail</b><br/>Popup/Dialog<br/>━━━━━━━━<br/>Entry Details"]
         sfrmPersonEntry["<b>sfrmPersonEntryByEntry</b><br/>Subform<br/>━━━━━━━━<br/>Persons in Entry"]
-        sfrmRuling2["<b>sfrmRuling</b><br/>Subform<br/>━━━━━━━━<br/>Ruling Details"]
-        sfrmOutcomes2["<b>sfrmPersonOutcomes</b><br/>Nested Subform<br/>━━━━━━━━<br/>Person Outcomes"]
+    end
+''
+    subgraph "List Forms (Continuous)"
+        frmCaseList["<b>frmCourtCaseList</b><br/>All Court Cases"]
+        frmEntriesList["<b>frmCourtCaseEntriesList</b><br/>All Case Entries"]
+        frmPersonEntriesList["<b>frmPersonEntryList</b><br/>Person Entries"]
     end
     
     subgraph "Picker Dialogs"
@@ -31,8 +35,6 @@ graph TB
     
     %% Detail Dialog Structure
     frmEntryDetail -.embeds.-> sfrmPersonEntry
-    frmEntryDetail -.embeds.-> sfrmRuling2
-    sfrmRuling2 -.embeds.-> sfrmOutcomes2
     
     %% Navigation from Main Form
     frmCourtCase -->|"cmdNewCase<br/>(New Record)"| frmCourtCase
@@ -40,18 +42,20 @@ graph TB
     sfrmEntries -->|"cmdEntryDetail<br/>(Opens Dialog)"| frmEntryDetail
     frmCourtCase -->|"cmdCreateRuling<br/>(Creates Ruling)"| sfrmRuling1
     frmCourtCase -->|"cmdAddEntry<br/>(Creates Entry)<br/>(Opens Dialog)"| frmEntryDetail
+
+    %% List Forms Navigation
+    frmCaseList -->|"cmdOpen<br/>(Opens Main)"| frmCourtCase
+    frmEntriesList -->|"cmdOpenDetail<br/>(Opens Dialog)"| frmEntryDetail
     
     %% Picker Calls from Detail Form
     frmEntryDetail -->|"cmdPickPlacename<br/>(Opens Dialog)"| frmPlacenameSearch
     sfrmPersonEntry -->|"cmdPickPerson<br/>(Opens Dialog)"| frmPersonSearch
-    sfrmOutcomes1 -->|"cmdPickPerson<br/>(Opens Dialog)"| frmPersonSearch
-    sfrmOutcomes2 -->|"cmdPickPerson<br/>(Opens Dialog)"| frmPersonSearch
+    %% sfrmPersonOutcomes has no picker button: person is chosen in the
+    %% cboPersonId combo (limited to people already in the case)
     
     %% Picker Returns
     frmPlacenameSearch -.->|"returns placename_id<br/>via OpenArgs"| frmEntryDetail
     frmPersonSearch -.->|"returns person_id<br/>via OpenArgs"| sfrmPersonEntry
-    frmPersonSearch -.->|"returns person_id<br/>via OpenArgs"| sfrmOutcomes1
-    frmPersonSearch -.->|"returns person_id<br/>via OpenArgs"| sfrmOutcomes2
     
     %% New Person Flow
     frmPersonSearch -->|"cmdNewPerson<br/>(Opens Dialog)"| frmPerson
@@ -65,8 +69,10 @@ graph TB
     classDef pickerForm fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
     
     class frmCourtCase mainForm
-    class sfrmEntries,sfrmPersonEntry,sfrmRuling1,sfrmRuling2 subForm
-    class sfrmOutcomes1,sfrmOutcomes2 nestedForm
+    class sfrmEntries,sfrmPersonEntry,sfrmRuling1 subForm
+    class sfrmOutcomes1 nestedForm
+    classDef listForm fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000
+    class frmCaseList,frmEntriesList,frmPersonEntriesList listForm
     class frmEntryDetail dialogForm
     class frmPlacenameSearch,frmPersonSearch,frmPerson pickerForm
 ```
@@ -79,7 +85,7 @@ graph TB
 
 **Primary Form**: `frmCourtCase`
 - **Purpose**: Central data entry workspace for court cases
-- **Mode**: Continuous form view
+- **Mode**: Single Form view (tabbed: Entries / Ruling)
 - **Contains**:
   - `sfrmCourtCaseEntries` - Datasheet subform listing all entries in current case
   - `sfrmRuling` - Single ruling details for the case
@@ -94,16 +100,17 @@ graph TB
 
 **Dialog Form**: `frmCourtCaseEntryDetail`
 - **Purpose**: Detailed view/edit of a single court case entry
-- **Mode**: Modal dialog (acDialog)
+- **Mode**: Popup, Modal in design; opened with `acWindowNormal` (deliberately not `acDialog`)
 - **Opened From**: 
   - `frmCourtCase.cmdOpenEntryDetail`
   - `sfrmCourtCaseEntries.cmdEntryDetail` (button in datasheet)
+  - `frmCourtCase.cmdAddEntry` (on the freshly created entry)
+  - `frmCourtCaseEntriesList.cmdOpenDetail`
 - **Contains**:
-  - `sfrmPersonEntryByEntry` - Persons linked to this specific entry
-  - `sfrmRuling` - Ruling details (reused component)
-    - `sfrmPersonOutcomes` - Person outcomes (reused nested component)
+  - `sfrmPersonEntryByEntry` - Persons linked to this specific entry (only subform)
 - **Key Actions**:
   - `cmdPickPlacename` - Opens placename picker dialog
+  - `cmdAddPersonEntry` / `cmdDeletePersonEntry` - Manage person links
 
 ### 3. Picker Dialogs (Green)
 
@@ -111,10 +118,10 @@ graph TB
 
 #### `frmPlacenameSearch`
 - **Purpose**: Search and select placenames
-- **Mode**: Modal dialog (acDialog)
+- **Mode**: Popup, Modal in design; opened with `acNormal`
 - **Controls**:
   - `txtSearch` - Search input
-  - `lstResults` - Results listbox (queries via `qPlacenameSearch`)
+  - `lstResults` - Results listbox (inline SQL: top-50 on load, `LIKE` search on click)
   - `cmdSearch` - Execute search
   - `cmdSelect` - Return selected ID to caller
   - `cmdCancel` - Close without selection
@@ -122,10 +129,10 @@ graph TB
 
 #### `frmPersonSearch`
 - **Purpose**: Search and select existing persons
-- **Mode**: Modal dialog (acDialog)
+- **Mode**: Popup, Modal in design; opened with `acNormal`
 - **Controls**:
   - `txtSearch` - Search input
-  - `lstResults` - Results listbox (queries via `qPersonSearch`)
+  - `lstResults` - Results listbox (inline SQL: top-50 on load, `LIKE` search on click)
   - `cmdSearch` - Execute search
   - `cmdSelect` - Return selected ID to caller
   - `cmdNewPerson` - Open person creation form
@@ -134,7 +141,7 @@ graph TB
 
 #### `frmPerson`
 - **Purpose**: Create new person records
-- **Mode**: Modal dialog (acDialog), data entry mode
+- **Mode**: Popup, `acFormAdd` (data entry only)
 - **Opened From**: `frmPersonSearch.cmdNewPerson`
 - **Behavior**: After closing, `frmPersonSearch` requeries to show newly created person
 
@@ -148,7 +155,7 @@ Picker forms receive calling context via `OpenArgs` parameter:
 
 ```vb
 ' Caller opens picker with context
-DoCmd.OpenForm "frmPlacenameSearch", , , , , acDialog, _
+DoCmd.OpenForm "frmPlacenameSearch", , , , , acNormal, _
     "caller=frmCourtCaseEntryDetail;target=txtPlacenameId"
 
 ' Picker parses OpenArgs and writes back selected ID
@@ -233,23 +240,16 @@ Ruling records are created on-demand rather than automatically:
 - User explicitly controls when to add ruling
 - UI clearly communicates ruling state (button visible = no ruling)
 
-### Shared Subform Components
+### Ruling & Outcome Subforms
 
-`sfrmRuling` and `sfrmPersonOutcomes` are reused across contexts:
-- Main form (`frmCourtCase`)
-- Detail dialog (`frmCourtCaseEntryDetail`)
-
-**Implementation**: Same form embedded in multiple parent forms
-
-**Benefits**:
-- Single source of truth for ruling/outcome UI
-- Reduces code duplication
-- Consistent behavior across contexts
+`sfrmRuling` and `sfrmPersonOutcomes` are embedded **only** in the main
+workspace (`frmCourtCase`, "Ruling" tab page). `frmCourtCaseEntryDetail` does
+not host them — it only embeds `sfrmPersonEntryByEntry`.
 
 ### Form Hierarchy
 
 ```
-frmCourtCase (Main)
+frmCourtCase (Main, Single Form, tabbed)
 ├── sfrmCourtCaseEntries (Datasheet)
 ├── sfrmRuling
 │   └── sfrmPersonOutcomes (Nested)
@@ -257,9 +257,11 @@ frmCourtCase (Main)
 
 frmCourtCaseEntryDetail (Dialog)
 ├── sfrmPersonEntryByEntry
-├── sfrmRuling
-│   └── sfrmPersonOutcomes (Nested)
-└── Button (cmdPickPlacename)
+└── Buttons (cmdPickPlacename, cmdAddPersonEntry, cmdDeletePersonEntry)
+
+frmCourtCaseList (Continuous)        → cmdOpen opens frmCourtCase
+frmCourtCaseEntriesList (Continuous) → cmdOpenDetail opens frmCourtCaseEntryDetail
+frmPersonEntryList (Continuous)      → flat list of person_entry rows
 
 frmPlacenameSearch (Dialog)
 └── Search/Select UI
@@ -275,7 +277,7 @@ frmPersonSearch (Dialog)
 
 ### Court Case Entry Workflow
 
-1. **Start**: User opens `frmCourtCase` (main workspace)
+1. **Start**: User opens `frmCourtCase` (main workspace) — or browses everything via the list forms `frmCourtCaseList`, `frmCourtCaseEntriesList`, `frmPersonEntryList`
 2. **Navigate**: User can browse existing cases or click `cmdNewCase` for new record
 3. **Add Entries**: User adds entries via `sfrmCourtCaseEntries` datasheet
 4. **Edit Details**: User clicks `cmdOpenEntryDetail` or datasheet button to open `frmCourtCaseEntryDetail`
@@ -309,10 +311,10 @@ sfrmPersonEntryByEntry.cmdPickPerson
       → User types in txtSearch → cmdSearch → select from lstResults → cmdSelect
     → [Option B] Create new
       → cmdNewPerson
-        → Opens frmPerson (data entry mode)
+        → Opens frmPerson (data entry mode, same OpenArgs)
         → User enters person details
-        → Closes, frmPersonSearch requeries
-        → User selects newly created person
+        → On close, new person_id is written directly to the caller and
+          frmPersonSearch closes automatically (see Create & Link Workflow)
     → Writes person_id back to sfrmPersonEntryByEntry.txtPersonId
   → Dialog closes
 ```
@@ -329,12 +331,15 @@ sfrmPersonEntryByEntry.cmdPickPerson
 - `DeleteFormsIfExist()` - Cleanup before generation
 - `CreateQueries()` - Creates `qPlacenameSearch`, `qPersonSearch`
 - `Create_frmCourtCase()` - Main workspace form
+- `Create_frmCourtCaseList()` - Continuous list of all cases
 - `Create_sfrmCourtCaseEntries()` - Datasheet subform
 - `Create_frmCourtCaseEntryDetail()` - Detail dialog
+- `Create_frmCourtCaseEntriesList()` - Continuous list of all entries
 - `Create_sfrmPersonEntryByEntry()` - Person-entry linkage
 - `Create_sfrmRuling()` - Ruling details
 - `Create_sfrmPersonOutcomes()` - Person outcomes
 - `Create_frmPlacenameSearch()` - Placename picker
+- `Create_frmPersonEntryList()` - Continuous list of person entries
 - `Create_frmPersonSearch()` - Person picker
 - `Create_frmPerson()` - Person creation
 - `CreateLabel()` - Helper function
@@ -381,14 +386,13 @@ sfrmPersonEntryByEntry.cmdPickPerson
 - `ruling_type` - Types of rulings
 - `legal_source` - Legal source references
 - `role` - Person roles
-- `outcome` - Outcome types
+- `outcome_type` - Outcome types
 - `season` - Season references
 - `source` - Source references
 
 ### Queries
 
-- `qPlacenameSearch` - Parameterized query for placename search
-- `qPersonSearch` - Parameterized query for person search
+- `qPlacenameSearch`, `qPersonSearch` — created by `BuildAllForms()` (`CreateQueries()`), but the pickers use inline SQL and do not reference these QueryDefs
 
 ---
 
@@ -426,9 +430,9 @@ sfrmPersonEntryByEntry.cmdPickPerson
 
 ### Form Opening Modes
 
-- **Main Workspace**: `frmCourtCase` opens in normal mode (continuous form)
-- **Detail Dialog**: `frmCourtCaseEntryDetail` opens with `acDialog` (modal, blocks parent)
-- **Picker Dialogs**: All search forms open with `acDialog` (modal)
+- **Main Workspace**: `frmCourtCase` opens in normal mode (Single Form view)
+- **Detail Dialog**: `frmCourtCaseEntryDetail` is Popup+Modal in design; opened with `acWindowNormal` (deliberately not `acDialog` — reduces UI-stall risk with linked ODBC tables)
+- **Picker Dialogs**: Popup+Modal in design; opened with `acNormal` so `OpenForm` returns (some in-datasheet pickers use `acDialog`)
 - **Person Creation**: `frmPerson` opens with `acFormAdd` mode (data entry only)
 
 ---
@@ -464,7 +468,7 @@ sfrmPersonEntryByEntry.cmdPickPerson
 ### Form Generation
 - [ ] Import both VBA modules (`generator` and `runtime`)
 - [ ] Run `BuildAllForms` without errors
-- [ ] All 9 forms created successfully
+- [ ] All 12 forms created successfully
 - [ ] Both queries (`qPlacenameSearch`, `qPersonSearch`) exist
 
 ### Main Workspace
