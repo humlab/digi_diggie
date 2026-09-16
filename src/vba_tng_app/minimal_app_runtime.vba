@@ -5,6 +5,10 @@ Option Explicit
 ' when the caller uses target="_return" (e.g., the Add Person flow).
 Private g_SelectedPersonId As Variant
 
+' Default outcome type for newly added person_outcome rows: 0 = "Okänd"
+' (most-used type). Change here if the most common type changes.
+Const DEFAULT_OUTCOME_TYPE_ID As Long = 0
+
 '==============================================================================
 ' modMinimalAppRuntime
 ' Purpose: Runtime event handlers For DigiDiggie TNG minimal forms
@@ -542,12 +546,12 @@ Public Function sfrmRuling_cmdAddOutcome_Click()
             Exit Function
         End If
 
-        ' Insert new person_outcome with default outcome_type_id (first one)
+        ' Insert new person_outcome with the most-used default outcome type
         Set db = CurrentDb
         Set rs = db.OpenRecordset("person_outcome", dbOpenDynaset)
         rs.AddNew
         rs!ruling_id = CLng(rulingId)
-        rs!outcome_type_id = DMin("outcome_type_id", "outcome_type")
+        rs!outcome_type_id = DEFAULT_OUTCOME_TYPE_ID
         rs.Update
         rs.Close
 
