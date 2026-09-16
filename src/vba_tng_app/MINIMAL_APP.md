@@ -3,7 +3,7 @@ Generate **VBA code** (MS Access) that **creates a minimal, robust, court-case�
 
 ## Architecture
 
-The VBA code is split into two modules for clarity:
+The core app is split into two modules for clarity (plus `automated_setup.vba` and `materialize_linked_tables.vba` for one-shot setup — see Files):
 
 1. **`minimal_app_generator.vba`** - Form generation code
    - Run `BuildAllForms()` to create all forms, queries, and controls
@@ -44,25 +44,27 @@ Create these saved forms with the given names:
   - txtReferenceNumber (reference_number)
   - txtCaseYear (case_year)
   - txtDistrictCourtName (district_court_name)
+  - txtSourceText (source_text) -> multiline court case text
 
-- Subforms on frmCourtCase:
-  1) sfrmCourtCaseEntries (datasheet/continuous)
+- Tab control (tabMain) with two pages:
+  1) "Court Case Entries" page hosts sfrmCourtCaseEntries (datasheet)
      - SourceObject: Form.sfrmCourtCaseEntries
      - LinkMasterFields: `court_case_id`
      - LinkChildFields: `court_case_id`
-  2) sfrmRuling (single)
+  2) "Ruling" page hosts sfrmRuling (single)
      - SourceObject: Form.sfrmRuling
      - LinkMasterFields: `court_case_id`
      - LinkChildFields: `court_case_id`
-  3) sfrmPersonOutcomes (datasheet)
-     - SourceObject: Form.sfrmPersonOutcomes
-     - IMPORTANT: This links to `ruling_id`, so host it in a container that can reference sfrmRuling.
-       Easiest pilot approach: place outcomes subform on frmCourtCase and set its RecordSource via code when ruling changes
-       OR place outcomes as a subform inside sfrmRuling (recommended; see below).
+
+  sfrmPersonOutcomes is embedded inside sfrmRuling (it links to `ruling_id`), see §5.
 
 - Buttons:
+  - cmdPrevious / cmdNext: DoCmd.GoToRecord , , acPrevious / acNext
+  - cmdSaveCase: saves current record, enabled while the form is dirty
   - cmdNewCase: DoCmd.GoToRecord , , acNewRec
-  - cmdOpenEntryDetail: opens frmCourtCaseEntryDetail for currently selected entry in sfrmCourtCaseEntries
+  - cmdOpenEntryDetail: opens frmCourtCaseEntryDetail for currently selected entry in sfrmCourtCaseEntries (disabled until a saved entry is selected)
+  - cmdAddEntry: inserts a blank court_case_entry for the case and opens frmCourtCaseEntryDetail on it
+  - cmdCreateRuling: creates the ruling for the current case (visible/enabled only while no ruling exists)
 
 ## 2) sfrmCourtCaseEntries (Subform grid)
 - RecordSource: `court_case_entry`
@@ -86,8 +88,10 @@ Create these saved forms with the given names:
   - entry_year, season_id (combo), land_use_id (combo), original_placename, curated_text
   - Show placename as:
     - txtPlacenameId (bound to placename_id) + txtPlacenameDisplay (unbound)
-- Button:
+- Buttons:
   - cmdPickPlacename → opens frmPlacenameSearch, passes calling form + target control in OpenArgs
+  - cmdAddPersonEntry → opens frmPersonSearch with `target=_return`; the selected person is INSERTed as a `person_entry` row for this entry
+  - cmdDeletePersonEntry → deletes the selected row in sfrmPersonEntryByEntry (with confirmation)
 
 - Embed subform:
   - sfrmPersonEntryByEntry
@@ -95,14 +99,14 @@ Create these saved forms with the given names:
   - LinkChildFields: `court_case_entry_id`
 
 ## 4) sfrmPersonEntryByEntry (Grid: people in entry)
-- RecordSource: `person_entry`
+- RecordSource: `person_entry` LEFT JOIN `person` (for read-only name display)
 - Default View: Datasheet (or Continuous)
 - Fields:
   - person_id (do NOT load all persons combo in grid; use popup picker)
+  - person_name (read-only, from the join)
   - community_id (combo OK)
   - land_rights_status_id (combo OK)
   - role_id (combo OK)
-  - curated_text
 - Add button:
   - cmdPickPerson → opens frmPersonSearch, writes selected person_id to current row
 
@@ -114,10 +118,10 @@ Create these saved forms with the given names:
   - ruling_type_id (combo)
   - legal_source_id (combo)
   - description
-- Button:
-  - cmdCreateRuling: if no ruling exists for current case, INSERT new row with current court_case_id and required ruling_type_id (pick default or prompt minimal)
-- Embed subform inside sfrmRuling (recommended):
-  - sfrmPersonOutcomes
+- Buttons:
+  - cmdAddOutcome / cmdDeleteOutcome: add/delete person_outcome rows (AddOutcome inserts with a default outcome_type_id)
+  - Note: cmdCreateRuling lives on `frmCourtCase`, not here (visible only while no ruling exists)
+- Embeds subform sfrmPersonOutcomes:
   - LinkMasterFields: `ruling_id`
   - LinkChildFields: `ruling_id`
 
@@ -125,11 +129,9 @@ Create these saved forms with the given names:
 - RecordSource: `person_outcome`
 - Default View: Datasheet
 - Fields:
-  - person_id (popup picker preferred; optional “limit to people in case” can be phase 2)
+  - person_id (combo, limited to persons already linked to the current court case)
   - outcome_type_id (combo OK)
   - description
-- Button:
-  - cmdPickPersonOutcomePerson → opens frmPersonSearch, writes person_id
 
 ## 7) frmPlacenameSearch (Popup picker)
 - Purpose: search placename without loading 50k rows.
@@ -142,11 +144,12 @@ Create these saved forms with the given names:
   - cmdSelect
   - cmdCancel
 - Behavior:
-  - cmdSearch builds/requeries results with LIKE on placename and/or parish_name
-  - Use TOP 200 and ORDER BY placename
+  - On load: shows top 50 placenames (ORDER BY placename)
+  - cmdSearch requeries with LIKE on placename and/or parish_name (no row cap)
   - cmdSelect writes selected placename_id back to caller:
-    - caller/target specified in OpenArgs (e.g., JSON-like or delimited string)
-    - Example OpenArgs: `caller=frmCourtCaseEntryDetail;target=placename_id`
+    - caller/target specified in OpenArgs (delimited string)
+    - Example OpenArgs: `caller=frmCourtCaseEntryDetail;target=txtPlacenameId`
+    - Also refreshes the caller's txtPlacenameDisplay via DLookup
   - After writeback, close search form
 
 ## 8) frmPersonSearch (Popup picker)
@@ -154,9 +157,10 @@ Create these saved forms with the given names:
 - Controls:
   - txtSearch (unbound)
   - cmdSearch
-  - lstResults: person_id, full_name, birth_year, death_year
+  - lstResults: person_id, full_name, birth_year, community_name
   - cmdSelect, cmdNewPerson, cmdCancel
-- cmdNewPerson opens frmPerson with DataEntry=True; after closing, requery results
+- On load: shows top 50 persons (ORDER BY full_name)
+- cmdNewPerson opens frmPerson with DataEntry=True and the same OpenArgs; on close the new person_id is written back to the caller and the search form closes (or, without OpenArgs, results are just requered)
 - cmdSelect writes person_id back to caller/target in OpenArgs
 
 ## 9) frmPerson (Basic person editor)
@@ -169,6 +173,18 @@ Create these saved forms with the given names:
 - Tab control with datasheet subforms for small lookup tables:
   - source, season, land_use, land_rights_status, role_type, role, ruling_type, legal_source, outcome_type, parish, community
 - Each subform RecordSource = table, DefaultView = Datasheet
+
+## 11) frmCourtCaseList (Continuous list of all cases)
+- RecordSource: `court_case` (ordered), includes a read-only "Has ruling" indicator
+- cmdOpen: opens frmCourtCase on the selected case
+
+## 12) frmCourtCaseEntriesList (Continuous list of all entries)
+- RecordSource: `court_case_entry` LEFT JOIN `placename` (for name display)
+- cmdOpenDetail: opens frmCourtCaseEntryDetail for the current row
+- cmdPickPlacename: same placename picker as in the detail dialog
+
+## 13) frmPersonEntryList (Continuous list of person entries)
+- RecordSource: `person_entry` JOIN `court_case_entry`, with lookup combos (person, community, land rights, role) and curated text
 
 ---
 
@@ -193,20 +209,23 @@ Combo properties:
 ---
 
 # Queries to Create (Saved QueryDefs)
-Create these saved queries (Access select queries) to support search listboxes:
+These saved queries are created by `BuildAllForms()` for completeness. The picker
+forms themselves use inline SQL (see above) and do not reference these QueryDefs:
 
 ## qPlacenameSearch
 A parameterized query (DAO QueryDef) with `PARAMETERS [pSearch] Text ( 255 );`
-SQL example (Access SQL):
-- `SELECT TOP 200 placename_id, placename, parish_name, serial_number
-   FROM placename
-   WHERE placename LIKE [pSearch] OR parish_name LIKE [pSearch]
-   ORDER BY placename;`
-At runtime set pSearch to `"*" & Nz(txtSearch,"") & "*"`.
+Actual SQL (Access SQL):
+- `SELECT TOP 200 p1.placename_id, p1.placename,
+   IIf(Nz(pr.parish, '') <> '', pr.parish, p1.parish_name) AS parish_display,
+   p1.serial_number
+   FROM placename AS p1
+   LEFT JOIN parish AS pr ON Val(p1.parish_code) = pr.parish_id
+   WHERE (p1.placename LIKE [pSearch]) OR (p1.parish_name LIKE [pSearch]) OR (pr.parish LIKE [pSearch])
+   ORDER BY p1.placename;`
 
 ## qPersonSearch
 `PARAMETERS [pSearch] Text ( 255 );`
-- `SELECT TOP 200 person_id, full_name, birth_year, death_year
+- `SELECT TOP 200 person_id, full_name, birth_year, community_name
    FROM person
    WHERE full_name LIKE [pSearch]
    ORDER BY full_name;`
@@ -219,25 +238,29 @@ At runtime set pSearch to `"*" & Nz(txtSearch,"") & "*"`.
 Implement these common helpers:
 
 ## BuildAllForms()
-- Calls:
+- Calls (subforms first, then parents, then list forms):
   - CreateQueries()
-  - Create_frmCourtCase()
   - Create_sfrmCourtCaseEntries()
-  - Create_sfrmRuling()
-  - Create_sfrmPersonOutcomes()
-  - Create_frmCourtCaseEntryDetail()
   - Create_sfrmPersonEntryByEntry()
+  - Create_sfrmPersonOutcomes()
+  - Create_sfrmRuling()
+  - Create_frmCourtCaseEntryDetail()
+  - Create_frmCourtCase()
+  - Create_frmCourtCaseList()
+  - Create_frmCourtCaseEntriesList()
   - Create_frmPlacenameSearch()
+  - Create_frmPersonEntryList()
   - Create_frmPersonSearch()
   - Create_frmPerson()
   - (optional) Create_frmLookups()
-- Shows a MsgBox when done.
+- Also closes open forms/tables, deletes previously generated forms, applies datasheet captions.
 
 ## OpenArgs convention
 Use a simple delimiter format:
 `caller=<FormName>;target=<ControlName>`
 Example:
-`caller=frmCourtCaseEntryDetail;target=placename_id`
+`caller=frmCourtCaseEntryDetail;target=txtPlacenameId`
+Special target `_return` (used by cmdAddPersonEntry): the picker INSERTs a `person_entry` row for the current entry instead of writing to a control.
 Write parse function `ParseOpenArgs(ByVal s As String) As Scripting.Dictionary` OR a simple Split-based parser (avoid external refs if possible).
 
 ## Picker write-back
@@ -250,12 +273,11 @@ In frmPlacenameSearch / frmPersonSearch:
   - Close picker
 
 ## Create ruling button
-In sfrmRuling:
+On frmCourtCase:
 - cmdCreateRuling_Click:
-  - If the subform has no record for current `court_case_id`:
-    - Insert into `ruling` with `court_case_id` and required `ruling_type_id`
-    - Choose a default ruling_type_id: the first row from ruling_type table (DMin / DLookup)
-  - Requery the ruling form and outcomes subform
+  - If no ruling exists for current `court_case_id`:
+    - Insert into `ruling` with `court_case_id` and a default `ruling_type_id` (first row, DMin)
+  - Requery the ruling subform, switch to the Ruling tab, hide the button
 
 ## Open Entry Detail button
 In sfrmCourtCaseEntries:
@@ -295,6 +317,7 @@ On frmCourtCase (action row, between `cmdOpenEntryDetail` and `cmdCreateRuling`)
    - Follow [LINKED-DATABASE.md](../../docs/LINKED-DATABASE.md) guide
    - Create ODBC DSN to your PostgreSQL database
    - Link all tables from `digidiggie_tng` schema
+   - Alternative: import `automated_setup.vba` and run `AutomatedFullSetup()` — it does the linking, form build, and local materialization in one go
 
 2. **Import VBA Modules**
    - Open VBA Editor (`Alt + F11`)
@@ -306,7 +329,7 @@ On frmCourtCase (action row, between `cmdOpenEntryDetail` and `cmdCreateRuling`)
    - In VBA Editor, open Immediate Window (`Ctrl + G`)
    - Type: `BuildAllForms` and press Enter
    - Wait 30-60 seconds for form generation
-   - Message box will confirm completion
+   - Immediate Window prints “BuildAllForms completed successfully.”
 
 4. **Start Using**
    - Close VBA Editor
@@ -358,7 +381,9 @@ If you need to recreate forms (e.g., after database changes):
 
 # Files
 
-- **`minimal_app_generator.vba`** - Form generation code (~870 lines)
-- **`minimal_app_runtime.vba`** - Runtime event handlers (~390 lines)
-- **`minimal_app.vba`** - DEPRECATED - Combined version (kept for reference)
+- **`minimal_app_generator.vba`** - Form generation code (~1600 lines)
+- **`minimal_app_runtime.vba`** - Runtime event handlers (~1050 lines)
+- **`automated_setup.vba`** - One-shot setup: `AutomatedFullSetup()` links tables, builds forms, runs the materialization pipeline
+- **`materialize_linked_tables.vba`** - Copies linked PostgreSQL tables to local tables with indexes and FK relations
 - **`MINIMAL_APP.md`** - This documentation
+- **`ARCHITECTURE_OVERVIEW.md`** - Form interconnections and runtime behavior overview
