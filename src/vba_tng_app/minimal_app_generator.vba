@@ -1234,19 +1234,19 @@ Private Sub Create_frmCourtCaseEntriesList()
         frm.DividingLines = True
 
         lblX = 200
-        ctrlX = 2200
-        txtX = 6800
+        ctrlX = 2800
+        txtX = 7400
         yPos = 200
 
         ' entry_year
-        CreateLabel frm.Name, "lblEntryYear", "Entry Year", lblX, yPos, 1800, 300
+        CreateLabel frm.Name, "lblEntryYear", "Entry Year", lblX, yPos, 2500, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1500, 300)
         ctl.Name = "txtEntryYear"
         ctl.ControlSource = "entry_year"
         yPos = yPos + 500
 
         ' season_id
-        CreateLabel frm.Name, "lblSeasonId", "Season", lblX, yPos, 1800, 300
+        CreateLabel frm.Name, "lblSeasonId", "Season", lblX, yPos, 2500, 300
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4300, 300)
         ctl.Name = "cboSeasonId"
         ctl.ControlSource = "season_id"
@@ -1258,7 +1258,7 @@ Private Sub Create_frmCourtCaseEntriesList()
         yPos = yPos + 500
 
         ' land_use_id
-        CreateLabel frm.Name, "lblLandUseId", "Land Use", lblX, yPos, 1800, 300
+        CreateLabel frm.Name, "lblLandUseId", "Land Use", lblX, yPos, 2500, 300
         Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4300, 300)
         ctl.Name = "cboLandUseId"
         ctl.ControlSource = "land_use_id"
@@ -1270,14 +1270,14 @@ Private Sub Create_frmCourtCaseEntriesList()
         yPos = yPos + 500
 
         ' original_placename (source)
-        CreateLabel frm.Name, "lblOriginalPlacename", "Placename (source)", lblX, yPos, 1800, 300
+        CreateLabel frm.Name, "lblOriginalPlacename", "Placename (source)", lblX, yPos, 2500, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 4300, 300)
         ctl.Name = "txtOriginalPlacename"
         ctl.ControlSource = "original_placename"
         yPos = yPos + 500
 
         ' placename_id (standardised) + display text + Pick button
-        CreateLabel frm.Name, "lblPlacenameId", "Placename (standardised)", lblX, yPos, 1800, 300
+        CreateLabel frm.Name, "lblPlacenameId", "Placename (standardised)", lblX, yPos, 2500, 300
         Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 1300, 300)
         ctl.Name = "txtPlacenameId"
         ctl.ControlSource = "placename_id"
