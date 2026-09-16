@@ -1247,7 +1247,7 @@ Private Sub Create_frmCourtCaseEntriesList()
 
         ' season_id
         CreateLabel frm.Name, "lblSeasonId", "Season", lblX, yPos, 1800, 300
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 3500, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4300, 300)
         ctl.Name = "cboSeasonId"
         ctl.ControlSource = "season_id"
         ctl.RowSource = "SELECT season_id, season_name FROM season ORDER BY season_name;"
@@ -1259,7 +1259,7 @@ Private Sub Create_frmCourtCaseEntriesList()
 
         ' land_use_id
         CreateLabel frm.Name, "lblLandUseId", "Land Use", lblX, yPos, 1800, 300
-        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 3500, 300)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", ctrlX, yPos, 4300, 300)
         ctl.Name = "cboLandUseId"
         ctl.ControlSource = "land_use_id"
         ctl.RowSource = "SELECT land_use_id, description FROM land_use ORDER BY description;"
@@ -1271,7 +1271,7 @@ Private Sub Create_frmCourtCaseEntriesList()
 
         ' original_placename (source)
         CreateLabel frm.Name, "lblOriginalPlacename", "Placename (source)", lblX, yPos, 1800, 300
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 3500, 300)
+        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", ctrlX, yPos, 4300, 300)
         ctl.Name = "txtOriginalPlacename"
         ctl.ControlSource = "original_placename"
         yPos = yPos + 500
