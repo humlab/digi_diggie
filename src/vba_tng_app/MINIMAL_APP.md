@@ -387,3 +387,4 @@ If you need to recreate forms (e.g., after database changes):
 - **`materialize_linked_tables.vba`** - Copies linked PostgreSQL tables to local tables with indexes and FK relations
 - **`MINIMAL_APP.md`** - This documentation
 - **`ARCHITECTURE_OVERVIEW.md`** - Form interconnections and runtime behavior overview
+- **`../../docs/USECASE-EDIT-COURT-CASE.md`** - End-user guide: editing a court case
