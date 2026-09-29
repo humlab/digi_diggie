@@ -1495,6 +1495,7 @@ Private Sub Create_frmPerson()
         ctl.Name = "txtFullName"
         ctl.ControlSource = "full_name"
         ctl.Locked = True
+        ctl.BorderStyle = 0 ' Transparent — reads as a label, not an input
         CreateLabel frm.Name, "lblFullName", "Full Name:", 200, yPos, 1600, 300
 
         yPos = yPos + 500
