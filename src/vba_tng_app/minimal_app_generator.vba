@@ -1539,10 +1539,15 @@ Private Sub Create_frmPerson()
 
         yPos = yPos + 500
 
-        ' community_name
-        Set ctl = CreateControl(frm.Name, acTextBox, acDetail, "", "", 2000, yPos, 4000, 300)
-        ctl.Name = "txtCommunityName"
+        ' community_name (dropdown listing the community table; person stores the name string, not an id)
+        Set ctl = CreateControl(frm.Name, acComboBox, acDetail, "", "", 2000, yPos, 4000, 300)
+        ctl.Name = "cboCommunityName"
         ctl.ControlSource = "community_name"
+        ctl.RowSourceType = "Table/Query"
+        ctl.RowSource = "SELECT community_name FROM community ORDER BY community_name;"
+        ctl.ColumnCount = 1
+        ctl.BoundColumn = 1
+        ctl.LimitToList = True
         CreateLabel frm.Name, "lblCommunityName", "Community:", 200, yPos, 1600, 300
 
         yPos = yPos + 500

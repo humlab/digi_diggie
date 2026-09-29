@@ -166,7 +166,7 @@ Create these saved forms with the given names:
 ## 9) frmPerson (Basic person editor)
 - RecordSource: `person`
 - Fields:
-  - given_name, patronymic, surname, birth_year, death_year, community_name, note
+  - given_name, patronymic, surname, birth_year, death_year, community_name (dropdown listing `SELECT community_name FROM community`; person stores the name string, not an id), note
 - (No relationship subform for pilot)
 
 ## 10) frmLookups (Tabbed maintenance; optional if time)
